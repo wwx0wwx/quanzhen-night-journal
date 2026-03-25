@@ -40,7 +40,7 @@
 - `/opt/blog-src/draft_review/`
 
 ### 静态发布目录
-- `/var/www/shetop.ru`
+- `/var/www/iuaa.de`
 
 ---
 

@@ -1,9 +1,9 @@
 {
   "meta": {
     "version": 2,
-    "post_count": 3,
-    "last_post_at": "2026-03-25T04:26:51Z",
-    "last_successful_post_at": "2026-03-25T04:26:51Z",
+    "post_count": 4,
+    "last_post_at": "2026-03-25T04:48:27Z",
+    "last_successful_post_at": "2026-03-25T04:48:27Z",
     "last_publish_day_utc": "2026-03-25",
     "current_season": "spring",
     "current_watch": "子时",
@@ -11,48 +11,52 @@
   },
   "owner": {
     "status": "resting",
-    "fatigue": 36,
+    "fatigue": 33,
     "closeness": 72,
     "attention_to_zhen": 36,
     "recent_mentions_of_sister": 1
   },
   "sister": {
     "status": "away",
-    "eta_days": 2,
-    "pressure": 66,
+    "eta_days": 1,
+    "pressure": 70,
     "renown": 88,
     "recent_letter": false
   },
   "zhen": {
-    "jealousy": 66,
+    "jealousy": 69,
     "longing": 81,
     "restraint": 74,
     "injury": 0,
     "confidence": 46,
-    "guilt": 21,
-    "emptiness": 29,
-    "vigilance": 58
+    "guilt": 19,
+    "emptiness": 28,
+    "vigilance": 60
   },
   "world": {
     "recent_danger": "quiet",
-    "server_peace_days": 110,
+    "server_peace_days": 18,
     "weather_mood": "cold_wind",
     "last_incident": "不知死活的鼠辈挤在暗处。属下未敢惊动主人，只是在别处多擦了一阵剑。"
   },
   "continuity": {
-    "last_summary": "夜半侍侧，为免惊醒主人，悄挪铜盆、掖衾拭剑，压下外间异动；因主人晚间提及姐姐，旧寒旧忍翻涌，终仍把不安独自咽回。",
+    "last_summary": "全真半月来隐在廊影守夜，听见异动也按兵不动，只护灯、换纸、拭刃，唯愿主人安睡；提及姐姐的旧事刺痛心口，更让他明白自己该止于暗处，把近前的冲动压回分寸里。",
     "recent_topics": [
       "守夜",
       "影子",
       "不敢开口",
-      "姐姐"
+      "姐姐",
+      "独白"
     ],
     "recent_scenes": [
-      "搁铜盆的小几旁"
+      "搁铜盆的小几旁",
+      "回廊转折处"
     ],
     "recent_emotions": [
       "嫉妒",
-      "不服"
+      "不服",
+      "贪恋",
+      "慌"
     ],
     "recent_imagery": [
       "薄衾",
@@ -60,7 +64,13 @@
       "笔锋",
       "更漏",
       "衣角",
-      "铜盆轻响"
+      "铜盆轻响",
+      "脚步落地极轻",
+      "竹叶轻碰",
+      "薄灰味",
+      "墨迹",
+      "掌纹沾湿",
+      "残茶"
     ]
   },
   "scheduler": {

@@ -1,19 +1,34 @@
 #!/usr/bin/env python3
-import json, random, subprocess, pathlib, urllib.request, re, sys, shutil
+import json, os, random, subprocess, pathlib, urllib.request, re, sys, shutil
 from datetime import datetime, UTC
 
-BASE = pathlib.Path('/opt/blog-src')
+def _load_env(path='/opt/blog-src/.env'):
+    env = {}
+    try:
+        for line in pathlib.Path(path).read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                continue
+            k, _, v = line.partition('=')
+            env[k.strip()] = v.strip()
+    except FileNotFoundError:
+        pass
+    return env
+
+_env = _load_env()
+
+BASE = pathlib.Path(_env.get('ENGINE_ROOT', '/opt/blog-src'))
 AUTO = BASE / 'automation'
 CONTENT = BASE / 'content' / 'posts'
 DRAFT_REVIEW = BASE / 'draft_review'
 DRAFT_REVIEW.mkdir(parents=True, exist_ok=True)
-OUT = pathlib.Path('/var/www/shetop.ru')
+OUT = pathlib.Path(_env.get('BLOG_OUTPUT_DIR', '/var/www/iuaa.de'))
 LOG = BASE / 'logs'
 LOG.mkdir(parents=True, exist_ok=True)
 
-API_KEY = 'sk-3fe4726694ed65cefaae70d82dffef92d5317e358b8a7c6a218f409c669464aa'
-BASE_URL = 'https://ai.dooo.ng/v1/chat/completions'
-MODEL = 'gpt-5.4'
+API_KEY = _env.get('OPENAI_API_KEY', '')
+BASE_URL = _env.get('OPENAI_BASE_URL', 'https://ai.dooo.ng/v1/chat/completions')
+MODEL = _env.get('OPENAI_MODEL', 'gpt-5.4')
 
 state = json.loads((AUTO / 'world_state.json').read_text())
 anchors = json.loads((AUTO / 'memory_anchors.json').read_text())
