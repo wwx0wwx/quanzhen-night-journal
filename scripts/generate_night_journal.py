@@ -152,7 +152,7 @@ def collect_vps_events():
     nginx_hits = int(nginx_hits or 0)
     svc_restart_hits = sh("journalctl --since '24 hours ago' 2>/dev/null | egrep -ci 'Started|Restarted' || true").stdout.strip()
     svc_restart_hits = int(svc_restart_hits or 0)
-    cert_hits = sh("grep -Rchi 'Cert not yet due for renewal\|Congratulations' /var/log/letsencrypt 2>/dev/null || true").stdout.strip()
+    cert_hits = sh("grep -Rchi 'Cert not yet due for renewal|Congratulations' /var/log/letsencrypt 2>/dev/null || true").stdout.strip()
     cert_hits = int(cert_hits or 0)
 
     events = [map_intrusions(ssh_bad), map_load(load1, mem_pct), map_uptime(uptime_days)]
