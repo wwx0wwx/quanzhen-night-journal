@@ -1,9 +1,9 @@
 {
   "meta": {
     "version": 2,
-    "post_count": 6,
-    "last_post_at": "2026-03-25T14:33:32Z",
-    "last_successful_post_at": "2026-03-25T14:33:32Z",
+    "post_count": 8,
+    "last_post_at": "2026-03-25T14:37:41Z",
+    "last_successful_post_at": "2026-03-25T14:37:41Z",
     "last_publish_day_utc": "2026-03-25",
     "current_season": "spring",
     "current_watch": "子时",
@@ -11,7 +11,7 @@
   },
   "owner": {
     "status": "resting",
-    "fatigue": 37,
+    "fatigue": 40,
     "closeness": 72,
     "attention_to_zhen": 36,
     "recent_mentions_of_sister": 1
@@ -19,19 +19,19 @@
   "sister": {
     "status": "away",
     "eta_days": 0,
-    "pressure": 74,
+    "pressure": 80,
     "renown": 88,
     "recent_letter": false
   },
   "zhen": {
-    "jealousy": 75,
-    "longing": 83,
-    "restraint": 72,
+    "jealousy": 79,
+    "longing": 85,
+    "restraint": 71,
     "injury": 0,
     "confidence": 46,
-    "guilt": 15,
+    "guilt": 17,
     "emptiness": 31,
-    "vigilance": 62
+    "vigilance": 66
   },
   "world": {
     "recent_danger": "quiet",
@@ -40,46 +40,48 @@
     "last_incident": "不知死活的鼠辈挤在暗处。属下未敢惊动主人，只是在别处多擦了一阵剑。"
   },
   "continuity": {
-    "last_summary": "夜里属下守在窗下，听外头骚动终被压平，只默拭冷铁、掩紧窗缝护主人安睡；虽察觉异样与心中空冷，仍强自按下，不让惊扰近身。",
+    "last_summary": "全真夜守门内半步，暗察院外异动、以刀声震慑窥探者；听闻姐姐消息逼近，忧念主人劳倦未展，悄然替其挡风，却始终克制不越界。",
     "recent_topics": [
-      "影子",
-      "不敢开口",
       "姐姐",
       "独白",
       "守夜",
-      "陪伴"
+      "陪伴",
+      "江湖",
+      "姐姐"
     ],
     "recent_scenes": [
       "搁铜盆的小几旁",
       "回廊转折处",
       "案几旁",
-      "窗下"
+      "窗下",
+      "树下暗处",
+      "门槛内侧半步处"
     ],
     "recent_emotions": [
-      "嫉妒",
-      "不服",
-      "贪恋",
-      "慌",
       "空寂",
       "麻木",
       "幽怨",
-      "狠后的空"
+      "狠后的空",
+      "空寂",
+      "麻木",
+      "贪恋",
+      "克制"
     ],
     "recent_imagery": [
-      "掌纹沾湿",
-      "残茶",
-      "掌心空落",
-      "未干的字",
-      "砚台",
-      "纸页发涩",
-      "墨气",
-      "案角",
-      "潮气",
-      "背脊发僵",
-      "药气",
-      "衣料轻擦",
       "小几",
-      "指腹发冷"
+      "指腹发冷",
+      "血腥散尽后的空味",
+      "指节发紧",
+      "白瓷盏",
+      "笔锋",
+      "脚步落地极轻",
+      "砖面返潮",
+      "旧纸气",
+      "衣角",
+      "纸页发涩",
+      "薄灰味",
+      "湿土气",
+      "门轴微哑"
     ]
   },
   "scheduler": {
@@ -94,9 +96,9 @@
   },
   "story_arcs": {
     "sister_return": {
-      "stage": 0,
+      "stage": 1,
       "enabled": true,
-      "next_trigger_post_count": 8
+      "next_trigger_post_count": 14
     },
     "owner_notice": {
       "stage": 0,

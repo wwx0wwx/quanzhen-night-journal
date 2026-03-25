@@ -171,7 +171,7 @@ def _drift_state(state: dict) -> None:
         z['jealousy'] = min(100, z['jealousy'] + 3)
 
 
-def run(base_path: Path | None = None) -> RunResult:
+def run(base_path: Path | None = None, mode_override: str | None = None) -> RunResult:
     """
     Main application entry point.
     Orchestrates the full night-journal generation pipeline.
@@ -277,13 +277,14 @@ def run(base_path: Path | None = None) -> RunResult:
             raise RuntimeError('Quality check failed after repair: ' + '; '.join(reasons))
 
     # --- Output ---
-    mode = overrides.get('mode', 'auto')
+    mode = mode_override or overrides.get('mode', 'auto')
+    effective_overrides = {**overrides, 'mode': mode}
     path, now_str, slug = write_post(
         title=title,
         description=description,
         category=category,
         body=diary_content,
-        overrides=overrides,
+        overrides=effective_overrides,
         content_dir=settings.content_dir,
         draft_review_dir=settings.draft_review_dir,
     )

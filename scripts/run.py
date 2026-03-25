@@ -90,7 +90,7 @@ def main():
 
     # 运行引擎
     try:
-        result = run(base_path=root)
+        result = run(base_path=root, mode_override=args.mode)
 
         if result.ok:
             print(f'\n✓ 夜札生成成功!')
