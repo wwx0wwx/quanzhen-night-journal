@@ -1,33 +1,31 @@
 #!/usr/bin/env python3
-import json, random, subprocess, pathlib, urllib.request, re, sys, os
+import json, random, subprocess, pathlib, urllib.request, re, sys, shutil
 from datetime import datetime, UTC
 
-BASE = BLOG_BASE_DIR
+BASE = pathlib.Path('/opt/blog-src')
 AUTO = BASE / 'automation'
 CONTENT = BASE / 'content' / 'posts'
 DRAFT_REVIEW = BASE / 'draft_review'
 DRAFT_REVIEW.mkdir(parents=True, exist_ok=True)
-OUT = BLOG_OUTPUT_DIR
+OUT = pathlib.Path('/var/www/shetop.ru')
 LOG = BASE / 'logs'
 LOG.mkdir(parents=True, exist_ok=True)
 
-API_KEY = os.getenv('OPENAI_API_KEY', '')
-BASE_URL = os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1/chat/completions')
-MODEL = os.getenv('OPENAI_MODEL', 'gpt-5.4')
-BLOG_BASE_DIR = pathlib.Path(os.getenv('BLOG_BASE_DIR', '/opt/blog-src'))
-BLOG_OUTPUT_DIR = pathlib.Path(os.getenv('BLOG_OUTPUT_DIR', '/var/www/shetop.ru'))
+API_KEY = 'sk-3fe4726694ed65cefaae70d82dffef92d5317e358b8a7c6a218f409c669464aa'
+BASE_URL = 'https://ai.dooo.ng/v1/chat/completions'
+MODEL = 'gpt-5.4'
 
-state = json.loads((AUTO / 'world_state.json').read_text()) if (AUTO / 'world_state.json').exists() else json.loads((AUTO / 'world_state.example.json').read_text())
+state = json.loads((AUTO / 'world_state.json').read_text())
 anchors = json.loads((AUTO / 'memory_anchors.json').read_text())
 rules = json.loads((AUTO / 'topic_rules.json').read_text())
 imagery = json.loads((AUTO / 'imagery_pool.json').read_text())
 scenes = json.loads((AUTO / 'scene_pool.json').read_text())
 emotions = json.loads((AUTO / 'emotion_pool.json').read_text())
 event_map = json.loads((AUTO / 'event_map_rules.json').read_text())
-recent_memories = json.loads((AUTO / 'recent_memories.json').read_text()) if (AUTO / 'recent_memories.json').exists() else []
+recent_memories = json.loads((AUTO / 'recent_memories.json').read_text())
 overrides = json.loads((AUTO / 'manual_overrides.json').read_text())
 future_fragments = json.loads((AUTO / 'future_fragments.json').read_text())
-stats = json.loads((AUTO / 'night_journal_stats.json').read_text()) if (AUTO / 'night_journal_stats.json').exists() else {'post_count':0,'successful_posts':0,'failed_runs':0,'repaired_runs':0,'topics':{},'scenes':{},'primary_emotions':{},'secondary_emotions':{},'imagery':{},'titles':[],'descriptions':[],'last_quality_failures':[]}
+stats = json.loads((AUTO / 'night_journal_stats.json').read_text())
 
 
 def sh(cmd):
@@ -86,12 +84,12 @@ def parse_front_matter(text: str):
 
 def extract_repeated_phrases(texts):
     phrases = []
-    patterns = [r'廊下', r'门外', r'帐内', r'垂帘', r'砖缝', r'擦了', r'替主人挡', r'袖中', r'指节', r'更冷', r'天色', r'属下还在', r'灯', r'剑', r'茶', r'纸窗', r'案上', r'眉间']
+    patterns = [r'廊下', r'门外', r'帐内', r'垂帘', r'砖缝', r'擦了', r'替主人挡', r'袖中', r'指节', r'更冷', r'天色', r'属下还在', r'灯', r'剑', r'茶', r'纸窗', r'案上', r'眉间', r'风', r'雨', r'寒']
     merged = '\n'.join(texts)
     for p in patterns:
-        if len(re.findall(p, merged)) >= 3:
+        if len(re.findall(p, merged)) >= 2:
             phrases.append(p)
-    return phrases[:14]
+    return phrases[:16]
 
 
 def build_recent_context():
@@ -147,7 +145,7 @@ def collect_vps_events():
     nginx_hits = int(nginx_hits or 0)
     svc_restart_hits = sh("journalctl --since '24 hours ago' 2>/dev/null | egrep -ci 'Started|Restarted' || true").stdout.strip()
     svc_restart_hits = int(svc_restart_hits or 0)
-    cert_hits = sh("grep -Rci 'Cert not yet due for renewal\|Congratulations' /var/log/letsencrypt 2>/dev/null || true").stdout.strip()
+    cert_hits = sh("grep -Rchi 'Cert not yet due for renewal\|Congratulations' /var/log/letsencrypt 2>/dev/null || true").stdout.strip()
     cert_hits = int(cert_hits or 0)
 
     events = [map_intrusions(ssh_bad), map_load(load1, mem_pct), map_uptime(uptime_days)]
@@ -174,13 +172,46 @@ def choose_topic():
 def choose_world_material(repeated_phrases):
     flat_imagery = imagery['visual'] + imagery['sound'] + imagery['smell'] + imagery['touch']
     recent_used = set(state['continuity'].get('recent_imagery', []))
-    imagery_candidates = [x for x in flat_imagery if x not in recent_used and x not in ''.join(repeated_phrases)] or flat_imagery
+
+    # generalized hot-term suppression: if any high-frequency motif appears in repeated_phrases,
+    # suppress the whole related cluster instead of patching one specific word at a time.
+    motif_clusters = {
+        '灯': ['灯', '灯芯', '灯花', '铜灯座', '火星噼剥'],
+        '雨': ['雨', '雨丝落檐', '雨后木气', '湿土气'],
+        '风': ['风', '风压窗纸', '夜露气'],
+        '雪': ['雪', '旧雪', '冬', '寒'],
+        '茶': ['茶', '残茶', '茶苦气', '白瓷盏'],
+        '剑': ['剑', '冷铁味'],
+        '窗': ['窗', '纸窗', '窗纸'],
+        '门': ['门', '门闩', '偏门'],
+        '夜': ['夜', '更漏']
+    }
+
+    hot_terms = set(repeated_phrases)
+    repeated_joined = ' '.join(repeated_phrases)
+    for key, cluster in motif_clusters.items():
+        if key in repeated_joined:
+            hot_terms.update(cluster)
+
+    def allowed_item(x):
+        return x not in recent_used and all(h not in x for h in hot_terms)
+
+    imagery_candidates = [x for x in flat_imagery if allowed_item(x)] or [x for x in flat_imagery if x not in recent_used] or flat_imagery
     chosen_imagery = random.sample(imagery_candidates, k=min(6, len(imagery_candidates)))
 
     scene_pool = scenes['indoor'] + scenes['semi_outdoor'] + scenes['outer_yard'] + scenes['special']
     recent_scenes = set(state['continuity'].get('recent_scenes', []))
-    scene_candidates = [s for s in scene_pool if s not in recent_scenes] or scene_pool
+    scene_candidates = [s for s in scene_pool if s not in recent_scenes and all(h not in s for h in hot_terms)] or [s for s in scene_pool if s not in recent_scenes] or scene_pool
     chosen_scene = overrides.get('force_scene') or random.choice(scene_candidates)
+
+    # scene-aware weighting to reduce habitual image collapse
+    if '窗' in chosen_scene:
+        chosen_imagery = [i for i in chosen_imagery if not any(h in i for h in motif_clusters['灯'])][:6] or chosen_imagery
+    if any(x in chosen_scene for x in ['偏门', '石阶', '檐', '外院']):
+        outdoor_bias = [i for i in flat_imagery if i in ['门闩', '竹影', '湿土气', '夜露气', '雨后木气', '檐下青砖', '脚步落地极轻', '夜鸟扑翅', '竹叶轻碰']]
+        outdoor_bias = [i for i in outdoor_bias if i not in recent_used and all(h not in i for h in hot_terms)] or outdoor_bias
+        merged = list(dict.fromkeys((outdoor_bias[:3] + chosen_imagery)))
+        chosen_imagery = merged[:6]
 
     if overrides.get('force_primary_emotion'):
         primary = overrides['force_primary_emotion']
@@ -215,16 +246,16 @@ def story_arc_triggers():
     pc = state['meta']['post_count'] + 1
     lines = []
     arcs = state.get('story_arcs', {})
-    if arcs.get('sister_return', {}).get('enabled') and pc >= arcs['sister_return']['next_trigger_post_count']:
+    if arcs.get('sister_return', {}).get('enabled') and pc >= arcs['sister_return']['next_trigger_post_count'] and state['zhen']['jealousy'] >= 74:
         stage = arcs['sister_return']['stage']
         if stage == 0: lines.append('姐姐的消息近来多了，归期像在慢慢逼近。')
         elif stage == 1: lines.append('有风声说，姐姐不久便会回府。')
         else: lines.append('姐姐将归的事，已不再只是风声。')
-    if arcs.get('owner_notice', {}).get('enabled') and pc >= arcs['owner_notice']['next_trigger_post_count']:
+    if arcs.get('owner_notice', {}).get('enabled') and pc >= arcs['owner_notice']['next_trigger_post_count'] and state['owner']['attention_to_zhen'] >= 42:
         stage = arcs['owner_notice']['stage']
         if stage == 0: lines.append('主人近来像是察觉了什么，偶有目光停在你身上。')
         else: lines.append('主人对你的沉默，已不似从前那样全然无知。')
-    if arcs.get('old_wound', {}).get('enabled') and pc >= arcs['old_wound']['next_trigger_post_count']:
+    if arcs.get('old_wound', {}).get('enabled') and pc >= arcs['old_wound']['next_trigger_post_count'] and state['zhen']['guilt'] + state['zhen']['emptiness'] >= 58:
         lines.append('旧伤隐隐作痛，像在提醒你，有些过去并未真正远去。')
     if overrides.get('notes_for_tonight'):
         lines.append(overrides['notes_for_tonight'])
@@ -248,8 +279,6 @@ def maybe_future_fragment():
 
 
 def api_chat(messages, temperature=0.8, max_tokens=900):
-    if not API_KEY:
-        raise RuntimeError('OPENAI_API_KEY is not set.')
     payload = {'model': MODEL, 'messages': messages, 'temperature': temperature, 'max_tokens': max_tokens}
     data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(BASE_URL, data=data, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {API_KEY}'}, method='POST')
@@ -285,8 +314,8 @@ def capture_recent_memory(text, title):
 
 
 def generate_title_and_description(body, recent_titles, recent_descs):
-    prompt = f'''根据下面这篇夜札正文，为博客生成一个标题和一条 description。要求：标题不要用固定模板，要像随笔，像夜里记下的一句、半句，或极简意象；description 不要写技术味提示，要像页边的一点轻注、心情、缘由，或极短摘要；标题 4-12 字为宜，description 16-36 字为宜；避免与最近这些标题/description 太像。\n最近标题：{recent_titles}\n最近description：{recent_descs}\n\n请严格用 JSON 输出：{{"title":"...","description":"..."}}\n\n正文：\n{body}\n'''
-    raw = api_chat([{'role': 'system', 'content': '你是一个审美克制的中文文学编辑。只输出合法 JSON。'}, {'role': 'user', 'content': prompt}], temperature=0.7, max_tokens=180)
+    prompt = f'''根据下面这篇夜札正文，为博客生成一个标题和一条 description。要求：标题不要用固定模板；标题句法要主动分散，轮换使用“极简意象 / 半句心迹 / 动作残片 / 时间切片”四类，不要连续几篇都像同一种短句；description 不要写技术味提示，要像页边的一点轻注、心情、缘由，或极短摘要；标题 4-12 字为宜，description 16-36 字为宜；避免与最近这些标题/description 太像。\n最近标题：{recent_titles}\n最近description：{recent_descs}\n\n请严格用 JSON 输出：{{"title":"...","description":"..."}}\n\n正文：\n{body}\n'''
+    raw = api_chat([{'role': 'system', 'content': '你是一个审美克制的中文文学编辑。只输出合法 JSON。'}, {'role': 'user', 'content': prompt}], temperature=0.78, max_tokens=220)
     m = re.search(r'\{.*\}', raw, re.S)
     if not m:
         return '灯下未眠', '这一页，是在灯将尽时留下的。'
@@ -321,17 +350,17 @@ def quality_check(body, title, description):
 def update_story_arcs():
     pc = state['meta']['post_count']
     arcs = state.get('story_arcs', {})
-    if arcs['old_wound']['enabled'] and pc >= arcs['old_wound']['next_trigger_post_count'] and arcs['old_wound']['stage'] == 0:
+    if arcs['old_wound']['enabled'] and pc >= arcs['old_wound']['next_trigger_post_count'] and arcs['old_wound']['stage'] == 0 and state['zhen']['guilt'] + state['zhen']['emptiness'] >= 58:
         arcs['old_wound']['stage'] = 1
-        arcs['old_wound']['next_trigger_post_count'] = pc + 5
-    if arcs['sister_return']['enabled'] and pc >= arcs['sister_return']['next_trigger_post_count']:
+        arcs['old_wound']['next_trigger_post_count'] = pc + 7
+    if arcs['sister_return']['enabled'] and pc >= arcs['sister_return']['next_trigger_post_count'] and state['zhen']['jealousy'] >= 74:
         arcs['sister_return']['stage'] = min(2, arcs['sister_return']['stage'] + 1)
-        arcs['sister_return']['next_trigger_post_count'] = pc + 4
-        state['sister']['pressure'] = min(100, state['sister']['pressure'] + 8)
-    if arcs['owner_notice']['enabled'] and pc >= arcs['owner_notice']['next_trigger_post_count']:
+        arcs['sister_return']['next_trigger_post_count'] = pc + 6
+        state['sister']['pressure'] = min(100, state['sister']['pressure'] + 6)
+    if arcs['owner_notice']['enabled'] and pc >= arcs['owner_notice']['next_trigger_post_count'] and state['owner']['attention_to_zhen'] >= 42:
         arcs['owner_notice']['stage'] = min(2, arcs['owner_notice']['stage'] + 1)
-        arcs['owner_notice']['next_trigger_post_count'] = pc + 6
-        state['owner']['attention_to_zhen'] = min(100, state['owner']['attention_to_zhen'] + 6)
+        arcs['owner_notice']['next_trigger_post_count'] = pc + 8
+        state['owner']['attention_to_zhen'] = min(100, state['owner']['attention_to_zhen'] + 4)
 
 
 def update_stats(category, scene, primary, secondary, chosen_imagery, title, description, repaired, failure_reasons):

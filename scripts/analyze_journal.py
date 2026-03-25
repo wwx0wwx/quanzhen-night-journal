@@ -39,12 +39,23 @@ def latest_posts(limit=10):
     return files[:limit]
 
 
+def title_shape(title: str):
+    if any(x in title for x in ['今夜', '夜里', '将明', '子时', '雨里', '雪里']):
+        return '时间切片'
+    if any(x in title for x in ['不宜', '不可', '未敢', '还在', '更冷', '先受', '近前']):
+        return '半句心迹'
+    if any(x in title for x in ['替', '把', '挑', '压', '收', '藏']):
+        return '动作残片'
+    return '极简意象'
+
+
 posts = latest_posts(12)
 word_counts = []
 scene_risk = Counter()
 term_risk = Counter()
 titles = []
 descriptions = []
+title_shapes = Counter()
 for p in posts:
     raw = p.read_text(encoding='utf-8')
     fm = parse_front_matter(raw)
@@ -79,6 +90,10 @@ print()
 print('== 最近标题 ==')
 for t in titles[:8]:
     print('-', t)
+print()
+print('== 标题句法分布 ==')
+for k, v in title_shapes.most_common():
+    print('-', k, v)
 print()
 print('== 最近 description ==')
 for d in descriptions[:8]:
