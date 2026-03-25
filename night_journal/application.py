@@ -109,7 +109,7 @@ def _summarize_for_state(base_url: str, api_key: str, model: str, text: str, max
 
 
 def _capture_recent_memory(base_url: str, api_key: str, model: str, text: str, title: str, max_retries: int, timeout: int) -> str:
-    """Use LLM to extract a narrative memory fragment from the generated post."""
+    """Use LLM to extract a narrative memory fragment from generated post."""
     prompt = (
         '请从下面这篇夜札中提取一条适合写入"近期记忆层"的片段。\n'
         '要求：\n'
@@ -171,10 +171,15 @@ def _drift_state(state: dict) -> None:
         z['jealousy'] = min(100, z['jealousy'] + 3)
 
 
-def run(base_path: Path | None = None, mode_override: str | None = None) -> RunResult:
+def run(base_path: Path | None = None, mode_override: str | None = None, force_topic: str | None = None) -> RunResult:
     """
     Main application entry point.
-    Orchestrates the full night-journal generation pipeline.
+    Orchestrates full night-journal generation pipeline.
+
+    Args:
+        base_path: Project root directory path.
+        mode_override: Override mode from command line ('auto', 'review', 'manual-only').
+        force_topic: Override topic from command line.
     """
     settings = load_settings(base_path)
     logger = get_logger(settings.log_dir)
@@ -185,6 +190,13 @@ def run(base_path: Path | None = None, mode_override: str | None = None) -> RunR
     # --- Load state ---
     state = store.load_world_state()
     overrides = store.load_overrides()
+
+    # Apply command-line overrides if provided
+    if mode_override:
+        overrides['mode'] = mode_override
+    if force_topic:
+        overrides['force_topic'] = force_topic
+
     rules = catalog.load_topic_rules()
     imagery = catalog.load_imagery_pool()
     scenes = catalog.load_scene_pool()
@@ -277,17 +289,32 @@ def run(base_path: Path | None = None, mode_override: str | None = None) -> RunR
             raise RuntimeError('Quality check failed after repair: ' + '; '.join(reasons))
 
     # --- Output ---
-    mode = mode_override or overrides.get('mode', 'auto')
-    effective_overrides = {**overrides, 'mode': mode}
+    mode = overrides.get('mode', 'auto')
     path, now_str, slug = write_post(
         title=title,
         description=description,
         category=category,
         body=diary_content,
-        overrides=effective_overrides,
+        overrides=overrides,
         content_dir=settings.content_dir,
         draft_review_dir=settings.draft_review_dir,
     )
+
+    # manual-only mode: skip build/state update
+    if path is None:
+        logger.info(f'manual-only mode: no file written for topic "{topic}"')
+        return RunResult(
+            ok=True,
+            stage='skipped',
+            message=f'Skipped (manual-only mode)',
+            data={
+                'title': title,
+                'slug': slug,
+                'mode': mode,
+                'category': category,
+                'topic': topic,
+            },
+        )
 
     # --- Build & Deploy (auto mode only) ---
     if mode == 'auto':

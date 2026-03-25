@@ -28,19 +28,17 @@ sys.path.insert(0, str(project_root))
 
 from night_journal.application import run
 
-
 def _load_env(env_path: Path) -> None:
     if not env_path.exists():
         return
-    for line in env_path.read_text(encoding=chr(39)+chr(117)+chr(116)+chr(102)+chr(45)+chr(56)+chr(39)).splitlines():
+    for line in env_path.read_text(encoding='utf-8').splitlines():
         line = line.strip()
-        if not line or line.startswith(chr(35)) or chr(61) not in line:
+        if not line or line.startswith('#') or '=' not in line:
             continue
-        k, _, v = line.partition(chr(61))
+        k, _, v = line.partition('=')
         k = k.strip()
         if k not in os.environ:
             os.environ[k] = v.strip()
-
 
 
 
@@ -88,9 +86,13 @@ def main():
     print(f'OpenAI 模型: {os.getenv("OPENAI_MODEL", "gpt-5.4")}')
     print(f'日志目录: {os.getenv("LOG_DIR", root / "logs")}')
 
+    # 传递命令行参数给引擎
+    mode_override = args.mode if args.mode else None
+    force_topic_override = args.force_topic if args.force_topic else None
+
     # 运行引擎
     try:
-        result = run(base_path=root, mode_override=args.mode)
+        result = run(base_path=root, mode_override=mode_override, force_topic=force_topic_override)
 
         if result.ok:
             print(f'\n✓ 夜札生成成功!')

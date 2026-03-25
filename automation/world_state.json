@@ -1,9 +1,9 @@
 {
   "meta": {
     "version": 2,
-    "post_count": 8,
-    "last_post_at": "2026-03-25T14:37:41Z",
-    "last_successful_post_at": "2026-03-25T14:37:41Z",
+    "post_count": 9,
+    "last_post_at": "2026-03-25T14:59:15Z",
+    "last_successful_post_at": "2026-03-25T14:59:15Z",
     "last_publish_day_utc": "2026-03-25",
     "current_season": "spring",
     "current_watch": "子时",
@@ -24,14 +24,14 @@
     "recent_letter": false
   },
   "zhen": {
-    "jealousy": 79,
-    "longing": 85,
-    "restraint": 71,
+    "jealousy": 80,
+    "longing": 87,
+    "restraint": 69,
     "injury": 0,
     "confidence": 46,
-    "guilt": 17,
+    "guilt": 18,
     "emptiness": 31,
-    "vigilance": 66
+    "vigilance": 65
   },
   "world": {
     "recent_danger": "quiet",
@@ -40,40 +40,34 @@
     "last_incident": "不知死活的鼠辈挤在暗处。属下未敢惊动主人，只是在别处多擦了一阵剑。"
   },
   "continuity": {
-    "last_summary": "全真夜守门内半步，暗察院外异动、以刀声震慑窥探者；听闻姐姐消息逼近，忧念主人劳倦未展，悄然替其挡风，却始终克制不越界。",
+    "last_summary": "子夜后属下守在屏风侧，压下外头骚动，挪身挡住夜凉，撤远苦盏，只在暗处看主人劳极难安；局面虽静，心头旧忧却更沉一分。",
     "recent_topics": [
-      "姐姐",
       "独白",
       "守夜",
       "陪伴",
       "江湖",
-      "姐姐"
+      "姐姐",
+      "独白"
     ],
     "recent_scenes": [
-      "搁铜盆的小几旁",
       "回廊转折处",
       "案几旁",
       "窗下",
       "树下暗处",
-      "门槛内侧半步处"
+      "门槛内侧半步处",
+      "屏风侧"
     ],
     "recent_emotions": [
-      "空寂",
-      "麻木",
       "幽怨",
       "狠后的空",
       "空寂",
       "麻木",
       "贪恋",
-      "克制"
+      "克制",
+      "不服",
+      "失落"
     ],
     "recent_imagery": [
-      "小几",
-      "指腹发冷",
-      "血腥散尽后的空味",
-      "指节发紧",
-      "白瓷盏",
-      "笔锋",
       "脚步落地极轻",
       "砖面返潮",
       "旧纸气",
@@ -81,7 +75,13 @@
       "纸页发涩",
       "薄灰味",
       "湿土气",
-      "门轴微哑"
+      "门轴微哑",
+      "墨气",
+      "纸窗",
+      "衣摆拂过冷面",
+      "茶苦气",
+      "雨后木气",
+      "檐影"
     ]
   },
   "scheduler": {

@@ -39,16 +39,20 @@ def route_output_dir(
     overrides: dict,
     content_dir: Path,
     draft_review_dir: Path,
-) -> Path:
+) -> Path | None:
     """
     Determine where to write the output file based on mode.
     auto → content_dir
-    review-first / anything else → draft_review_dir
+    review → draft_review_dir
+    manual-only → None (do not write)
     """
     mode = overrides.get('mode', 'auto')
     if mode == 'auto':
         return content_dir
-    return draft_review_dir
+    if mode == 'review':
+        return draft_review_dir
+    # manual-only: do not write
+    return None
 
 
 def write_post(
@@ -60,13 +64,19 @@ def write_post(
     content_dir: Path,
     draft_review_dir: Path,
     now: datetime | None = None,
-) -> tuple[Path, str, str]:
+) -> tuple[Path | None, str, str]:
     """
     Build and write a Hugo Markdown post.
     Returns (path, now_str, slug).
+    Returns (None, now_str, slug) if mode is manual-only.
     """
     md, now_str, slug = build_markdown(title, description, category, body, now)
     target_dir = route_output_dir(overrides, content_dir, draft_review_dir)
+
+    # manual-only mode: do not write
+    if target_dir is None:
+        return None, now_str, slug
+
     target_dir.mkdir(parents=True, exist_ok=True)
     path = target_dir / f'{slug}.md'
     path.write_text(md, encoding='utf-8')
