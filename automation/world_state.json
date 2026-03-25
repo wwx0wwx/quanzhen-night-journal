@@ -1,9 +1,9 @@
 {
   "meta": {
     "version": 2,
-    "post_count": 9,
-    "last_post_at": "2026-03-25T14:59:15Z",
-    "last_successful_post_at": "2026-03-25T14:59:15Z",
+    "post_count": 11,
+    "last_post_at": "2026-03-25T15:09:03Z",
+    "last_successful_post_at": "2026-03-25T15:09:03Z",
     "last_publish_day_utc": "2026-03-25",
     "current_season": "spring",
     "current_watch": "子时",
@@ -11,7 +11,7 @@
   },
   "owner": {
     "status": "resting",
-    "fatigue": 40,
+    "fatigue": 39,
     "closeness": 72,
     "attention_to_zhen": 36,
     "recent_mentions_of_sister": 1
@@ -24,14 +24,14 @@
     "recent_letter": false
   },
   "zhen": {
-    "jealousy": 80,
-    "longing": 87,
-    "restraint": 69,
+    "jealousy": 85,
+    "longing": 90,
+    "restraint": 67,
     "injury": 0,
     "confidence": 46,
-    "guilt": 18,
-    "emptiness": 31,
-    "vigilance": 65
+    "guilt": 19,
+    "emptiness": 33,
+    "vigilance": 67
   },
   "world": {
     "recent_danger": "quiet",
@@ -40,48 +40,48 @@
     "last_incident": "不知死活的鼠辈挤在暗处。属下未敢惊动主人，只是在别处多擦了一阵剑。"
   },
   "continuity": {
-    "last_summary": "子夜后属下守在屏风侧，压下外头骚动，挪身挡住夜凉，撤远苦盏，只在暗处看主人劳极难安；局面虽静，心头旧忧却更沉一分。",
+    "last_summary": "夜里院外有异动，全真未惊动主人，只暗中守听、低声拭剑，最终悄然放箭清除窥伺者。见主人仍眉蹙未醒，他守在竹影下，把旧痛与杂念一并按回心底。",
     "recent_topics": [
-      "独白",
-      "守夜",
       "陪伴",
       "江湖",
       "姐姐",
-      "独白"
+      "独白",
+      "守夜",
+      "江湖"
     ],
     "recent_scenes": [
-      "回廊转折处",
-      "案几旁",
       "窗下",
       "树下暗处",
       "门槛内侧半步处",
-      "屏风侧"
+      "屏风侧",
+      "旧井边",
+      "竹影下"
     ],
     "recent_emotions": [
-      "幽怨",
-      "狠后的空",
-      "空寂",
-      "麻木",
       "贪恋",
       "克制",
       "不服",
-      "失落"
+      "失落",
+      "贪恋",
+      "短暂安心",
+      "幽怨",
+      "隐秘满足"
     ],
     "recent_imagery": [
-      "脚步落地极轻",
-      "砖面返潮",
-      "旧纸气",
-      "衣角",
-      "纸页发涩",
-      "薄灰味",
-      "湿土气",
-      "门轴微哑",
-      "墨气",
-      "纸窗",
-      "衣摆拂过冷面",
-      "茶苦气",
       "雨后木气",
-      "檐影"
+      "檐影",
+      "案角",
+      "小几",
+      "青瓷盘",
+      "冷铁味",
+      "笔锋",
+      "指腹发冷",
+      "袖口微重",
+      "血腥散尽后的空味",
+      "指节发紧",
+      "翻卷的纸页",
+      "远处犬吠",
+      "铜灯座"
     ]
   },
   "scheduler": {

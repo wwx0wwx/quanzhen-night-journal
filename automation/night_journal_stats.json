@@ -1,14 +1,14 @@
 {
-  "post_count": 7,
-  "successful_posts": 7,
+  "post_count": 9,
+  "successful_posts": 9,
   "failed_runs": 1,
   "repaired_runs": 0,
   "topics": {
     "姐姐": 2,
     "独白": 2,
-    "守夜": 1,
+    "守夜": 2,
     "陪伴": 1,
-    "江湖": 1
+    "江湖": 2
   },
   "scenes": {
     "搁铜盆的小几旁": 1,
