@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.env
+logs/
+content/posts/
+draft_review/
+automation/backups/
+automation/*.runtime.json
+automation/world_state.json
+automation/recent_memories.json
+automation/night_journal_stats.json
