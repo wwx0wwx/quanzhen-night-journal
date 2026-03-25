@@ -1,13 +1,13 @@
 {
-  "post_count": 9,
-  "successful_posts": 9,
+  "post_count": 11,
+  "successful_posts": 11,
   "failed_runs": 1,
   "repaired_runs": 0,
   "topics": {
     "姐姐": 2,
-    "独白": 2,
+    "独白": 3,
     "守夜": 2,
-    "陪伴": 1,
+    "陪伴": 2,
     "江湖": 2
   },
   "scenes": {

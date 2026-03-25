@@ -1,9 +1,9 @@
 {
   "meta": {
     "version": 2,
-    "post_count": 11,
-    "last_post_at": "2026-03-25T15:09:03Z",
-    "last_successful_post_at": "2026-03-25T15:09:03Z",
+    "post_count": 13,
+    "last_post_at": "2026-03-25T15:18:04Z",
+    "last_successful_post_at": "2026-03-25T15:18:04Z",
     "last_publish_day_utc": "2026-03-25",
     "current_season": "spring",
     "current_watch": "子时",
@@ -11,7 +11,7 @@
   },
   "owner": {
     "status": "resting",
-    "fatigue": 39,
+    "fatigue": 38,
     "closeness": 72,
     "attention_to_zhen": 36,
     "recent_mentions_of_sister": 1
@@ -24,13 +24,13 @@
     "recent_letter": false
   },
   "zhen": {
-    "jealousy": 85,
-    "longing": 90,
+    "jealousy": 88,
+    "longing": 89,
     "restraint": 67,
     "injury": 0,
     "confidence": 46,
-    "guilt": 19,
-    "emptiness": 33,
+    "guilt": 20,
+    "emptiness": 37,
     "vigilance": 67
   },
   "world": {
@@ -40,48 +40,48 @@
     "last_incident": "不知死活的鼠辈挤在暗处。属下未敢惊动主人，只是在别处多擦了一阵剑。"
   },
   "continuity": {
-    "last_summary": "夜里院外有异动，全真未惊动主人，只暗中守听、低声拭剑，最终悄然放箭清除窥伺者。见主人仍眉蹙未醒，他守在竹影下，把旧痛与杂念一并按回心底。",
+    "last_summary": "全真夜守榻前，压着旧伤与难言幽怨，替主人挪物避寒、以磨铁震慑暗处窥伺者；见其案牍劳形、睡亦不安，只能收住气息继续守着。",
     "recent_topics": [
-      "陪伴",
-      "江湖",
       "姐姐",
       "独白",
       "守夜",
-      "江湖"
+      "江湖",
+      "陪伴",
+      "独白"
     ],
     "recent_scenes": [
-      "窗下",
-      "树下暗处",
       "门槛内侧半步处",
       "屏风侧",
       "旧井边",
-      "竹影下"
+      "竹影下",
+      "偏院小门旁",
+      "榻边一臂之外"
     ],
     "recent_emotions": [
       "贪恋",
-      "克制",
-      "不服",
-      "失落",
-      "贪恋",
       "短暂安心",
       "幽怨",
-      "隐秘满足"
+      "隐秘满足",
+      "嫉妒",
+      "羞",
+      "幽怨",
+      "旧伤翻起"
     ],
     "recent_imagery": [
-      "雨后木气",
-      "檐影",
-      "案角",
-      "小几",
-      "青瓷盘",
-      "冷铁味",
-      "笔锋",
-      "指腹发冷",
-      "袖口微重",
-      "血腥散尽后的空味",
-      "指节发紧",
-      "翻卷的纸页",
       "远处犬吠",
-      "铜灯座"
+      "铜灯座",
+      "肩头旧痛",
+      "铜盆轻响",
+      "药气",
+      "纸窗",
+      "薄衾",
+      "翻书声",
+      "笔尖停顿",
+      "水痕",
+      "书页边",
+      "咳声",
+      "冷铁味",
+      "小几"
     ]
   },
   "scheduler": {
