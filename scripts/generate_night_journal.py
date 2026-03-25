@@ -2,6 +2,39 @@
 import json, random, subprocess, pathlib, urllib.request, re, sys, shutil, os
 from datetime import datetime, UTC
 
+try:
+    from night_journal.application import run as app_run
+    from night_journal.config import load_settings
+    from night_journal.inputs.state_store import StateStore
+    from night_journal.inputs.content_catalog import ContentCatalog
+    from night_journal.inputs.vps_signals import collect_vps_signals
+    from night_journal.inputs.recent_posts import build_recent_context as input_build_recent_context
+    from night_journal.narrative.topic_selector import choose_topic as narrative_choose_topic
+    from night_journal.narrative.material_selector import choose_world_material as narrative_choose_world_material
+    from night_journal.narrative.memory_selector import maybe_memory as narrative_maybe_memory
+    from night_journal.narrative.future_selector import maybe_future_fragment as narrative_maybe_future_fragment
+    from night_journal.narrative.story_arcs import story_arc_triggers as narrative_story_arc_triggers
+    from night_journal.generation.prompt_builder import build_prompt as generation_build_prompt
+    from night_journal.generation.llm_client import api_chat as generation_api_chat
+    from night_journal.generation.body_refiner import refine_body as generation_refine_body
+    from night_journal.generation.title_desc import generate_title_and_description as generation_title_desc
+except Exception:
+    app_run = None
+    load_settings = None
+    StateStore = None
+    ContentCatalog = None
+    collect_vps_signals = None
+    input_build_recent_context = None
+    narrative_choose_topic = None
+    narrative_choose_world_material = None
+    narrative_maybe_memory = None
+    narrative_maybe_future_fragment = None
+    narrative_story_arc_triggers = None
+    generation_build_prompt = None
+    generation_api_chat = None
+    generation_refine_body = None
+    generation_title_desc = None
+
 # Load configuration from environment
 def get_env(key, default=None):
     return os.getenv(key, default)
@@ -22,17 +55,41 @@ MODEL = get_env('OPENAI_MODEL', 'gpt-4')
 if not API_KEY:
     raise RuntimeError('OPENAI_API_KEY not set. Please configure .env file.')
 
-state = json.loads((AUTO / 'world_state.json').read_text())
-anchors = json.loads((AUTO / 'memory_anchors.json').read_text())
-rules = json.loads((AUTO / 'topic_rules.json').read_text())
-imagery = json.loads((AUTO / 'imagery_pool.json').read_text())
-scenes = json.loads((AUTO / 'scene_pool.json').read_text())
-emotions = json.loads((AUTO / 'emotion_pool.json').read_text())
-event_map = json.loads((AUTO / 'event_map_rules.json').read_text())
-recent_memories = json.loads((AUTO / 'recent_memories.json').read_text())
-overrides = json.loads((AUTO / 'manual_overrides.json').read_text())
-future_fragments = json.loads((AUTO / 'future_fragments.json').read_text())
-stats = json.loads((AUTO / 'night_journal_stats.json').read_text())
+if load_settings and StateStore and ContentCatalog:
+    settings = load_settings(BASE)
+    store = StateStore(settings)
+    catalog = ContentCatalog(settings)
+    BASE = settings.engine_root
+    AUTO = settings.automation_dir
+    CONTENT = settings.content_dir
+    DRAFT_REVIEW = settings.draft_review_dir
+    OUT = settings.output_dir
+    LOG = settings.log_dir
+    DRAFT_REVIEW.mkdir(parents=True, exist_ok=True)
+    LOG.mkdir(parents=True, exist_ok=True)
+    state = store.load_world_state()
+    anchors = store.load_memory_anchors()
+    rules = catalog.load_topic_rules()
+    imagery = catalog.load_imagery_pool()
+    scenes = catalog.load_scene_pool()
+    emotions = catalog.load_emotion_pool()
+    event_map = catalog.load_event_map_rules()
+    recent_memories = store.load_recent_memories()
+    overrides = store.load_overrides()
+    future_fragments = store.load_future_fragments()
+    stats = store.load_stats()
+else:
+    state = json.loads((AUTO / 'world_state.json').read_text())
+    anchors = json.loads((AUTO / 'memory_anchors.json').read_text())
+    rules = json.loads((AUTO / 'topic_rules.json').read_text())
+    imagery = json.loads((AUTO / 'imagery_pool.json').read_text())
+    scenes = json.loads((AUTO / 'scene_pool.json').read_text())
+    emotions = json.loads((AUTO / 'emotion_pool.json').read_text())
+    event_map = json.loads((AUTO / 'event_map_rules.json').read_text())
+    recent_memories = json.loads((AUTO / 'recent_memories.json').read_text())
+    overrides = json.loads((AUTO / 'manual_overrides.json').read_text())
+    future_fragments = json.loads((AUTO / 'future_fragments.json').read_text())
+    stats = json.loads((AUTO / 'night_journal_stats.json').read_text())
 
 
 def sh(cmd):
@@ -69,6 +126,9 @@ def recent_post_paths(limit=8):
 
 
 def strip_front_matter(text: str) -> str:
+    if input_build_recent_context:
+        from night_journal.inputs.recent_posts import strip_front_matter as input_strip_front_matter
+        return input_strip_front_matter(text)
     if text.startswith('---'):
         parts = text.split('---', 2)
         if len(parts) >= 3:
@@ -77,6 +137,9 @@ def strip_front_matter(text: str) -> str:
 
 
 def parse_front_matter(text: str):
+    if input_build_recent_context:
+        from night_journal.inputs.recent_posts import parse_front_matter as input_parse_front_matter
+        return input_parse_front_matter(text)
     data = {}
     if text.startswith('---'):
         parts = text.split('---', 2)
@@ -90,6 +153,9 @@ def parse_front_matter(text: str):
 
 
 def extract_repeated_phrases(texts):
+    if input_build_recent_context:
+        from night_journal.inputs.recent_posts import extract_repeated_phrases as input_extract_repeated_phrases
+        return input_extract_repeated_phrases(texts)
     phrases = []
     patterns = [r'廊下', r'门外', r'帐内', r'垂帘', r'砖缝', r'擦了', r'替主人挡', r'袖中', r'指节', r'更冷', r'天色', r'属下还在', r'灯', r'剑', r'茶', r'纸窗', r'案上', r'眉间', r'风', r'雨', r'寒']
     merged = '\n'.join(texts)
@@ -100,6 +166,8 @@ def extract_repeated_phrases(texts):
 
 
 def build_recent_context():
+    if load_settings and input_build_recent_context:
+        return input_build_recent_context(load_settings(BASE), limit=6)
     texts, titles, descs = [], [], []
     for p in recent_post_paths(6):
         raw = p.read_text(encoding='utf-8')
@@ -138,22 +206,33 @@ def map_uptime(days: int):
 
 
 def collect_vps_events():
-    uptime_out = sh("awk '{print int($1)}' /proc/uptime").stdout.strip()
-    uptime_days = int(uptime_out) // 86400 if uptime_out else 0
-    load_out = sh("cut -d' ' -f1 /proc/loadavg").stdout.strip()
-    load1 = float(load_out) if load_out else 0.0
-    mem_out = sh("free -m | awk '/Mem:/ {printf \"%d\", ($3*100)/$2}'").stdout.strip()
-    mem_pct = int(mem_out) if mem_out else 0
-    ssh_bad = sh("journalctl --since '24 hours ago' 2>/dev/null | egrep -ci 'Failed password|Invalid user|authentication failure' || true").stdout.strip()
-    ssh_bad = int(ssh_bad or 0)
-    disk_out = sh("df -P / | awk 'NR==2 {print int($5)}' | tr -d '%' ").stdout.strip()
-    disk_pct = int(disk_out) if disk_out else 0
-    nginx_hits = sh("find /var/log/nginx -type f -name '*access*.log' -mtime -1 -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $1}' || true").stdout.strip()
-    nginx_hits = int(nginx_hits or 0)
-    svc_restart_hits = sh("journalctl --since '24 hours ago' 2>/dev/null | egrep -ci 'Started|Restarted' || true").stdout.strip()
-    svc_restart_hits = int(svc_restart_hits or 0)
-    cert_hits = sh("grep -Rchi 'Cert not yet due for renewal|Congratulations' /var/log/letsencrypt 2>/dev/null || true").stdout.strip()
-    cert_hits = int(cert_hits or 0)
+    if collect_vps_signals:
+        sig = collect_vps_signals()
+        uptime_days = sig.uptime_days
+        load1 = sig.load1
+        mem_pct = sig.mem_pct
+        ssh_bad = sig.ssh_bad
+        disk_pct = sig.disk_pct
+        nginx_hits = sig.nginx_hits
+        svc_restart_hits = sig.service_restart_hits
+        cert_hits = sig.cert_hits
+    else:
+        uptime_out = sh("awk '{print int($1)}' /proc/uptime").stdout.strip()
+        uptime_days = int(uptime_out) // 86400 if uptime_out else 0
+        load_out = sh("cut -d' ' -f1 /proc/loadavg").stdout.strip()
+        load1 = float(load_out) if load_out else 0.0
+        mem_out = sh("free -m | awk '/Mem:/ {printf \"%d\", ($3*100)/$2}'").stdout.strip()
+        mem_pct = int(mem_out) if mem_out else 0
+        ssh_bad = sh("journalctl --since '24 hours ago' 2>/dev/null | egrep -ci 'Failed password|Invalid user|authentication failure' || true").stdout.strip()
+        ssh_bad = int(ssh_bad or 0)
+        disk_out = sh("df -P / | awk 'NR==2 {print int($5)}' | tr -d '%' ").stdout.strip()
+        disk_pct = int(disk_out) if disk_out else 0
+        nginx_hits = sh("find /var/log/nginx -type f -name '*access*.log' -mtime -1 -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $1}' || true").stdout.strip()
+        nginx_hits = int(nginx_hits or 0)
+        svc_restart_hits = sh("journalctl --since '24 hours ago' 2>/dev/null | egrep -ci 'Started|Restarted' || true").stdout.strip()
+        svc_restart_hits = int(svc_restart_hits or 0)
+        cert_hits = sh("grep -Rchi 'Cert not yet due for renewal|Congratulations' /var/log/letsencrypt 2>/dev/null || true").stdout.strip()
+        cert_hits = int(cert_hits or 0)
 
     events = [map_intrusions(ssh_bad), map_load(load1, mem_pct), map_uptime(uptime_days)]
     if disk_pct >= 80: events.append(random.choice(event_map['signals']['disk_usage']['mapping']))
@@ -164,6 +243,8 @@ def collect_vps_events():
 
 
 def choose_topic():
+    if narrative_choose_topic:
+        return narrative_choose_topic(rules, state, overrides)
     if overrides.get('force_topic'):
         return overrides['force_topic'], overrides['force_topic']
     all_topics = []
@@ -177,6 +258,8 @@ def choose_topic():
 
 
 def choose_world_material(repeated_phrases):
+    if narrative_choose_world_material:
+        return narrative_choose_world_material(imagery, scenes, emotions, state, overrides, repeated_phrases)
     flat_imagery = imagery['visual'] + imagery['sound'] + imagery['smell'] + imagery['touch']
     recent_used = set(state['continuity'].get('recent_imagery', []))
 
@@ -233,6 +316,8 @@ def choose_world_material(repeated_phrases):
 
 
 def maybe_memory(primary_emotion):
+    if narrative_maybe_memory:
+        return narrative_maybe_memory(primary_emotion, overrides, anchors, recent_memories, rules)
     if overrides.get('force_memory_id'):
         for a in anchors:
             if a['id'] == overrides['force_memory_id']:
@@ -250,6 +335,8 @@ def maybe_memory(primary_emotion):
 
 
 def story_arc_triggers():
+    if narrative_story_arc_triggers:
+        return narrative_story_arc_triggers(state, overrides)
     pc = state['meta']['post_count'] + 1
     lines = []
     arcs = state.get('story_arcs', {})
@@ -270,6 +357,8 @@ def story_arc_triggers():
 
 
 def maybe_future_fragment():
+    if narrative_maybe_future_fragment:
+        return narrative_maybe_future_fragment(overrides, future_fragments, state['story_arcs'])
     if overrides.get('force_future_id'):
         for f in future_fragments:
             if f['id'] == overrides['force_future_id']:
@@ -286,6 +375,8 @@ def maybe_future_fragment():
 
 
 def api_chat(messages, temperature=0.8, max_tokens=900):
+    if generation_api_chat:
+        return generation_api_chat(BASE_URL, API_KEY, MODEL, messages, temperature=temperature, max_tokens=max_tokens)
     payload = {'model': MODEL, 'messages': messages, 'temperature': temperature, 'max_tokens': max_tokens}
     data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(BASE_URL, data=data, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {API_KEY}'}, method='POST')
@@ -295,6 +386,23 @@ def api_chat(messages, temperature=0.8, max_tokens=900):
 
 
 def build_prompt(events, topic, memory_block, future_block, repeated_phrases, chosen_imagery, chosen_scene, primary, secondary, arc_lines):
+    if generation_build_prompt:
+        return generation_build_prompt(
+            state=state,
+            overrides=overrides,
+            rules=rules,
+            recent_memories=recent_memories,
+            events=events,
+            topic=topic,
+            memory_block=memory_block,
+            future_block=future_block,
+            repeated_phrases=repeated_phrases,
+            chosen_imagery=chosen_imagery,
+            chosen_scene=chosen_scene,
+            primary=primary,
+            secondary=secondary,
+            arc_lines=arc_lines,
+        )
     repeated_text = '、'.join(repeated_phrases) if repeated_phrases else '无明显重复'
     arc_text = ' '.join(arc_lines) if arc_lines else '今夜没有新的命数落下，只是旧心事在慢慢发酵。'
     recent_mem_text = '；'.join([m['summary'] for m in recent_memories[-3:]]) if recent_memories else '近来无新的可追忆片段。'
@@ -321,6 +429,9 @@ def capture_recent_memory(text, title):
 
 
 def generate_title_and_description(body, recent_titles, recent_descs):
+    if generation_title_desc:
+        return generation_title_desc(BASE_URL, API_KEY, MODEL, body, recent_titles, recent_descs)
+
     prompt = f'''根据下面这篇夜札正文，为博客生成一个标题和一条 description。要求：标题不要用固定模板；标题句法要主动分散，轮换使用“极简意象 / 半句心迹 / 动作残片 / 时间切片”四类，不要连续几篇都像同一种短句；description 不要写技术味提示，要像页边的一点轻注、心情、缘由，或极短摘要；标题 4-12 字为宜，description 16-36 字为宜；避免与最近这些标题/description 太像。\n最近标题：{recent_titles}\n最近description：{recent_descs}\n\n请严格用 JSON 输出：{{"title":"...","description":"..."}}\n\n正文：\n{body}\n'''
     raw = api_chat([{'role': 'system', 'content': '你是一个审美克制的中文文学编辑。只输出合法 JSON。'}, {'role': 'user', 'content': prompt}], temperature=0.78, max_tokens=220)
     m = re.search(r'\{.*\}', raw, re.S)
@@ -334,6 +445,9 @@ def generate_title_and_description(body, recent_titles, recent_descs):
 
 
 def refine_body(body):
+    if generation_refine_body:
+        return generation_refine_body(BASE_URL, API_KEY, MODEL, body)
+
     prompt = f'''请将下面这篇夜札做一次“冷处理式润色”。要求：保留原意，不要改剧情；去掉明显解释感、模板感、口水句；若句子太满，就削薄；增强清冷、克制、贴身的质感；不要变成长篇排比；只输出润色后的正文。\n\n正文：\n{body}\n'''
     return api_chat([{'role': 'system', 'content': '你是一个极其克制的文学润色者，擅长把句子削薄。'}, {'role': 'user', 'content': prompt}], temperature=0.4, max_tokens=900)
 
