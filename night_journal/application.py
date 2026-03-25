@@ -24,38 +24,11 @@ from .generation import (
     refine_body,
     generate_title_and_description,
 )
+from .quality.checker import quality_check, guard_publish
+from .publishing.writer import write_post
+from .publishing.hugo import build_hugo, git_push
 
 UTC = timezone.utc
-
-
-def _quality_check(body: str, title: str, description: str, overrides: dict, recent_post_paths_fn) -> list[str]:
-    """Return list of quality failure reasons (empty = pass)."""
-    import re
-    reasons = []
-    if len(body.strip()) < 220:
-        reasons.append('正文过短')
-    banned = ['由全真夜札引擎生成', '我嫉妒', '我好恨', '我爱主人', '今夜共有'] + overrides.get('forbid_terms', [])
-    for b in banned:
-        if b and (b in body or b in title or b in description):
-            reasons.append(f'命中禁词:{b}')
-    if title.startswith('夜札：'):
-        reasons.append('标题模板化')
-    if '由' in description and '引擎' in description:
-        reasons.append('description 技术味过重')
-    overlap = 0
-    try:
-        paths = recent_post_paths_fn(3)
-        merged_recent = '\n'.join(
-            p.read_text(encoding='utf-8')[:700] for p in paths
-        )
-        for token in ['廊下', '纸窗', '擦剑', '袖中', '主人睡得', '砖缝', '残茶', '灯芯', '帐外']:
-            if token in body and token in merged_recent:
-                overlap += 1
-        if overlap >= 4:
-            reasons.append('与近三篇重复度过高')
-    except Exception:
-        pass
-    return reasons
 
 
 def _update_story_arcs(state: dict) -> None:
@@ -116,6 +89,10 @@ def run(base_path: Path | None = None) -> RunResult:
     recent_memories = store.load_recent_memories()
     future_fragments = store.load_future_fragments()
     stats = store.load_stats()
+
+    # --- Guard: daily limit and mode checks ---
+    _today = datetime.now(UTC).strftime('%Y-%m-%d')
+    guard_publish(overrides, state, _today)
 
     base_url = settings.openai_base_url
     api_key = settings.openai_api_key
@@ -179,7 +156,7 @@ def run(base_path: Path | None = None) -> RunResult:
     failure_reasons: list[str] = []
     from .inputs.recent_posts import recent_posts as _rp
     recent_post_paths_fn = lambda n: [post.path for post in _rp(settings, limit=n)]
-    reasons = _quality_check(diary_content, title, description, overrides, recent_post_paths_fn)
+    reasons = quality_check(diary_content, title, description, overrides, recent_post_paths_fn)
     if reasons:
         repaired = True
         failure_reasons.extend(reasons)
@@ -193,21 +170,22 @@ def run(base_path: Path | None = None) -> RunResult:
         title, description = generate_title_and_description(
             base_url, api_key, model, diary_content, recent_titles, recent_descs
         )
-        reasons = _quality_check(diary_content, title, description, overrides, recent_post_paths_fn)
+        reasons = quality_check(diary_content, title, description, overrides, recent_post_paths_fn)
         if reasons:
             failure_reasons.extend(reasons)
             raise RuntimeError('Quality check failed after repair: ' + '; '.join(reasons))
 
     # --- Output ---
-    now = datetime.now(UTC).replace(microsecond=0)
-    now_str = now.isoformat().replace('+00:00', 'Z')
-    slug = now.strftime('%Y%m%d-%H%M%S') + '-night-note'
     mode = overrides.get('mode', 'auto')
-    target_dir = settings.content_dir if mode == 'auto' else settings.draft_review_dir
-    target_dir.mkdir(parents=True, exist_ok=True)
-    path = target_dir / f'{slug}.md'
-    md = f'---\ntitle: "{title}"\ndate: {now_str}\ndraft: false\ntags: ["全真", "夜札", "{category}"]\nauthor: "全真"\ndescription: "{description}"\n---\n\n{diary_content}\n'
-    path.write_text(md, encoding='utf-8')
+    path, now_str, slug = write_post(
+        title=title,
+        description=description,
+        category=category,
+        body=diary_content,
+        overrides=overrides,
+        content_dir=settings.content_dir,
+        draft_review_dir=settings.draft_review_dir,
+    )
 
     # --- State update ---
     state['meta']['post_count'] = state['meta'].get('post_count', 0) + 1
