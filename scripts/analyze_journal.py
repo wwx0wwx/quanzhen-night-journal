@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
+"""全真夜札系统复盘脚本 - 统计发文成功率、高频意象、情绪分布和剧情进度。"""
 import json
+import os
 from pathlib import Path
 from collections import Counter
 
-BASE = Path('/opt/blog-src')
+BASE = Path(os.getenv('ENGINE_ROOT', Path(__file__).resolve().parent.parent))
 AUTO = BASE / 'automation'
 CONTENT = BASE / 'content' / 'posts'
 DRAFT = BASE / 'draft_review'

@@ -1,9 +1,9 @@
 {
   "meta": {
     "version": 2,
-    "post_count": 5,
-    "last_post_at": "2026-03-25T13:51:41Z",
-    "last_successful_post_at": "2026-03-25T13:51:41Z",
+    "post_count": 6,
+    "last_post_at": "2026-03-25T14:33:32Z",
+    "last_successful_post_at": "2026-03-25T14:33:32Z",
     "last_publish_day_utc": "2026-03-25",
     "current_season": "spring",
     "current_watch": "子时",
@@ -11,7 +11,7 @@
   },
   "owner": {
     "status": "resting",
-    "fatigue": 35,
+    "fatigue": 37,
     "closeness": 72,
     "attention_to_zhen": 36,
     "recent_mentions_of_sister": 1
@@ -24,14 +24,14 @@
     "recent_letter": false
   },
   "zhen": {
-    "jealousy": 72,
-    "longing": 81,
-    "restraint": 74,
+    "jealousy": 75,
+    "longing": 83,
+    "restraint": 72,
     "injury": 0,
     "confidence": 46,
-    "guilt": 17,
-    "emptiness": 29,
-    "vigilance": 60
+    "guilt": 15,
+    "emptiness": 31,
+    "vigilance": 62
   },
   "world": {
     "recent_danger": "quiet",
@@ -40,19 +40,20 @@
     "last_incident": "不知死活的鼠辈挤在暗处。属下未敢惊动主人，只是在别处多擦了一阵剑。"
   },
   "continuity": {
-    "last_summary": "深夜里他守在案侧，替熟睡的主人挪开纸页、理稳文案，暗中压下外间异动与心中波澜；念及白日那句“姐姐”，终将牵挂与失落一并收回。",
+    "last_summary": "夜里属下守在窗下，听外头骚动终被压平，只默拭冷铁、掩紧窗缝护主人安睡；虽察觉异样与心中空冷，仍强自按下，不让惊扰近身。",
     "recent_topics": [
-      "守夜",
       "影子",
       "不敢开口",
       "姐姐",
       "独白",
-      "守夜"
+      "守夜",
+      "陪伴"
     ],
     "recent_scenes": [
       "搁铜盆的小几旁",
       "回廊转折处",
-      "案几旁"
+      "案几旁",
+      "窗下"
     ],
     "recent_emotions": [
       "嫉妒",
@@ -60,15 +61,11 @@
       "贪恋",
       "慌",
       "空寂",
-      "麻木"
+      "麻木",
+      "幽怨",
+      "狠后的空"
     ],
     "recent_imagery": [
-      "衣角",
-      "铜盆轻响",
-      "脚步落地极轻",
-      "竹叶轻碰",
-      "薄灰味",
-      "墨迹",
       "掌纹沾湿",
       "残茶",
       "掌心空落",
@@ -76,7 +73,13 @@
       "砚台",
       "纸页发涩",
       "墨气",
-      "案角"
+      "案角",
+      "潮气",
+      "背脊发僵",
+      "药气",
+      "衣料轻擦",
+      "小几",
+      "指腹发冷"
     ]
   },
   "scheduler": {
