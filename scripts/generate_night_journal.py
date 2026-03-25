@@ -1,19 +1,26 @@
 #!/usr/bin/env python3
-import json, random, subprocess, pathlib, urllib.request, re, sys, shutil
+import json, random, subprocess, pathlib, urllib.request, re, sys, shutil, os
 from datetime import datetime, UTC
 
-BASE = pathlib.Path('/opt/blog-src')
+# Load configuration from environment
+def get_env(key, default=None):
+    return os.getenv(key, default)
+
+BASE = pathlib.Path(get_env('ENGINE_ROOT', '/opt/blog-src'))
 AUTO = BASE / 'automation'
 CONTENT = BASE / 'content' / 'posts'
 DRAFT_REVIEW = BASE / 'draft_review'
 DRAFT_REVIEW.mkdir(parents=True, exist_ok=True)
-OUT = pathlib.Path('/var/www/shetop.ru')
-LOG = BASE / 'logs'
+OUT = pathlib.Path(get_env('BLOG_OUTPUT_DIR', '/var/www/shetop.ru'))
+LOG = pathlib.Path(get_env('LOG_DIR', BASE / 'logs'))
 LOG.mkdir(parents=True, exist_ok=True)
 
-API_KEY = 'sk-3fe4726694ed65cefaae70d82dffef92d5317e358b8a7c6a218f409c669464aa'
-BASE_URL = 'https://ai.dooo.ng/v1/chat/completions'
-MODEL = 'gpt-5.4'
+API_KEY = get_env('OPENAI_API_KEY', '')
+BASE_URL = get_env('OPENAI_BASE_URL', 'https://api.openai.com/v1/chat/completions')
+MODEL = get_env('OPENAI_MODEL', 'gpt-4')
+
+if not API_KEY:
+    raise RuntimeError('OPENAI_API_KEY not set. Please configure .env file.')
 
 state = json.loads((AUTO / 'world_state.json').read_text())
 anchors = json.loads((AUTO / 'memory_anchors.json').read_text())
