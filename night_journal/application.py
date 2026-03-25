@@ -122,7 +122,18 @@ def run(base_path: Path | None = None) -> RunResult:
     model = settings.openai_model
 
     # --- Collect inputs ---
-    events, _uptime_days = collect_vps_signals()
+    vps = collect_vps_signals()
+    events: list[str] = []
+    if vps.uptime_days > 0:
+        events.append(f'服务器已连续运行 {vps.uptime_days} 天。')
+    if vps.ssh_bad > 10:
+        events.append(f'今日有 {vps.ssh_bad} 次异常登录尝试，属下已记录在案。')
+    if vps.load1 > 2.0:
+        events.append(f'机器负载偏高，今夜有些不安静。')
+    if vps.disk_pct > 85:
+        events.append(f'磁盘已用 {vps.disk_pct}%，快满了。')
+    if not events:
+        events.append('今夜无异常，服务器平静如常。')
     recent_texts, repeated_phrases, recent_titles, recent_descs = build_recent_context(settings)
 
     # --- Narrative decisions ---
