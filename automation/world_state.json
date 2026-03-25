@@ -1,9 +1,9 @@
 {
   "meta": {
     "version": 2,
-    "post_count": 4,
-    "last_post_at": "2026-03-25T04:48:27Z",
-    "last_successful_post_at": "2026-03-25T04:48:27Z",
+    "post_count": 5,
+    "last_post_at": "2026-03-25T13:51:41Z",
+    "last_successful_post_at": "2026-03-25T13:51:41Z",
     "last_publish_day_utc": "2026-03-25",
     "current_season": "spring",
     "current_watch": "子时",
@@ -11,58 +11,58 @@
   },
   "owner": {
     "status": "resting",
-    "fatigue": 33,
+    "fatigue": 35,
     "closeness": 72,
     "attention_to_zhen": 36,
     "recent_mentions_of_sister": 1
   },
   "sister": {
     "status": "away",
-    "eta_days": 1,
-    "pressure": 70,
+    "eta_days": 0,
+    "pressure": 74,
     "renown": 88,
     "recent_letter": false
   },
   "zhen": {
-    "jealousy": 69,
+    "jealousy": 72,
     "longing": 81,
     "restraint": 74,
     "injury": 0,
     "confidence": 46,
-    "guilt": 19,
-    "emptiness": 28,
+    "guilt": 17,
+    "emptiness": 29,
     "vigilance": 60
   },
   "world": {
     "recent_danger": "quiet",
-    "server_peace_days": 18,
+    "server_peace_days": 110,
     "weather_mood": "cold_wind",
     "last_incident": "不知死活的鼠辈挤在暗处。属下未敢惊动主人，只是在别处多擦了一阵剑。"
   },
   "continuity": {
-    "last_summary": "全真半月来隐在廊影守夜，听见异动也按兵不动，只护灯、换纸、拭刃，唯愿主人安睡；提及姐姐的旧事刺痛心口，更让他明白自己该止于暗处，把近前的冲动压回分寸里。",
+    "last_summary": "深夜里他守在案侧，替熟睡的主人挪开纸页、理稳文案，暗中压下外间异动与心中波澜；念及白日那句“姐姐”，终将牵挂与失落一并收回。",
     "recent_topics": [
       "守夜",
       "影子",
       "不敢开口",
       "姐姐",
-      "独白"
+      "独白",
+      "守夜"
     ],
     "recent_scenes": [
       "搁铜盆的小几旁",
-      "回廊转折处"
+      "回廊转折处",
+      "案几旁"
     ],
     "recent_emotions": [
       "嫉妒",
       "不服",
       "贪恋",
-      "慌"
+      "慌",
+      "空寂",
+      "麻木"
     ],
     "recent_imagery": [
-      "薄衾",
-      "药气",
-      "笔锋",
-      "更漏",
       "衣角",
       "铜盆轻响",
       "脚步落地极轻",
@@ -70,7 +70,13 @@
       "薄灰味",
       "墨迹",
       "掌纹沾湿",
-      "残茶"
+      "残茶",
+      "掌心空落",
+      "未干的字",
+      "砚台",
+      "纸页发涩",
+      "墨气",
+      "案角"
     ]
   },
   "scheduler": {

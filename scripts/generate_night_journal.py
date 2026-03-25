@@ -22,7 +22,7 @@ AUTO = BASE / 'automation'
 CONTENT = BASE / 'content' / 'posts'
 DRAFT_REVIEW = BASE / 'draft_review'
 DRAFT_REVIEW.mkdir(parents=True, exist_ok=True)
-OUT = pathlib.Path(_env.get('BLOG_OUTPUT_DIR', '/var/www/iuaa.de'))
+OUT = pathlib.Path(_env.get('BLOG_OUTPUT_DIR', '/var/www/shetop.ru'))
 LOG = BASE / 'logs'
 LOG.mkdir(parents=True, exist_ok=True)
 
@@ -160,7 +160,7 @@ def collect_vps_events():
     nginx_hits = int(nginx_hits or 0)
     svc_restart_hits = sh("journalctl --since '24 hours ago' 2>/dev/null | egrep -ci 'Started|Restarted' || true").stdout.strip()
     svc_restart_hits = int(svc_restart_hits or 0)
-    cert_hits = sh("grep -Rchi 'Cert not yet due for renewal\|Congratulations' /var/log/letsencrypt 2>/dev/null || true").stdout.strip()
+    cert_hits = sh("grep -rchi -E 'Cert not yet due for renewal|Congratulations' /var/log/letsencrypt 2>/dev/null || true").stdout.strip()
     cert_hits = int(cert_hits or 0)
 
     events = [map_intrusions(ssh_bad), map_load(load1, mem_pct), map_uptime(uptime_days)]
