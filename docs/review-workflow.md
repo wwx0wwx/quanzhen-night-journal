@@ -11,9 +11,20 @@
 1. Set `mode` to `review-first`
 2. Let timer or manual run generate drafts
 3. Review markdown under `draft_review/`
-4. Move approved drafts into `content/posts/`
-5. Rebuild Hugo
+4. Approve a draft:
 
-## Important
+```bash
+bash scripts/publish_reviewed_post.sh <draft-file>
+```
 
-At the moment, review-first stores the draft but does not include a dedicated approval helper script yet. Approval is still manual.
+5. Or discard a draft:
+
+```bash
+bash scripts/discard_review_draft.sh <draft-file>
+```
+
+## Notes
+
+- Publishing an approved draft moves it into `content/posts/` and rebuilds Hugo.
+- Discarding a draft deletes the markdown file only.
+- Review mode is recommended for major story arc milestones.
