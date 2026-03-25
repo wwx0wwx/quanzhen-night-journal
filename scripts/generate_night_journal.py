@@ -502,6 +502,21 @@ def update_stats(category, scene, primary, secondary, chosen_imagery, title, des
 
 
 def main():
+    # --- Stage 4: delegate to night_journal.application when available ---
+    if app_run:
+        try:
+            guard_daily_limit()
+            result = app_run(BASE)
+            print(result.message)
+            return
+        except Exception as e:
+            import sys
+            err = f'[application.run error] {e}'
+            log_line(err)
+            print(err, file=sys.stderr)
+            sys.exit(1)
+
+    # --- Fallback: legacy inline flow ---
     repaired = False
     failure_reasons = []
     try:
