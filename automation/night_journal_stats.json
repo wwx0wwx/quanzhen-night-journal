@@ -1,0 +1,33 @@
+{
+  "post_count": 1,
+  "successful_posts": 1,
+  "failed_runs": 0,
+  "repaired_runs": 0,
+  "topics": {
+    "姐姐": 1
+  },
+  "scenes": {
+    "搁铜盆的小几旁": 1
+  },
+  "primary_emotions": {
+    "嫉妒": 1
+  },
+  "secondary_emotions": {
+    "不服": 1
+  },
+  "imagery": {
+    "薄衾": 1,
+    "药气": 1,
+    "笔锋": 1,
+    "更漏": 1,
+    "衣角": 1,
+    "铜盆轻响": 1
+  },
+  "titles": [
+    "子时拧帕声"
+  ],
+  "descriptions": [
+    "药气与更漏之间，那句应声迟迟咽不下去。"
+  ],
+  "last_quality_failures": []
+}

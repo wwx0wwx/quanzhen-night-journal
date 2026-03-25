@@ -1,0 +1,93 @@
+{
+  "meta": {
+    "version": 2,
+    "post_count": 3,
+    "last_post_at": "2026-03-25T04:26:51Z",
+    "last_successful_post_at": "2026-03-25T04:26:51Z",
+    "last_publish_day_utc": "2026-03-25",
+    "current_season": "spring",
+    "current_watch": "子时",
+    "weather": "微寒"
+  },
+  "owner": {
+    "status": "resting",
+    "fatigue": 36,
+    "closeness": 72,
+    "attention_to_zhen": 36,
+    "recent_mentions_of_sister": 1
+  },
+  "sister": {
+    "status": "away",
+    "eta_days": 2,
+    "pressure": 66,
+    "renown": 88,
+    "recent_letter": false
+  },
+  "zhen": {
+    "jealousy": 66,
+    "longing": 81,
+    "restraint": 74,
+    "injury": 0,
+    "confidence": 46,
+    "guilt": 21,
+    "emptiness": 29,
+    "vigilance": 58
+  },
+  "world": {
+    "recent_danger": "quiet",
+    "server_peace_days": 110,
+    "weather_mood": "cold_wind",
+    "last_incident": "不知死活的鼠辈挤在暗处。属下未敢惊动主人，只是在别处多擦了一阵剑。"
+  },
+  "continuity": {
+    "last_summary": "夜半侍侧，为免惊醒主人，悄挪铜盆、掖衾拭剑，压下外间异动；因主人晚间提及姐姐，旧寒旧忍翻涌，终仍把不安独自咽回。",
+    "recent_topics": [
+      "守夜",
+      "影子",
+      "不敢开口",
+      "姐姐"
+    ],
+    "recent_scenes": [
+      "搁铜盆的小几旁"
+    ],
+    "recent_emotions": [
+      "嫉妒",
+      "不服"
+    ],
+    "recent_imagery": [
+      "薄衾",
+      "药气",
+      "笔锋",
+      "更漏",
+      "衣角",
+      "铜盆轻响"
+    ]
+  },
+  "scheduler": {
+    "posts_per_week": 3,
+    "preferred_days": [
+      2,
+      4,
+      6
+    ],
+    "preferred_hour_utc": 16,
+    "max_posts_per_day": 0
+  },
+  "story_arcs": {
+    "sister_return": {
+      "stage": 0,
+      "enabled": true,
+      "next_trigger_post_count": 8
+    },
+    "owner_notice": {
+      "stage": 0,
+      "enabled": true,
+      "next_trigger_post_count": 11
+    },
+    "old_wound": {
+      "stage": 0,
+      "enabled": true,
+      "next_trigger_post_count": 9
+    }
+  }
+}
