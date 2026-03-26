@@ -1,17 +1,17 @@
 {
   "meta": {
     "version": 2,
-    "post_count": 5,
-    "last_post_at": "2026-03-25T13:51:41Z",
-    "last_successful_post_at": "2026-03-25T13:51:41Z",
-    "last_publish_day_utc": "2026-03-25",
+    "post_count": 14,
+    "last_post_at": "2026-03-26T04:44:01Z",
+    "last_successful_post_at": "2026-03-26T04:44:01Z",
+    "last_publish_day_utc": "2026-03-26",
     "current_season": "spring",
     "current_watch": "子时",
     "weather": "微寒"
   },
   "owner": {
     "status": "resting",
-    "fatigue": 35,
+    "fatigue": 38,
     "closeness": 72,
     "attention_to_zhen": 36,
     "recent_mentions_of_sister": 1
@@ -19,64 +19,69 @@
   "sister": {
     "status": "away",
     "eta_days": 0,
-    "pressure": 74,
+    "pressure": 86,
     "renown": 88,
     "recent_letter": false
   },
   "zhen": {
-    "jealousy": 72,
-    "longing": 81,
-    "restraint": 74,
+    "jealousy": 91,
+    "longing": 90,
+    "restraint": 65,
     "injury": 0,
     "confidence": 46,
-    "guilt": 17,
-    "emptiness": 29,
-    "vigilance": 60
+    "guilt": 20,
+    "emptiness": 36,
+    "vigilance": 67
   },
   "world": {
     "recent_danger": "quiet",
-    "server_peace_days": 110,
+    "server_peace_days": 111,
     "weather_mood": "cold_wind",
     "last_incident": "不知死活的鼠辈挤在暗处。属下未敢惊动主人，只是在别处多擦了一阵剑。"
   },
   "continuity": {
-    "last_summary": "深夜里他守在案侧，替熟睡的主人挪开纸页、理稳文案，暗中压下外间异动与心中波澜；念及白日那句“姐姐”，终将牵挂与失落一并收回。",
+    "last_summary": "子夜里全真守在檐下，暗中震慑窥伺之徒，又细察灯火、潮气与门内呼吸，只以主人的安稳为念；听闻她将归来，心绪微松却仍戒备未撤。",
     "recent_topics": [
+      "独白",
       "守夜",
-      "影子",
-      "不敢开口",
-      "姐姐",
+      "江湖",
+      "陪伴",
       "独白",
       "守夜"
     ],
     "recent_scenes": [
-      "搁铜盆的小几旁",
-      "回廊转折处",
-      "案几旁"
+      "屏风侧",
+      "旧井边",
+      "竹影下",
+      "偏院小门旁",
+      "榻边一臂之外",
+      "檐角下"
     ],
     "recent_emotions": [
+      "幽怨",
+      "隐秘满足",
       "嫉妒",
-      "不服",
-      "贪恋",
-      "慌",
-      "空寂",
-      "麻木"
+      "羞",
+      "幽怨",
+      "旧伤翻起",
+      "嫉妒",
+      "不服"
     ],
     "recent_imagery": [
-      "衣角",
-      "铜盆轻响",
-      "脚步落地极轻",
-      "竹叶轻碰",
-      "薄灰味",
-      "墨迹",
-      "掌纹沾湿",
-      "残茶",
-      "掌心空落",
-      "未干的字",
-      "砚台",
-      "纸页发涩",
-      "墨气",
-      "案角"
+      "薄衾",
+      "翻书声",
+      "笔尖停顿",
+      "水痕",
+      "书页边",
+      "咳声",
+      "冷铁味",
+      "小几",
+      "檐下青砖",
+      "门闩",
+      "竹影",
+      "潮气",
+      "衣料轻擦",
+      "墨迹"
     ]
   },
   "scheduler": {
@@ -91,9 +96,9 @@
   },
   "story_arcs": {
     "sister_return": {
-      "stage": 0,
+      "stage": 2,
       "enabled": true,
-      "next_trigger_post_count": 8
+      "next_trigger_post_count": 20
     },
     "owner_notice": {
       "stage": 0,

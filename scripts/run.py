@@ -28,6 +28,19 @@ sys.path.insert(0, str(project_root))
 
 from night_journal.application import run
 
+def _load_env(env_path: Path) -> None:
+    if not env_path.exists():
+        return
+    for line in env_path.read_text(encoding='utf-8').splitlines():
+        line = line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        k, _, v = line.partition('=')
+        k = k.strip()
+        if k not in os.environ:
+            os.environ[k] = v.strip()
+
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -65,6 +78,7 @@ def main():
     args = parse_args()
 
     # 确定项目根目录
+    _load_env(project_root / '.env')
     root = args.root or Path(os.getenv('ENGINE_ROOT', project_root)).resolve()
     print(f'项目根目录: {root}')
 

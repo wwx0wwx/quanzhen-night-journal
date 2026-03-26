@@ -318,7 +318,7 @@ def run(base_path: Path | None = None, mode_override: str | None = None, force_t
 
     # --- Build & Deploy (auto mode only) ---
     if mode == 'auto':
-        success, msg = build_hugo(settings.engine_root)
+        success, msg = build_hugo(settings.engine_root, destination=settings.output_dir)
         if not success:
             logger.error(f'Hugo build failed: {msg}')
             return RunResult(

@@ -4,14 +4,17 @@ import subprocess
 from pathlib import Path
 
 
-def build_hugo(site_root: Path, timeout: int = 60) -> tuple[bool, str]:
+def build_hugo(site_root: Path, destination: Path | None = None, timeout: int = 60) -> tuple[bool, str]:
     """
     Run `hugo` in the given site root directory.
     Returns (success, output_or_error_message).
     """
     try:
+        cmd = ['hugo']
+        if destination:
+            cmd.extend(['--destination', str(destination)])
         result = subprocess.run(
-            ['hugo'],
+            cmd,
             cwd=site_root,
             capture_output=True,
             text=True,
