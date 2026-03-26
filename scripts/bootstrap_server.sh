@@ -82,6 +82,8 @@ ensure_env_has_output_dir
 ensure_theme
 
 cp "${ENGINE_ROOT}/automation/night-journal.service" /etc/systemd/system/night-journal.service
+sed -i "s|WorkingDirectory=/opt/blog-src|WorkingDirectory=${ENGINE_ROOT}|" /etc/systemd/system/night-journal.service
+sed -i "s|ExecStart=/opt/blog-src/scripts/run_night_journal.sh|ExecStart=${ENGINE_ROOT}/scripts/run_night_journal.sh|" /etc/systemd/system/night-journal.service
 cp "${ENGINE_ROOT}/automation/night-journal.timer" /etc/systemd/system/night-journal.timer
 systemctl daemon-reload
 systemctl enable --now night-journal.timer
@@ -110,6 +112,7 @@ systemctl enable --now nginx
 systemctl reload nginx
 
 cd "${ENGINE_ROOT}"
+sed -i "s|^baseURL = .*|baseURL = \"https://${DOMAIN}/\"|" "${ENGINE_ROOT}/hugo.toml"
 hugo --destination "${SITE_ROOT}"
 
 if [[ ! -f "${SITE_ROOT}/index.html" ]]; then

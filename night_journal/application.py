@@ -311,7 +311,10 @@ def run(
 
     # manual-only mode: skip build/state update
     if path is None:
-        logger.info(f'manual-only mode: no file written for topic "{topic}"')
+        if dry_run:
+            logger.info(f'[dry-run mode: no files written, no real API calls] skipped topic "{topic}"')
+        else:
+            logger.info(f'manual-only mode: no file written for topic "{topic}"')
         return RunResult(
             ok=True,
             stage='skipped',

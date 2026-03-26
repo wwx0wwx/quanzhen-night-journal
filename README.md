@@ -52,42 +52,46 @@ night_journal/
 git clone <repo-url> /opt/blog-src
 ```
 
-### 2. 配置环境
+### 2. 执行一键安装向导（推荐）
 
-复制 `.env.example` 为 `.env`，填入 API 密钥和基础配置：
+直接运行交互式部署脚本，向导会自动完成环境配置、依赖安装和定时发文设定：
+
+```bash
+bash /opt/blog-src/install.sh
+```
+
+### 3. 手动部署流程（可选）
+
+如果你不希望使用交互流程，可以完全手动配置：
+
+**3.1 配置环境变量**
+复制 `.env.example` 为 `.env`，填入相关信息：
 
 ```bash
 cp /opt/blog-src/.env.example /opt/blog-src/.env
 ```
-
-重点字段：
+重点需改字段：
 - `OPENAI_API_KEY`
 - `OPENAI_BASE_URL`
 - `OPENAI_MODEL`
 - `ENGINE_ROOT`
 - `BLOG_OUTPUT_DIR`
 
-### 3. 一键初始化新 VPS
+**3.2 执行底层初始化脚本**
 
 ```bash
 bash /opt/blog-src/scripts/bootstrap_server.sh <domain>
 ```
 
 例如：
-
 ```bash
-bash /opt/blog-src/scripts/bootstrap_server.sh iuaa.de
+bash /opt/blog-src/scripts/bootstrap_server.sh example.com
 ```
 
 脚本会完成：
-- 安装基础依赖
-- 安装 Hugo Extended（若缺失）
-- 检查 `.env` 与关键模板文件
-- 自动补齐 `themes/PaperMod`（优先 submodule，失败则直接克隆主题）
-- 创建发布目录
-- 安装 systemd service/timer
-- 配置 Nginx（含 UTF-8）
-- 首次构建博客并校验 `index.html`
+- 自动补齐 `themes/PaperMod` 和系统依赖
+- 创建发布目录与 Nginx 配置
+- 安装 systemd service/timer 守护进程
 
 ### 4. 启用 HTTPS
 

@@ -2,7 +2,12 @@
 import json, os, random, subprocess, pathlib, urllib.request, re, sys, shutil
 from datetime import datetime, UTC
 
-def _load_env(path='/opt/blog-src/.env'):
+print('⚠ 此脚本已废弃，请使用 python3 scripts/run.py')
+sys.exit(1)
+
+def _load_env(path=None):
+    if path is None:
+        path = str(pathlib.Path(__file__).resolve().parent.parent / '.env')
     env = {}
     try:
         for line in pathlib.Path(path).read_text().splitlines():
@@ -22,7 +27,7 @@ AUTO = BASE / 'automation'
 CONTENT = BASE / 'content' / 'posts'
 DRAFT_REVIEW = BASE / 'draft_review'
 DRAFT_REVIEW.mkdir(parents=True, exist_ok=True)
-OUT = pathlib.Path(_env.get('BLOG_OUTPUT_DIR', '/var/www/shetop.ru'))
+OUT = pathlib.Path(_env.get('BLOG_OUTPUT_DIR', '/var/www/example.com'))
 LOG = BASE / 'logs'
 LOG.mkdir(parents=True, exist_ok=True)
 

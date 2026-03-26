@@ -36,7 +36,26 @@ git clone <repo-url> /opt/blog-src
 
 ---
 
-## 3. 写 `.env`
+## 3. 初始化与环境配置
+
+你可以选择使用**命令行向导**，或者**纯手动配置**。
+
+### 选项 A：使用一键安装向导（极度推荐）
+
+直接拉起全动化脚本，向导会交互式地询问你所有参数，并自动完成环境变量生成、系统依赖底座与 Nginx 安装、以及自动发文配置。
+
+```bash
+cd /opt/blog-src
+bash install.sh
+```
+
+> **注意：如果使用了向导完成部署，你可以直接跳过选项 B 以及后文的第 4、5、6、7 步，直接进入最后的第 8 步验证即可！**
+
+---
+
+### 选项 B：纯手动环境配置
+
+**B.1 手动拉写 `.env` 内容**
 
 ```bash
 cat > /opt/blog-src/.env <<'EOF'
@@ -53,27 +72,19 @@ MAX_RETRIES=3
 EOF
 ```
 
----
+**B.2 替换 `hugo.toml` 中 `baseURL`**
 
-## 4. 检查 `hugo.toml`
-
-确认：
-- `baseURL` 已改成目标域名
-
-快速替换：
+确认 `baseURL` 已改成目标域名，可使用下一行流：
 
 ```bash
 python3 - <<'PY'
 from pathlib import Path
 p=Path('/opt/blog-src/hugo.toml')
 s=p.read_text(encoding='utf-8')
-# 把旧域名替换成你的新域名
-s=s.replace('https://old-domain.example/','https://<domain>/')
+s=s.replace('https://example.com/','https://<domain>/')
 p.write_text(s,encoding='utf-8')
 PY
 ```
-
----
 
 ## 5. 安装 Hugo（若机器太旧，直接拷已知可用版本）
 

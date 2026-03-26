@@ -2,7 +2,9 @@
 """config.py — 配置加载与全局常量"""
 import json, pathlib
 
-def _load_env(path='/opt/blog-src/.env'):
+def _load_env(path=None):
+    if path is None:
+        path = str(pathlib.Path(__file__).resolve().parent.parent / '.env')
     env = {}
     try:
         for line in pathlib.Path(path).read_text().splitlines():
@@ -21,7 +23,7 @@ BASE        = pathlib.Path(_env.get('ENGINE_ROOT', '/opt/blog-src'))
 AUTO        = BASE / 'automation'
 CONTENT     = BASE / 'content' / 'posts'
 DRAFT_REVIEW= BASE / 'draft_review'
-OUT         = pathlib.Path(_env.get('BLOG_OUTPUT_DIR', '/var/www/shetop.ru'))
+OUT         = pathlib.Path(_env.get('BLOG_OUTPUT_DIR', '/var/www/example.com'))
 LOG         = BASE / 'logs'
 
 API_KEY  = _env.get('OPENAI_API_KEY', '')

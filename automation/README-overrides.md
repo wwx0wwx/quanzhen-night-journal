@@ -5,6 +5,7 @@
 - `auto`：生成后直接发布
 - `review-first`：生成到 `draft_review/`，不自动发布
 - `manual-only`：只允许手动触发，不允许 timer 正常发文
+- `max_posts_per_day`：每日发文硬限制。0 代表不限制，1 代表发过一篇后当天强制阻断
 
 ## 手动干预项
 
