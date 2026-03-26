@@ -40,22 +40,16 @@ night_journal/
 
 - **主方案始终是 Hugo 博客**
 - **静态页不是默认方案，只能作为故障兜底**
-- 部署时应先确保 `themes/PaperMod` 存在并能正常构建
+- 主题 `themes/PaperMod` 已 vendored 入仓库，部署时不再依赖 submodule
 
 ## 快速部署
 
 ### 1. 拉取代码
 
-若仓库保留 submodule：
+当前仓库已内置 `themes/PaperMod`，普通 clone 即可：
 
 ```bash
-git clone --recurse-submodules <repo-url> /opt/blog-src
-```
-
-若已存在工作树：
-
-```bash
-git -C /opt/blog-src submodule update --init --recursive
+git clone <repo-url> /opt/blog-src
 ```
 
 ### 2. 配置环境
