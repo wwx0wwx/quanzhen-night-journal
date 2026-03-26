@@ -510,7 +510,6 @@ def main():
             print(result.message)
             return
         except Exception as e:
-            import sys
             err = f'[application.run error] {e}'
             log_line(err)
             print(err, file=sys.stderr)
