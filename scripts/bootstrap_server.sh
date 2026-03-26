@@ -54,9 +54,16 @@ apt-get update
 apt-get install -y git nginx python3 python3-venv python3-pip certbot python3-certbot-nginx rsync curl jq unzip
 
 if ! command -v hugo >/dev/null 2>&1; then
-  curl -L "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VER}/hugo_extended_${HUGO_VER}_linux-amd64.tar.gz" -o /tmp/hugo.tgz
-  tar -xzf /tmp/hugo.tgz -C /tmp
-  install -m 0755 /tmp/hugo /usr/local/bin/hugo
+  echo "[!] hugo not found in PATH"
+  echo "    Please install Hugo Extended >= ${HUGO_VER} first, or copy a known-good binary to /usr/local/bin/hugo."
+  exit 1
+fi
+
+if ! hugo version | grep -Eq 'v0\.(14[6-9]|1[5-9][0-9])|v[1-9][0-9]'; then
+  echo "[!] Hugo version is too old for PaperMod."
+  echo "    Current: $(hugo version)"
+  echo "    Required: Hugo Extended >= ${HUGO_VER}"
+  exit 1
 fi
 
 mkdir -p "${SITE_ROOT}" "${ENGINE_ROOT}/logs" "${ENGINE_ROOT}/draft_review" "${ENGINE_ROOT}/automation/backups"
