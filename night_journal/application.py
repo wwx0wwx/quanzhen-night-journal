@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import random
 import sys
 from datetime import datetime, timezone
@@ -11,7 +12,7 @@ from .logging_utils import get_logger
 from .models import RunResult
 from .inputs.state_store import StateStore
 from .inputs.content_catalog import ContentCatalog
-from .inputs.vps_signals import collect_vps_signals
+from .inputs.vps_signals import collect_vps_signals, VpsSignals
 from .inputs.recent_posts import build_recent_context
 from .narrative.topic_selector import choose_topic
 from .narrative.material_selector import choose_world_material
@@ -29,6 +30,108 @@ from .publishing.writer import write_post
 from .publishing.hugo import build_hugo, git_push
 
 UTC = timezone.utc
+
+
+def _translate_vps_events(vps: VpsSignals, event_map: dict) -> list[str]:
+    """Translate raw VPS metrics into 古风意象 via event_map_rules."""
+    signals = event_map['signals']
+    events: list[str] = []
+
+    # SSH intrusions → 江湖宵小
+    m = signals['ssh_intrusion']['mapping']
+    if vps.ssh_bad <= 0:
+        events.append(m[0])
+    elif vps.ssh_bad <= 5:
+        events.append(m[1])
+    elif vps.ssh_bad <= 50:
+        events.append(m[2])
+    else:
+        events.append(m[3])
+
+    # Server load → 堂上风雨
+    m = signals['server_load']['mapping']
+    pressure = max(vps.load1, vps.mem_pct / 50.0)
+    if pressure < 0.5:
+        events.append(m[0])
+    elif pressure <= 2.0:
+        events.append(m[1])
+    else:
+        events.append(m[2])
+
+    # Uptime → 守夜天数
+    m = signals['uptime']['mapping']
+    if vps.uptime_days < 30:
+        events.append(m[0])
+    elif vps.uptime_days < 120:
+        events.append(m[1])
+    else:
+        events.append(m[2])
+
+    # Disk usage
+    if vps.disk_pct >= 80:
+        events.append(random.choice(signals['disk_usage']['mapping']))
+
+    # Site traffic
+    if vps.nginx_hits >= 500:
+        events.append(random.choice(signals['site_traffic']['mapping']))
+
+    # Service restarts
+    if vps.service_restart_hits > 20:
+        events.append(random.choice(signals['service_restart']['mapping']))
+
+    # Certificate renewal (rare)
+    if vps.cert_hits > 0 and random.random() < 0.15:
+        events.append(signals['certificate_renewal']['mapping'][0])
+
+    return events
+
+
+def _summarize_for_state(base_url: str, api_key: str, model: str, text: str, max_retries: int, timeout: int) -> str:
+    """Use LLM to generate a concise continuity summary for the next run."""
+    prompt = (
+        '请把下面这篇夜札浓缩成一条 45-70 字的"连续性摘要"，用于下一篇写作时回顾前情。'
+        '要求：不要抄原句；写清情绪落点和关键动作；保持概述口吻。\n\n'
+        f'原文：\n{text}\n'
+    )
+    try:
+        return api_chat(
+            base_url, api_key, model,
+            [
+                {'role': 'system', 'content': '你是一个克制、准确的摘要器。'},
+                {'role': 'user', 'content': prompt},
+            ],
+            temperature=0.2, max_tokens=120,
+            max_retries=max_retries, timeout=timeout,
+        )
+    except Exception:
+        text = ' '.join(text.strip().split())
+        return (text[:70] + '...') if len(text) > 70 else text
+
+
+def _capture_recent_memory(base_url: str, api_key: str, model: str, text: str, title: str, max_retries: int, timeout: int) -> str:
+    """Use LLM to extract a narrative memory fragment from generated post."""
+    prompt = (
+        '请从下面这篇夜札中提取一条适合写入"近期记忆层"的片段。\n'
+        '要求：\n'
+        '1. 只写 30-60 字。\n'
+        '2. 口吻用第三人称概述。\n'
+        '3. 要像近来真实发生过的一件小事。\n'
+        '4. 不要抄原文太多。\n\n'
+        f'标题：{title}\n正文：\n{text}\n'
+    )
+    try:
+        summary = api_chat(
+            base_url, api_key, model,
+            [
+                {'role': 'system', 'content': '你是一个擅长抽取叙事记忆片段的编辑。'},
+                {'role': 'user', 'content': prompt},
+            ],
+            temperature=0.3, max_tokens=100,
+            max_retries=max_retries, timeout=timeout,
+        )
+        return summary.strip()
+    except Exception:
+        return '近来她又在夜里替主人收拾了一处无人会留意的小乱。'
 
 
 def _update_story_arcs(state: dict) -> None:
@@ -68,10 +171,15 @@ def _drift_state(state: dict) -> None:
         z['jealousy'] = min(100, z['jealousy'] + 3)
 
 
-def run(base_path: Path | None = None) -> RunResult:
+def run(base_path: Path | None = None, mode_override: str | None = None, force_topic: str | None = None) -> RunResult:
     """
     Main application entry point.
-    Orchestrates the full night-journal generation pipeline.
+    Orchestrates full night-journal generation pipeline.
+
+    Args:
+        base_path: Project root directory path.
+        mode_override: Override mode from command line ('auto', 'review', 'manual-only').
+        force_topic: Override topic from command line.
     """
     settings = load_settings(base_path)
     logger = get_logger(settings.log_dir)
@@ -82,6 +190,13 @@ def run(base_path: Path | None = None) -> RunResult:
     # --- Load state ---
     state = store.load_world_state()
     overrides = store.load_overrides()
+
+    # Apply command-line overrides if provided
+    if mode_override:
+        overrides['mode'] = mode_override
+    if force_topic:
+        overrides['force_topic'] = force_topic
+
     rules = catalog.load_topic_rules()
     imagery = catalog.load_imagery_pool()
     scenes = catalog.load_scene_pool()
@@ -100,17 +215,8 @@ def run(base_path: Path | None = None) -> RunResult:
 
     # --- Collect inputs ---
     vps = collect_vps_signals()
-    events: list[str] = []
-    if vps.uptime_days > 0:
-        events.append(f'服务器已连续运行 {vps.uptime_days} 天。')
-    if vps.ssh_bad > 10:
-        events.append(f'今日有 {vps.ssh_bad} 次异常登录尝试，属下已记录在案。')
-    if vps.load1 > 2.0:
-        events.append(f'机器负载偏高，今夜有些不安静。')
-    if vps.disk_pct > 85:
-        events.append(f'磁盘已用 {vps.disk_pct}%，快满了。')
-    if not events:
-        events.append('今夜无异常，服务器平静如常。')
+    event_map = catalog.load_event_map_rules()
+    events = _translate_vps_events(vps, event_map)
     recent_texts, repeated_phrases, recent_titles, recent_descs = build_recent_context(settings)
 
     # --- Narrative decisions ---
@@ -141,14 +247,19 @@ def run(base_path: Path | None = None) -> RunResult:
         arc_lines=arc_lines,
     )
     system_msg = '你是全真，一个清冷、幽怨、痴忠、决绝的白衣女子。你写的是只有自己会看的夜札。你最强的武器是沉默。越是贪恋主人，文字越要冷。'
+    max_retries = int(os.getenv('MAX_RETRIES', '3'))
+    api_timeout = int(os.getenv('API_TIMEOUT', '150'))
+
     raw_body = api_chat(
         base_url, api_key, model,
         [{'role': 'system', 'content': system_msg}, {'role': 'user', 'content': prompt}],
         temperature=0.84, max_tokens=1100,
+        max_retries=max_retries, timeout=api_timeout,
     )
-    diary_content = refine_body(base_url, api_key, model, raw_body)
+    diary_content = refine_body(base_url, api_key, model, raw_body, max_retries=max_retries, timeout=api_timeout)
     title, description = generate_title_and_description(
-        base_url, api_key, model, diary_content, recent_titles, recent_descs
+        base_url, api_key, model, diary_content, recent_titles, recent_descs,
+        max_retries=max_retries, timeout=api_timeout,
     )
 
     # --- Quality check & repair ---
@@ -165,10 +276,12 @@ def run(base_path: Path | None = None) -> RunResult:
             base_url, api_key, model,
             [{'role': 'system', 'content': '你是一个擅长修文的冷感写作者。'}, {'role': 'user', 'content': repair_prompt}],
             temperature=0.45, max_tokens=1000,
+            max_retries=max_retries, timeout=api_timeout,
         )
-        diary_content = refine_body(base_url, api_key, model, diary_content)
+        diary_content = refine_body(base_url, api_key, model, diary_content, max_retries=max_retries, timeout=api_timeout)
         title, description = generate_title_and_description(
-            base_url, api_key, model, diary_content, recent_titles, recent_descs
+            base_url, api_key, model, diary_content, recent_titles, recent_descs,
+            max_retries=max_retries, timeout=api_timeout,
         )
         reasons = quality_check(diary_content, title, description, overrides, recent_post_paths_fn)
         if reasons:
@@ -187,11 +300,70 @@ def run(base_path: Path | None = None) -> RunResult:
         draft_review_dir=settings.draft_review_dir,
     )
 
+    # manual-only mode: skip build/state update
+    if path is None:
+        logger.info(f'manual-only mode: no file written for topic "{topic}"')
+        return RunResult(
+            ok=True,
+            stage='skipped',
+            message=f'Skipped (manual-only mode)',
+            data={
+                'title': title,
+                'slug': slug,
+                'mode': mode,
+                'category': category,
+                'topic': topic,
+            },
+        )
+
+    # --- Build & Deploy (auto mode only) ---
+    if mode == 'auto':
+        success, msg = build_hugo(settings.engine_root)
+        if not success:
+            logger.error(f'Hugo build failed: {msg}')
+            return RunResult(
+                ok=False,
+                stage='build',
+                message=f'Hugo build failed: {msg}',
+                data={'path': str(path), 'mode': mode},
+            )
+        logger.info('Hugo build succeeded')
+
+        # Optional: git push if configured
+        if os.getenv('ENABLE_GIT_PUSH', 'false').lower() == 'true':
+            commit_msg = f'夜札: {title} [{now_str}]'
+            push_success, push_msg = git_push(settings.engine_root, commit_msg)
+            if push_success:
+                logger.info(f'Git push succeeded: {push_msg}')
+            else:
+                logger.warning(f'Git push failed: {push_msg}')
+
     # --- State update ---
     state['meta']['post_count'] = state['meta'].get('post_count', 0) + 1
-    state['continuity']['last_summary'] = diary_content[:120].replace('\n', ' ')
+    state['meta']['last_post_at'] = now_str
+    state['meta']['last_successful_post_at'] = now_str
+    state['meta']['last_publish_day_utc'] = _today
+    state['world']['server_peace_days'] = vps.uptime_days
+    state['world']['last_incident'] = events[0] if events else ''
+    state['continuity']['last_summary'] = _summarize_for_state(base_url, api_key, model, diary_content, max_retries, api_timeout)
+    state['continuity']['recent_topics'] = (state['continuity'].get('recent_topics', []) + [category])[-6:]
+    state['continuity']['recent_scenes'] = (state['continuity'].get('recent_scenes', []) + [chosen_scene])[-6:]
+    state['continuity']['recent_emotions'] = (state['continuity'].get('recent_emotions', []) + [primary, secondary])[-8:]
+    state['continuity']['recent_imagery'] = (state['continuity'].get('recent_imagery', []) + chosen_imagery)[-14:]
     _drift_state(state)
     _update_story_arcs(state)
+
+    # Append new memory to recent_memories
+    recent_memories.append({
+        'at': now_str,
+        'title': title,
+        'summary': _capture_recent_memory(base_url, api_key, model, diary_content, title, max_retries, api_timeout),
+        'topic': category,
+        'scene': chosen_scene,
+        'primary_emotion': primary,
+    })
+    if len(recent_memories) > 20:
+        del recent_memories[:-20]
 
     stats['post_count'] = stats.get('post_count', 0) + 1
     stats['successful_posts'] = stats.get('successful_posts', 0) + 1

@@ -1,138 +1,88 @@
-# Quanzhen Night Journal
+# 全真夜札系统（私有迁移模板）
 
-A long-running narrative engine for generating and publishing late-night in-character journal entries for **Quan Zhen (全真)** — a cold, restrained, fiercely devoted wuxia heroine whose emotional continuity is maintained through world state, memory, future fragments, and system signals from a live VPS.
+这是 **全真夜札** 的 Hugo 博客与自动发文系统仓库。
 
-## Features
+当前仓库包含：
+- Hugo 站点源码
+- 夜札生成脚本
+- 世界状态 / 记忆 / 素材池
+- systemd 定时任务模板
+- Nginx + VPS 迁移样例文档
 
-- OpenAI-compatible generation pipeline
-- Hugo publishing workflow
-- systemd timer support
-- World state + story arc progression
-- Core memories + recent memories + future fragments
-- VPS signal mapping into narrative incidents
-- Title / description generation
-- Refinement pass + quality checks
-- Auto mode and review-first mode
-- Analysis / maintenance tooling
+## 快速迁移
 
-## Repository layout
+### 1. 拉取代码
 
-```text
-automation/
-  *.example.json          # runtime templates
-  *.json                  # reusable pools and rules
-  README-system.md        # full internal system map
-  README-overrides.md     # override reference
-  night-journal.service   # systemd service template
-  night-journal.timer     # systemd timer template
-scripts/
-  bootstrap_runtime_state.py
-  generate_night_journal.py
-  run_night_journal.sh
-  analyze_journal.py
-  publish_reviewed_post.sh
-  discard_review_draft.sh
-docs/
-  architecture.md
-  deployment.md
-  review-workflow.md
-```
-
-## Quick start
-
-### 1. Clone the repo
 ```bash
-git clone https://github.com/wwx0wwx/quanzhen-night-journal.git
-cd quanzhen-night-journal
+git clone --recurse-submodules <your-private-repo-url> /opt/blog-src
 ```
 
-### 2. Configure environment
+### 2. 准备运行时配置
+
+复制 `.env.example` 为 `.env`，填入真实值：
+
 ```bash
-cp .env.example .env
+cp /opt/blog-src/.env.example /opt/blog-src/.env
 ```
 
-Fill in:
+重点字段：
 - `OPENAI_API_KEY`
 - `OPENAI_BASE_URL`
 - `OPENAI_MODEL`
-- `BLOG_BASE_DIR`
+- `ENGINE_ROOT`
 - `BLOG_OUTPUT_DIR`
 
-### 3. Bootstrap runtime state
+### 3. 一键初始化新 VPS
+
 ```bash
-python3 scripts/bootstrap_runtime_state.py
+bash /opt/blog-src/scripts/bootstrap_server.sh <domain>
 ```
 
-This creates runtime JSON files from the provided templates.
+例如：
 
-### 4. Run once manually
 ```bash
-bash scripts/run_night_journal.sh
+bash /opt/blog-src/scripts/bootstrap_server.sh iuaa.de
 ```
 
-### 5. Inspect the system
+这个脚本会完成：
+- 安装基础依赖
+- 安装 Hugo（若缺失）
+- 创建发布目录
+- 安装 systemd service/timer
+- 配置 Nginx
+- 首次构建站点
+
+### 4. 启用 HTTPS
+
 ```bash
-python3 scripts/analyze_journal.py
+certbot --nginx -d <domain> -d www.<domain> --non-interactive --agree-tos -m admin@<domain> --redirect
 ```
 
-## Runtime modes
+### 5. 验证系统
 
-Controlled through `automation/manual_overrides.json`.
-
-- `auto` — publish immediately
-- `review-first` — generate to `draft_review/`
-- `manual-only` — block timer-driven publishing
-
-## Review workflow
-
-### Approve a generated draft
 ```bash
-bash scripts/publish_reviewed_post.sh <draft-file>
+systemctl status night-journal.timer --no-pager
+systemctl status night-journal.service --no-pager
+curl -I http://<domain>
+curl -I https://<domain>
 ```
 
-### Discard a generated draft
-```bash
-bash scripts/discard_review_draft.sh <draft-file>
-```
+## 详细部署样例
 
-## Deployment
+完整实战步骤见：
 
-See:
-- `docs/deployment.md`
-- `docs/architecture.md`
-- `docs/review-workflow.md`
-- `automation/README-system.md`
+- `DEPLOY_EXAMPLE.md`
 
-## Important note
+## 不建议直接入库的内容
 
-This repository is a **sanitized project version**. Runtime secrets, live state, logs, generated posts, and instance-specific values should not be committed directly.
+已通过 `.gitignore` 排除：
+- `.env`
+- `logs/`
+- `automation/backups/`
+- Python 缓存
+- `.hugo_build.lock`
 
-## 開鍙戞敞鎰?
-### Hugo 鐞?杞?鐗堟湰瑕佹??
-- 鐞?璁?Hugo 鐞?杞?鐗堟湰 `>= 0.146.0` (濡傛灉浣跨敤 PaperMod 涓昏?)
-- 涓存椂鏂规??: 鐞?璁?绠€鏄?Markdown 杈? HTML 杈?杞?鎹?鏂规?案
-- 鐞?璁?Hugo 開鍙戦?椤?锛?https://gohugo.io/getting-started/installing/
-
-### 開鍙戞?у?ц?烘??
-1. **API 杈?杩涙?у?ц?烘??**
-   - 鐞?璁?API 鐞?瑕?瀵嗛挜
-   - 鐞?璁?API 缁?鐐?绔?鍙?
-   - 鐞?璁?API 杈?杩涘拰瀹㈡?绔?璇锋眰鏍煎紡
-
-2. **Nginx 開鍙戞?у?ц?烘??**
-   - 鐞?璁?闈?椤甸潤鎬佸瓨鍌ㄧ洰褰?鏉冮檺
-   - 鐞?璁?Nginx 開鍙戦厤缃?鏂囦欢
-   - 鐞?璁?鍩熷悕瑙ｆ瀽鏄?鍚﹂?舵椂
-
-3. **SSL 瀵?璇?璁剧疆**
-   - 鐞?璁?Let's Encrypt 瀵?璇佽?宠?璁剧疆
-   - 鐞?璁?HTTPS 杈?杩涘姞杞?
-
-4. **鏂囦欢缂栫爜璁剧疆**
-   - 鐞?璁?UTF-8 缂栫爜璁剧疆
-   - 鐞?璁?HTML 涓?娣?娣诲姞 `<meta charset="utf-8" />` 鐞?瑕?
-
-### 開鍙戝?у??
-- 鐞?璁?DEPLOY_GUIDE.md 鐞?瑕?淇℃伅
-- 鐞?璁?HUGO_TROUBLESHOOTING.md 鐞?瑕?淇℃伅
-- 鐞?璁?鍙戠敓鍗曟?у?ц?烘??
+后续若要继续标准化，可再补：
+- 运行态与示例态分离
+- 初始化状态脚本
+- 发布审核工作流说明

@@ -6,6 +6,5 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/blog-src
-EnvironmentFile=/opt/blog-src/.env
 ExecStart=/opt/blog-src/scripts/run_night_journal.sh
 User=root

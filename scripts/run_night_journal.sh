@@ -1,21 +1,11 @@
 #!/usr/bin/env bash
+# 全真夜札引擎 - 自动运行脚本（供 systemd 调用）
 set -euo pipefail
 
-# Load environment variables from .env in the engine root
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENGINE_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+# 项目根目录（可通过环境变量覆盖）
+PROJECT_ROOT="${ENGINE_ROOT:-/opt/blog-src}"
 
-if [ -f "${ENGINE_ROOT}/.env" ]; then
-    export $(grep -v '^#' "${ENGINE_ROOT}/.env" | xargs)
-fi
+cd "$PROJECT_ROOT"
 
-# Set default values if not in .env
-export ENGINE_ROOT="${ENGINE_ROOT:-${ENGINE_ROOT}}"
-export BLOG_OUTPUT_DIR="${BLOG_OUTPUT_DIR:-/var/www/shetop.ru}"
-export LOG_DIR="${LOG_DIR:-${ENGINE_ROOT}/logs}"
-
-# Ensure log directory exists
-mkdir -p "${LOG_DIR}"
-
-# Run the generator
-python3 "${ENGINE_ROOT}/scripts/generate_night_journal.py" >> "${LOG_DIR}/night-journal.log" 2>&1
+# 运行新的模块化引擎
+/usr/bin/env python3 "$PROJECT_ROOT/scripts/run.py" >> "${LOG_DIR:-$PROJECT_ROOT/logs}/night-journal.log" 2>&1
