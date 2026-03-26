@@ -171,7 +171,12 @@ def _drift_state(state: dict) -> None:
         z['jealousy'] = min(100, z['jealousy'] + 3)
 
 
-def run(base_path: Path | None = None, mode_override: str | None = None, force_topic: str | None = None) -> RunResult:
+def run(
+    base_path: Path | None = None,
+    mode_override: str | None = None,
+    force_topic: str | None = None,
+    dry_run: bool = False,
+) -> RunResult:
     """
     Main application entry point.
     Orchestrates full night-journal generation pipeline.
@@ -196,6 +201,9 @@ def run(base_path: Path | None = None, mode_override: str | None = None, force_t
         overrides['mode'] = mode_override
     if force_topic:
         overrides['force_topic'] = force_topic
+    if dry_run:
+        overrides['mode'] = 'manual-only'
+        os.environ['MOCK_LLM'] = 'true'
 
     rules = catalog.load_topic_rules()
     imagery = catalog.load_imagery_pool()
@@ -207,7 +215,8 @@ def run(base_path: Path | None = None, mode_override: str | None = None, force_t
 
     # --- Guard: daily limit and mode checks ---
     _today = datetime.now(UTC).strftime('%Y-%m-%d')
-    guard_publish(overrides, state, _today)
+    if not dry_run:
+        guard_publish(overrides, state, _today)
 
     base_url = settings.openai_base_url
     api_key = settings.openai_api_key
@@ -267,7 +276,7 @@ def run(base_path: Path | None = None, mode_override: str | None = None, force_t
     failure_reasons: list[str] = []
     from .inputs.recent_posts import recent_posts as _rp
     recent_post_paths_fn = lambda n: [post.path for post in _rp(settings, limit=n)]
-    reasons = quality_check(diary_content, title, description, overrides, recent_post_paths_fn)
+    reasons = [] if dry_run else quality_check(diary_content, title, description, overrides, recent_post_paths_fn)
     if reasons:
         repaired = True
         failure_reasons.extend(reasons)

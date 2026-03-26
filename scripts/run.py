@@ -92,7 +92,12 @@ def main():
 
     # 运行引擎
     try:
-        result = run(base_path=root, mode_override=mode_override, force_topic=force_topic_override)
+        result = run(
+            base_path=root,
+            mode_override=mode_override,
+            force_topic=force_topic_override,
+            dry_run=args.dry_run,
+        )
 
         if result.ok:
             print(f'\n✓ 夜札生成成功!')

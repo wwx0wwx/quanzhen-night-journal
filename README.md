@@ -133,11 +133,11 @@ python scripts/run.py --root /path/to/blog
 # 强制指定主题
 python scripts/run.py --force-topic "守夜"
 
-# 试运行（当前实现仍会触发 LLM 请求）
+# 试运行（离线 mock，不写入文件）
 python scripts/run.py --dry-run
 ```
 
-> 注意：当前 `--dry-run` 仍会请求模型接口，只是不应写入最终发布文件。若要完全离线 dry-run，后续需再补 mock / no-llm 模式。
+> `--dry-run` 现在会自动切到 `manual-only` + `MOCK_LLM=true`，不会写入最终文章，也不会请求真实模型接口。
 
 ## 文件结构
 
