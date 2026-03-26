@@ -160,8 +160,10 @@ python scripts/run.py --dry-run
 - `scripts/health_check.py`：检查 API 连接、文件权限、磁盘空间等
 - 日志：`/opt/blog-src/logs/night-journal.log`
 
-## 详细部署样例
+## 部署文档导航
 
-见：
+按使用场景看：
 
-- `DEPLOY_EXAMPLE.md`
+- `DEPLOY_SOP.md`：最短路径的一键迁移 SOP，适合直接照着做
+- `DEPLOY_FINAL_CHECKLIST.md`：最终验收与避坑清单，适合部署后逐项勾检
+- `DEPLOY_EXAMPLE.md`：完整迁移样例，适合复盘或第一次搭建时参考
