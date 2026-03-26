@@ -1,165 +1,132 @@
-# 全鐪椾箣澶滈椆璁 - 開鍙戞寚鍗?
+# 全真之夜日记 - 部署指南
 
-## 鏲?鍙戝墠鍑嗗??
+## 部署前准备
+
 - 确认目标服务器系统环境（Ubuntu/Debian/CentOS）
-- 准备域名解析（A记录指向服务器IP）
-- 获取AI API密钥及端点信息
-- 确认服务器时间同步（重要：影响SSL证书）
+- 准备域名解析（A 记录指向服务器 IP）
+- 获取 AI API 密钥及端点信息
+- 确认服务器时间同步（重要：影响 SSL 证书）
 
-## 鏲?鍙戞?搴?
-1. **鐜?澧?渚濊?瀹?瑁?**
-   ```bash
-   # Ubuntu/Debian
-   apt update && apt install -y python3 python3-pip git curl wget
-   
-   # CentOS/RHEL
-   yum install -y python3 python3-pip git curl wget
-   ```
+## 部署步骤
 
-2. **Hugo 鐞?瑁?**
-   - 璐?璐?锛?https://gohugo.io/getting-started/installing/
-   - 鐞?璁?Hugo 鐞?杞?瑕?姹?锛?https://gohugo.io/themes/
-   - 鐞?璁?涓?閬?鐗?涓婚?锛?https://github.com/adityatelange/hugo-PaperMod
+### 1. 环境依赖安装
 
-3. **椤圭洰鍏嬮?**
-   ```bash
-   git clone <repository-url> /opt/blog-src
-   cd /opt/blog-src
-   ```
+```bash
+# Ubuntu/Debian
+apt update && apt install -y python3 python3-pip git curl wget
 
-4. **鐜?澧?閰嶇疆**
-   - 澶嶅埗 `.env.example` 涓? `.env`
-   - 涓?缃?AI API 鐞?瑕?淇℃伅
-   - 涓?缃?杈撳嚭璺?寰? (`BLOG_OUTPUT_DIR`)
-   - 鐞?璁?甯?鍚? (`ENGINE_ROOT`)
+# CentOS/RHEL
+yum install -y python3 python3-pip git curl wget
+```
 
-5. **涓婚?瀹?瑁?**
-   ```bash
-   # 涓昏?涓轰互涓?鏂瑰紡锛?   git submodule update --init --recursive  # 涓昏?1: Git 涓昏?涓荤?妯″紡
-   # cp -r themes/PaperMod themes/  # 涓昏?2: 鐞?杞?涓嬭浇
-   ```
+### 2. Hugo 安装
 
-6. **Nginx 鐞?璁?**
-   ```bash
-   apt install -y nginx
-   # 鐞?璁?缃戠珯閰嶇疆锛?/etc/nginx/sites-available/<domain>
-   ```
+- 官方下载：https://gohugo.io/getting-started/installing/
+- 推荐版本：0.146.0+ Extended
 
-7. **SSL 瀵?璇?
-   ```bash
-   apt install -y certbot python3-certbot-nginx
-   certbot --nginx -d <domain> --non-interactive --agree-tos --email <email>
-   ```
+```bash
+wget https://github.com/gohugoio/hugo/releases/download/v0.146.0/hugo_extended_0.146.0_Linux-64bit.tar.gz
+tar -xzf hugo_extended_0.146.0_Linux-64bit.tar.gz
+sudo mv hugo /usr/local/bin/
+```
 
-## 鏲?鍙戝父瑙侀棶棰樹笌瑙ｅ喅鏂规??
-### 1. Hugo 涓昏?鐗堟湰涓嶅?ㄥ??
-- **闂?棰?**：Hugo 鐞?杞?鐗堟湰杩囦綆锛屼富棰樺姞杞藉け璐?
-- **瑙ｅ喅**：
-  - 鐞?璁?Hugo 鐞?杞?鏈€浣庤?姹?鐗堟湰
-  - 鐞?璁?涓昏?鐨? `go.mod` 鐞?瑕?淇℃伅
-  - 鐞?璁?浠ｇ爜涓?鐨?Hugo 鐞?瑕?鍙婃?搴?鍏煎?ц?存??
-  - 涓存椂鏂规??锛氬垱寤?绠€鏄?HTML 杈?鎹㈡?у?烘??
-  
-### 2. 涓?缂栫爜闂?棰?
-- **闂?棰?**：涓?鏂囧唴瀹规樉绀轰负闂?鍙?
-- **瑙ｅ喅**：
-  - 鐞?璁?HTML 涓?娣?娣诲姞 `<meta charset="utf-8" />` 鐞?瑕?
-  - 鐞?璁?API 杈?杩涘強杈撳嚭鐨?UTF-8 缂栫爜
-  - 鐞?璁?鏂囦欢瀛樺偛鏃剁殑缂栫爜妯″紡
+### 3. 代码部署
 
-### 3. Markdown Front Matter 瑙ｆ瀽闂?棰?
-- **闂?棰?**：YAML 涓婚?淇℃伅鏄剧ず鍦ㄥ唴瀹规渶鍓嶄竴琛?
-- **瑙ｅ喅**：
-  - 鐞?璁?Hugo 杈?鎴愮殑 HTML 杈?鏂?鏂规??
-  - 鐞?璁?绠€鏄?Markdown 杈? HTML 杈?杞?鎹㈡?у?烘??
-  - 涓存椂鏂规??: 涓?鍑芥??鎻愬彇 `---` 鐞?鍚庣殑姝ｆ枃鍐呭??
-  
-### 4. API 杈?杩涢棶棰?
-- **闂?棰?**：API 杈?杩炰弗澶辫触锛?401/403 瑙ら敊
-- **瑙ｅ喅**：
-  - 鐞?璁?API 鐞?瑕?瀵嗛挜
-  - 鐞?璁?API 缁?鐐?绔?鍙?
-  - 鐞?璁?API 杈?杩涘拰瀹㈡埛绔?璇锋眰鏍煎紡
-  - 鐞?璁?AI 鐞?杞?妯″瀷鏄?鍚﹂厤缃?纭?璁?
+```bash
+git clone https://github.com/wwx0wwx/quanzhen-night-journal.git
+cd quanzhen-night-journal
+pip3 install -r requirements.txt
+```
 
-### 5. Nginx 開鍙戦棶棰?
-- **闂?棰?**：闈?椤典负 403 瑙ラ敊
-- **瑙ｅ喅**：
-  - 鐞?璁?闈?椤甸潤鎬佸瓨鍌ㄧ洰褰?鏉冮檺
-  - 鐞?璁?Nginx 開鍙戦厤缃?鏂囦欢
-  - 鐞?璁?鍩熷悕瑙ｆ瀽鏄?鍚﹂?舵椂
+### 4. 配置检查
 
-### 6. SSL 瀵?璇㈤棶棰?
-- **闂?棰?**：SSL 瀵?璇佷笅杞?澶辫触
-- **瑙ｅ喅**：
-  - 鐞?璁?鍩熷悕鏄?鍚﹂?舵椂瑙ｆ瀽鍒版湇鍔＄?IP
-  - 鐞?璁?鏈嶅姟鍣ㄦ槸鍚﹀惎鐢?80/443 绫?鍙?
-  - 鐞?璁?Firewall 鏅?閿佸樊?娌℃湁闃绘?版?鍙?
+```bash
+# 检查 Python 脚本编码
+file scripts/*.py
 
-## 鏲?鍙戞?т?妫?鏌ュ崟
-- [ ] 鏅?瑕?渚?浠?瀹?瑁?瀹屾瘯
-- [ ] AI API 杈?杩涙?у?ц?存??
-- [ ] 椤圭洰浠ｇ爜鍏嬮?涓嬭浇
-- [ ] 鐞?璁￠厤缃?鏂囦欢璁剧疆
-- [ ] 鐞?璁?妯″紡涓婚?瀹?瑁?
-- [ ] 椤哄彂鍗曠敓鎴愭?у?ц?存??
-- [ ] Nginx 開鍙戦厤缃?
-- [ ] SSL 瀵?璇佺敵璇?
-- [ ] 椤圭洰璁块棶娴嬭瘯
-- [ ] 涓婚?鏇存柊娴嬭瘯
-- [ ] 宸?鍔℃椂浠诲姟璁剧疆
-- [ ] 鐞?璁￠?舵椂浠诲姟杩愯?妫?鏌?
+# 确保所有文件为 UTF-8
+find . -name "*.py" -exec sed -i 's/\r$//' {} \;
+```
 
-## 鏲?鍙戝畨鍏ㄦ?у?у??
-1. **API 鐞?瑕?瀹夊叏**
-   - 涓嶅?ㄥ厖璁稿?ュ瘑閽?
-   - 涓嶅?ㄥ己鍒跺?ヨ?妫?鏌?
-   - 鐞?璁?API 杈?杩涘ご淇℃伅
-   - 鐞?璁?API 鐞?瑕?淇℃伅鍦ㄦ?存??涓?鐨勫瓨鍌?
+### 5. 运行测试
 
-2. **鏂囦欢璁块棶瀹夊叏**
-   - 鐞?璁?闈?椤甸潤鎬佸瓨鍌ㄧ洰褰?鏉冮檺
-   - 鐞?璁?Nginx 鏅?閿佸樊?璁剧疆
-   - 鐞?璁?API 杈?杩涘拰鍐呴儴鎺ュ彛璁块棶鍏?闃?
+```bash
+python3 scripts/generate_night_journal.py --test
+```
 
-3. **绯荤粺瀹夊叏**
-   - 鐞?璁?鏈嶅姟鍣ㄥ熀纭?瀹夊叏璁剧疆
-   - 鐞?璁?SSH 杈?杩炲畨鍏ㄥ姞寮?
-   - 鐞?璁?鏈嶅姟鍣ㄥ畨鍏ㄥ崌绾?
+## Nginx 配置
 
-## 鏲?鍙戞?у?ц?存??
-1. **鍙戠敓鍗曠敓鎴愭?у?ц?存??
-   - 鐞?璁?API 杈?杩涘搷搴旀椂闂?
-   - 鐞?璁?鍗曞瓙鐢熸垚鏃堕暱
-   - 鐞?璁?API 杈?杩涘ご娆℃?у?ц?存??
+### 静态文件服务
 
-2. **闈?椤靛姞杞芥?у?ц?存??
-   - 鐞?璁?闈?椤靛姞杞介?搴?
-   - 鐞?璁?闈?椤典俊鎭?鍐呭?规樉绀烘?у?ц?存??
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    
+    location / {
+        root /var/www/quanzhen-night-journal/public;
+        index index.html;
+        try_files $uri $uri/ =404;
+    }
+    
+    # UTF-8 编码设置
+    charset utf-8;
+    charset_types text/html text/plain text/css application/javascript;
+}
+```
 
-3. **绯荤粺璧勬簮娑堣?ф?у?ц?存??
-   - 鐞?璁?CPU/鍐呭瓨浣跨敤鐜?
-   - 鐞?璁?纭?鐩橀?绌洪棽
+### HTTPS 配置（Let's Encrypt）
 
-## 鏲?鍙戠淮鎶ゅ缓璁?
-1. **鑷?鍔ㄥ寲閮ㄧ讲**
-   - 鐞?璁?閮ㄧ讲鑴氭湰
-   - 鐞?璁?閮ㄧ讲妫?鏌ュ伐鍏?
-   - 鐞?璁?閮ㄧ讲鍥炴?版?у?烘??
+```bash
+# 安装 certbot
+apt install -y certbot python3-certbot-nginx
 
-2. **鐩戞帶鍜屽憡璀?
-   - 鐞?璁?API 杈?杩涘仠鏈嶅憡璀?
-   - 鐞?璁?闈?椤甸?甯告?у?х洃鎺?
-   - 鐞?璁?绯荤粺璧勬簮鐩戞帶
+# 获取证书
+certbot --nginx -d your-domain.com
 
-3. **澶囦唤鍜屾亽澶?
-   - 鐞?璁?鐘舵?佸?版?澶囦唤
-   - 鐞?璁?鍘嗗彶鏂囦欢澶囦唤
-   - 鐞?璁?鍙戠敓鍗曞?版?澶囦唤
+# 自动续期
+crontab -e
+# 添加：0 3 * * * certbot renew --quiet
+```
 
-## 鏲?鍙戝父鐢ㄦ?у?у??
-- 鐞?璁?瀹规槗閮ㄧ讲
-- 鐞?璁?鍙?绉婚泦
-- 鐞?璁?杩愯?缁存姢
-- 鐞?璁?瀹夊叏瀹氬瘑
-- 鐞?璁?鍙?鎵╁?у?烘??
+## 常见问题
+
+### 1. Hugo 主题兼容性
+
+- 错误：`Module "PaperMod" is not compatible with this Hugo version`
+- 解决：升级 Hugo 到 0.146.0+ 或降级主题版本
+
+### 2. 字符编码问题
+
+- 确保所有 Python 脚本以 UTF-8 保存
+- HTML 中添加 `<meta charset="utf-8">`
+- Nginx 配置中设置 `charset utf-8`
+
+### 3. Front Matter 解析失败
+
+- 检查 YAML 格式是否正确
+- 确保没有混用 Tab 和空格
+- 特殊字符使用引号包裹
+
+## 部署检查清单
+
+- [ ] 系统依赖已安装
+- [ ] Hugo 版本 >= 0.146.0
+- [ ] Python 依赖已安装
+- [ ] 域名解析生效
+- [ ] SSL 证书已配置
+- [ ] 文件编码为 UTF-8
+- [ ] 测试生成成功
+- [ ] Nginx 配置正确
+
+## 版本发布
+
+```bash
+# 创建标签
+git tag -a v1.0.x -m "版本说明"
+
+# 推送标签
+git push origin v1.0.x
+
+# 创建 Release（GitHub UI 或 API）
+```
