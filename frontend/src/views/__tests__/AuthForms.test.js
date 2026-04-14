@@ -34,4 +34,14 @@ describe('auth forms', () => {
 
     expect(wrapper.find('input[autocomplete="new-password"]').element.value).toBe('')
   })
+
+  it('does not show embedding guidance on setup screen', () => {
+    const wrapper = mount(Setup, {
+      global: {
+        plugins: [createPinia()],
+      },
+    })
+
+    expect(wrapper.text()).not.toContain('Embedding')
+  })
 })

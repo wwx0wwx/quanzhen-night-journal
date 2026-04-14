@@ -3,7 +3,7 @@
     <div class="hero">
       <div>
         <h1>初始化引导</h1>
-        <p>按顺序完成安全、站点和大脑接入后，系统才会解除锁定并进入可用状态。</p>
+        <p>按顺序完成安全、站点和大脑接入后，系统就会解除锁定。更细的记忆检索配置可以稍后再补。</p>
       </div>
     </div>
 
@@ -66,7 +66,7 @@
           <div class="setup-section-kicker">03</div>
           <div>
             <h2>大脑接入</h2>
-            <p class="muted">正文生成依赖 LLM，记忆检索与去重依赖 Embedding。字段名和提交结构保持不变。</p>
+            <p class="muted">首次可先接好 LLM，用来完成正文生成。记忆检索相关配置保持原样提交，后续可在配置页再补。</p>
           </div>
         </div>
 
@@ -92,37 +92,6 @@
             <label class="field">
               <span>LLM Model ID</span>
               <input v-model="form.llm_model_id" placeholder="例如：gpt-4.1-mini、qwen-max、deepseek-chat" />
-            </label>
-          </div>
-        </div>
-
-        <div class="panel panel-pad stack">
-          <div class="setup-subsection-head">
-            <div class="section-title">Embedding</div>
-            <div class="muted">负责记忆检索、相似度判断和去重。</div>
-          </div>
-          <div class="form-grid">
-            <label class="field">
-              <span>Embedding Base URL</span>
-              <input v-model="form.embedding_base_url" placeholder="例如：https://api.openai.com/v1 或你的向量服务地址" />
-            </label>
-
-            <label class="field">
-              <span>Embedding API Key</span>
-              <input
-                v-model="form.embedding_api_key"
-                type="password"
-                autocomplete="off"
-                placeholder="输入向量模型服务分配给你的密钥"
-              />
-              <div class="field-help-list">
-                <small class="field-help">如何获取？通常在向量模型服务的控制台里创建，格式和 LLM Key 类似。</small>
-              </div>
-            </label>
-
-            <label class="field">
-              <span>Embedding Model ID</span>
-              <input v-model="form.embedding_model_id" placeholder="例如：text-embedding-3-large、text-embedding-v4" />
             </label>
           </div>
         </div>
