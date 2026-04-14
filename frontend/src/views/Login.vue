@@ -39,6 +39,7 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useAuthStore } from '../stores/auth'
+import { getPostLoginRoute } from '../utils/adminNavigation'
 import { describeError } from '../utils/errors'
 
 const auth = useAuthStore()
@@ -53,7 +54,7 @@ async function submit() {
   isSubmitting.value = true
   try {
     const data = await auth.login(form)
-    router.push(data.is_initialized ? '/admin/' : '/admin/setup')
+    router.push(getPostLoginRoute(Boolean(data.system_initialized ?? data.is_initialized)))
   } catch (error) {
     message.value = describeError(error, '登录失败，请检查账号密码或稍后重试。')
   } finally {

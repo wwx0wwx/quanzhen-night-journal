@@ -15,6 +15,7 @@ import Sensory from '../views/Sensory.vue'
 import Settings from '../views/Settings.vue'
 import Setup from '../views/Setup.vue'
 import TaskDetail from '../views/TaskDetail.vue'
+import { getPostLoginRoute } from '../utils/adminNavigation'
 
 const routes = [
   { path: '/admin/login', component: Login, meta: { guest: true } },
@@ -57,7 +58,7 @@ router.beforeEach(async (to) => {
 
   if (to.meta.guest) {
     if (to.path === '/admin/login' && auth.isLoggedIn) {
-      return auth.isInitialized ? '/admin/' : '/admin/setup'
+      return getPostLoginRoute(auth.isInitialized)
     }
     return true
   }

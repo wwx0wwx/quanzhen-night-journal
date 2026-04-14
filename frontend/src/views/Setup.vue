@@ -145,6 +145,7 @@ import { useRouter } from 'vue-router'
 
 import { api, unwrap } from '../api'
 import { useAuthStore } from '../stores/auth'
+import { getPostLoginRoute } from '../utils/adminNavigation'
 import { describeError } from '../utils/errors'
 
 const auth = useAuthStore()
@@ -171,8 +172,8 @@ async function submit() {
   try {
     await unwrap(api.post('/setup/complete', form))
     await auth.refresh()
-    await auth.login({ username: 'admin', password: form.new_password })
-    router.push('/admin/')
+    const loginData = await auth.login({ username: 'admin', password: form.new_password })
+    router.push(getPostLoginRoute(Boolean(loginData.system_initialized ?? loginData.is_initialized)))
   } catch (error) {
     message.value = describeError(error, '初始化失败，请检查填写内容后重试。')
   } finally {

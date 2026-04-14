@@ -2,97 +2,134 @@
   <header class="nav-wrap">
     <div class="nav-inner panel">
       <div class="nav-brand">
-        <div>
-          <div class="brand-kicker">Quanzhen Night Journal Admin</div>
-          <div class="brand">全真夜记</div>
-          <div class="brand-status">
-            <span class="brand-status-dot"></span>
-            <span>{{ auth.username || 'admin' }} 正在守夜</span>
-          </div>
+        <div class="brand">全真夜记</div>
+        <div class="brand-status">
+          <span class="brand-status-dot"></span>
+          <span>{{ auth.username || 'admin' }} 正在守夜</span>
         </div>
-        <button class="btn ghost nav-toggle" type="button" @click="drawerOpen = !drawerOpen">
-          {{ drawerOpen ? '收起导航' : '展开导航' }}
+      </div>
+
+      <nav class="nav-primary" aria-label="后台主导航">
+        <RouterLink :to="overview.to" class="nav-primary-link" :class="{ active: isOverviewActive }">
+          {{ overview.label }}
+        </RouterLink>
+        <RouterLink
+          v-for="section in sections"
+          :key="section.id"
+          :to="section.to"
+          class="nav-primary-link"
+          :class="{ active: isSectionActive(section) }"
+        >
+          {{ section.label }}
+        </RouterLink>
+      </nav>
+
+      <button class="btn ghost nav-toggle" type="button" @click="drawerOpen = !drawerOpen">
+        {{ drawerOpen ? '收起导航' : '展开导航' }}
+      </button>
+    </div>
+
+    <div v-if="currentSection" class="nav-submenu panel">
+      <div class="nav-submenu-title">{{ currentSection.label }}</div>
+      <div class="nav-submenu-links">
+        <RouterLink
+          v-for="item in currentSection.items"
+          :key="item.to"
+          :to="item.to"
+          :class="{ active: isActive(item.to) }"
+        >
+          {{ item.label }}
+        </RouterLink>
+        <button
+          v-if="currentSection.id === 'advanced'"
+          class="btn ghost btn-small nav-submenu-logout"
+          type="button"
+          @click="handleLogout"
+        >
+          退出登录
         </button>
       </div>
-
-      <div class="nav-desktop">
-        <div v-for="group in groups" :key="group.title" class="nav-group">
-          <div class="nav-group-title">{{ group.title }}</div>
-          <div class="nav-group-desc">{{ group.description }}</div>
-          <nav class="nav-links">
-            <RouterLink
-              v-for="item in group.items"
-              :key="item.to"
-              :to="item.to"
-              :class="{ active: isActive(item) }"
-            >
-              {{ item.label }}
-            </RouterLink>
-          </nav>
-        </div>
-      </div>
-
-      <button class="btn ghost nav-logout" @click="handleLogout">退出</button>
     </div>
 
     <div v-if="drawerOpen" class="nav-drawer panel">
-      <div v-for="group in groups" :key="group.title" class="nav-group">
-        <div class="nav-group-title">{{ group.title }}</div>
-        <div class="nav-group-desc">{{ group.description }}</div>
-        <nav class="nav-drawer-links">
+      <RouterLink :to="overview.to" class="nav-drawer-top-link" :class="{ active: isOverviewActive }" @click="drawerOpen = false">
+        {{ overview.label }}
+      </RouterLink>
+
+      <div v-for="section in sections" :key="section.id" class="nav-drawer-group">
+        <RouterLink
+          :to="section.to"
+          class="nav-drawer-top-link"
+          :class="{ active: isSectionActive(section) }"
+          @click="drawerOpen = false"
+        >
+          {{ section.label }}
+        </RouterLink>
+        <div class="nav-drawer-links">
           <RouterLink
-            v-for="item in group.items"
+            v-for="item in section.items"
             :key="item.to"
             :to="item.to"
-            :class="{ active: isActive(item) }"
+            :class="{ active: isActive(item.to) }"
             @click="drawerOpen = false"
           >
             {{ item.label }}
           </RouterLink>
-        </nav>
+          <button
+            v-if="section.id === 'advanced'"
+            class="btn ghost btn-small nav-drawer-logout"
+            type="button"
+            @click="handleLogout"
+          >
+            退出登录
+          </button>
+        </div>
       </div>
-
-      <button class="btn ghost nav-drawer-logout" @click="handleLogout">退出登录</button>
     </div>
   </header>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useAuthStore } from '../stores/auth'
 
-const groups = [
+const overview = { label: '总览', to: '/admin/' }
+
+const sections = [
   {
-    title: '内容',
-    description: '先看运营总览，再处理文章、人格设定和记忆碎片。',
+    id: 'content',
+    label: '内容',
+    to: '/admin/posts',
     items: [
-      { label: '总览', to: '/admin/' },
       { label: '文章', to: '/admin/posts' },
-      { label: '人格设定（写作风格）', to: '/admin/personas' },
-      { label: '记忆碎片（素材）', to: '/admin/memories' },
+      { label: '人格设定', to: '/admin/personas' },
+      { label: '记忆碎片', to: '/admin/memories' },
     ],
   },
   {
-    title: '配置',
-    description: '维护站点、模型和日常运行参数。',
+    id: 'config',
+    label: '配置',
+    to: '/admin/settings',
     items: [
       { label: '设置', to: '/admin/settings' },
       { label: '环境输入', to: '/admin/sensory' },
     ],
   },
   {
-    title: '观察',
-    description: '查看系统状态、异常线索和排查信息。',
+    id: 'observe',
+    label: '观察',
+    to: '/admin/observatory',
     items: [
       { label: '系统状态', to: '/admin/observatory' },
       { label: '日志', to: '/admin/audit' },
     ],
   },
   {
-    title: '高级',
-    description: '用于迁移、备份和特殊操作。',
+    id: 'advanced',
+    label: '高级',
+    to: '/admin/ghost',
     items: [
       { label: '迁移与备份', to: '/admin/ghost' },
     ],
@@ -104,9 +141,16 @@ const router = useRouter()
 const route = useRoute()
 const drawerOpen = ref(false)
 
-function isActive(item) {
-  if (item.to === '/admin/') return route.path === item.to
-  return route.path.startsWith(item.to)
+const isOverviewActive = computed(() => route.path === overview.to)
+const currentSection = computed(() => sections.find((section) => isSectionActive(section)) || null)
+
+function isActive(path) {
+  if (path === overview.to) return route.path === path
+  return route.path.startsWith(path)
+}
+
+function isSectionActive(section) {
+  return section.items.some((item) => isActive(item.to))
 }
 
 async function handleLogout() {
@@ -127,36 +171,28 @@ watch(() => route.path, () => {
   left: 0;
   right: 0;
   z-index: 20;
-  padding: 16px 18px;
+  padding: 14px 18px;
 }
 
 .nav-inner {
   width: min(1280px, calc(100vw - 36px));
   margin: 0 auto;
-  padding: 18px 22px;
+  padding: 16px 20px;
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr) auto;
-  gap: 22px;
-  align-items: start;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
 }
 
 .nav-brand {
   display: grid;
-  gap: 14px;
-}
-
-.brand-kicker {
-  margin-bottom: 6px;
-  font-size: 0.72rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--secondary);
+  gap: 8px;
 }
 
 .brand {
-  font-size: 1.22rem;
+  font-size: 1.18rem;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   color: var(--ink);
   text-shadow: 0 0 20px rgba(200, 242, 255, 0.14);
 }
@@ -165,7 +201,6 @@ watch(() => route.path, () => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 10px;
   color: var(--muted);
   font-size: 0.9rem;
 }
@@ -178,41 +213,22 @@ watch(() => route.path, () => {
   box-shadow: 0 0 16px rgba(134, 215, 255, 0.45);
 }
 
-.nav-desktop {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.nav-group {
-  display: grid;
-  gap: 8px;
-  padding: 2px 0;
-}
-
-.nav-group-title {
-  font-size: 0.92rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--accent-soft);
-}
-
-.nav-group-desc {
-  font-size: 0.86rem;
-  color: var(--muted);
-  line-height: 1.55;
-}
-
-.nav-links,
-.nav-drawer-links {
+.nav-primary {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
 }
 
-.nav-links a,
+.nav-primary-link,
+.nav-submenu-links a,
+.nav-drawer-top-link,
 .nav-drawer-links a {
-  padding: 9px 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 9px 14px;
   border-radius: 999px;
   color: var(--secondary);
   background: rgba(134, 215, 255, 0.04);
@@ -220,7 +236,9 @@ watch(() => route.path, () => {
   transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
 }
 
-.nav-links a:hover,
+.nav-primary-link:hover,
+.nav-submenu-links a:hover,
+.nav-drawer-top-link:hover,
 .nav-drawer-links a:hover {
   transform: translateY(-1px);
   color: var(--ink);
@@ -229,7 +247,9 @@ watch(() => route.path, () => {
   box-shadow: 0 10px 24px rgba(1, 7, 16, 0.24);
 }
 
-.nav-links a.active,
+.nav-primary-link.active,
+.nav-submenu-links a.active,
+.nav-drawer-top-link.active,
 .nav-drawer-links a.active {
   color: #041019;
   border-color: rgba(169, 223, 255, 0.24);
@@ -239,28 +259,55 @@ watch(() => route.path, () => {
     0 14px 28px rgba(83, 191, 245, 0.24);
 }
 
+.nav-submenu {
+  width: min(1280px, calc(100vw - 36px));
+  margin: 10px auto 0;
+  padding: 14px 18px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+
+.nav-submenu-title {
+  color: var(--accent-soft);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.nav-submenu-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.nav-submenu-logout {
+  min-height: 40px;
+}
+
 .nav-toggle,
 .nav-drawer {
   display: none;
 }
 
-.nav-logout {
-  align-self: center;
-  min-width: 84px;
-}
-
 @media (max-width: 1080px) {
   .nav-inner {
     grid-template-columns: 1fr auto;
+    align-items: start;
   }
 
-  .nav-desktop,
-  .nav-logout {
+  .nav-primary,
+  .nav-submenu {
     display: none;
   }
 
+  .nav-toggle,
+  .nav-drawer {
+    display: grid;
+  }
+
   .nav-toggle {
-    display: inline-flex;
     justify-content: center;
   }
 
@@ -268,13 +315,18 @@ watch(() => route.path, () => {
     width: min(1280px, calc(100vw - 36px));
     margin: 12px auto 0;
     padding: 18px;
+    gap: 16px;
+  }
+
+  .nav-drawer-group {
     display: grid;
-    gap: 18px;
+    gap: 10px;
   }
 
   .nav-drawer-links {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
   }
 
   .nav-drawer-logout {
