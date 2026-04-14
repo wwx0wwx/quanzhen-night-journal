@@ -62,11 +62,11 @@
         <div v-for="item in items" :key="item.id" class="list-item panel stack audit-item">
           <div class="audit-row">
             <div class="audit-cell stack" style="gap: 6px;">
-              <strong>{{ item.action }}</strong>
+              <strong>{{ displayAction(item.action) }}</strong>
               <div class="muted audit-subline">{{ item.timestamp }}</div>
-              <div class="button-row audit-tags">
-                <span class="tag">{{ item.actor || 'system' }}</span>
-                <span class="tag" :class="severityClass(item.severity)">{{ item.severity }}</span>
+              <div v-if="showMeta(item)" class="button-row audit-tags">
+                <span v-if="showActor(item.actor)" class="tag">{{ item.actor }}</span>
+                <span v-if="showSeverity(item.severity)" class="tag" :class="severityClass(item.severity)">{{ item.severity }}</span>
               </div>
             </div>
             <div class="audit-cell processed-event">{{ item.processed_event || '-' }}</div>
@@ -74,7 +74,7 @@
             <div class="audit-cell">{{ item.ip_address || '-' }}</div>
           </div>
 
-          <pre class="code-block">{{ prettyDetail(item.detail) }}</pre>
+          <pre v-if="hasDetail(item.detail)" class="code-block">{{ prettyDetail(item.detail) }}</pre>
         </div>
       </div>
 
@@ -115,6 +115,52 @@ function severityClass(severity) {
   if (severity === 'critical') return 'tag-danger'
   if (severity === 'warning') return 'tag-warning'
   return 'tag-success'
+}
+
+function displayAction(action) {
+  const actionMap = {
+    'auth.login': '管理员登录',
+    'auth.logout': '退出登录',
+    'auth.change_password': '修改密码',
+    'task.status_change': '任务状态变更',
+    'post.publish': '发布文章',
+    'post.approve': '审核通过',
+    'post.archive': '归档文章',
+    'post.create': '创建文章',
+    'post.update': '修改文章',
+    'post.delete': '删除文章',
+    'persona.create': '创建人格设定',
+    'persona.update': '修改人格设定',
+    'persona.delete': '删除人格设定',
+    'persona.activate': '启用人格设定',
+    'memory.create': '创建记忆碎片',
+    'memory.update': '修改记忆碎片',
+    'memory.delete': '删除记忆碎片',
+    'memory.promote': '提升记忆等级',
+    'ghost.export': '导出备份',
+    'ghost.import': '导入备份',
+  }
+  return actionMap[action] || action
+}
+
+function showActor(actor) {
+  return actor && !['user', 'system'].includes(actor)
+}
+
+function showSeverity(severity) {
+  return severity && severity !== 'info'
+}
+
+function showMeta(item) {
+  return showActor(item.actor) || showSeverity(item.severity)
+}
+
+function hasDetail(detail) {
+  if (detail == null) return false
+  if (typeof detail === 'string') return detail.trim().length > 0
+  if (Array.isArray(detail)) return detail.length > 0
+  if (typeof detail === 'object') return Object.keys(detail).length > 0
+  return true
 }
 
 function prettyDetail(detail) {

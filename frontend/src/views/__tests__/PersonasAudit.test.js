@@ -87,9 +87,36 @@ describe('Personas and Audit views', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('事件映射')
-    expect(wrapper.text()).toContain('task.status_change')
+    expect(wrapper.text()).toContain('任务状态变更')
     expect(wrapper.text()).toContain('waiting_human_signoff')
     expect(wrapper.text()).toContain('夜里下雨，机房风扇声更清楚了')
     expect(wrapper.text()).toContain('第 1 / 1 页，共 1 条')
+  })
+
+  it('hides empty detail and default actor or info noise', async () => {
+    api.get.mockResolvedValue({
+      items: [
+        {
+          id: 10,
+          action: 'auth.login',
+          timestamp: '2026-04-12T12:00:00+00:00',
+          actor: 'user',
+          severity: 'info',
+          target_type: 'user',
+          target_id: '1',
+          ip_address: '127.0.0.1',
+          detail: {},
+          processed_event: '',
+        },
+      ],
+      total: 1,
+    })
+
+    const wrapper = mount(Audit)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('管理员登录')
+    expect(wrapper.findAll('.audit-tags .tag')).toHaveLength(0)
+    expect(wrapper.findAll('.code-block')).toHaveLength(0)
   })
 })
