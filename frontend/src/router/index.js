@@ -6,12 +6,10 @@ import Ghost from '../views/Ghost.vue'
 import Login from '../views/Login.vue'
 import Memories from '../views/Memories.vue'
 import Observatory from '../views/Observatory.vue'
-import Audit from '../views/Audit.vue'
 import PersonaEdit from '../views/PersonaEdit.vue'
 import Personas from '../views/Personas.vue'
 import PostEdit from '../views/PostEdit.vue'
 import Posts from '../views/Posts.vue'
-import Sensory from '../views/Sensory.vue'
 import Settings from '../views/Settings.vue'
 import Setup from '../views/Setup.vue'
 import TaskDetail from '../views/TaskDetail.vue'
@@ -28,12 +26,12 @@ const routes = [
   { path: '/admin/personas/new', component: PersonaEdit },
   { path: '/admin/personas/:id', component: PersonaEdit },
   { path: '/admin/memories', component: Memories },
-  { path: '/admin/sensory', component: Sensory },
   { path: '/admin/observatory', component: Observatory },
+  { path: '/admin/sensory', redirect: { path: '/admin/observatory', query: { panel: 'sensory' } } },
   { path: '/admin/tasks/:id', component: TaskDetail },
   { path: '/admin/settings', component: Settings },
   { path: '/admin/ghost', component: Ghost },
-  { path: '/admin/audit', component: Audit },
+  { path: '/admin/audit', redirect: { path: '/admin/observatory', query: { panel: 'audit' } } },
 ]
 
 const router = createRouter({

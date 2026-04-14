@@ -29,7 +29,7 @@
       </button>
     </div>
 
-    <div v-if="currentSection" class="nav-submenu panel">
+    <div v-if="showSubmenu" class="nav-submenu panel">
       <div class="nav-submenu-title">{{ currentSection.label }}</div>
       <div class="nav-submenu-links">
         <RouterLink
@@ -114,7 +114,6 @@ const sections = [
     to: '/admin/settings',
     items: [
       { label: '设置', to: '/admin/settings' },
-      { label: '环境输入', to: '/admin/sensory' },
     ],
   },
   {
@@ -122,8 +121,7 @@ const sections = [
     label: '观察',
     to: '/admin/observatory',
     items: [
-      { label: '系统状态', to: '/admin/observatory' },
-      { label: '日志', to: '/admin/audit' },
+      { label: '观测中心', to: '/admin/observatory' },
     ],
   },
   {
@@ -143,6 +141,10 @@ const drawerOpen = ref(false)
 
 const isOverviewActive = computed(() => route.path === overview.to)
 const currentSection = computed(() => sections.find((section) => isSectionActive(section)) || null)
+const showSubmenu = computed(() => {
+  if (!currentSection.value) return false
+  return currentSection.value.items.length > 1 || currentSection.value.id === 'advanced'
+})
 
 function isActive(path) {
   if (path === overview.to) return route.path === path
