@@ -149,7 +149,11 @@ const isDirty = computed(() => hasLoaded.value && createSnapshot() !== initialSn
 const isBusy = computed(() => isSaving.value || isTestingLLM.value || isTestingEmbedding.value)
 const llmReady = computed(() => hasValue('llm.base_url') && hasValue('llm.model_id') && hasSecretValue('llm.api_key'))
 const embeddingReady = computed(() => hasValue('embedding.base_url') && hasValue('embedding.model_id') && hasSecretValue('embedding.api_key'))
-const automationReady = computed(() => Number(formValues['schedule.posts_per_day'] || 0) > 0)
+const automationReady = computed(() => (
+  Number(formValues['schedule.days_per_cycle'] || 0) > 0 &&
+  Number(formValues['schedule.posts_per_cycle'] || 0) > 0 &&
+  isClockValue(formValues['schedule.publish_time'])
+))
 const configConclusion = computed(() => {
   if (!hasValue('site.title') || !llmReady.value) {
     return {
@@ -186,6 +190,10 @@ function hasValue(key) {
 function hasSecretValue(key) {
   const value = String(formValues[key] ?? '').trim()
   return value !== ''
+}
+
+function isClockValue(value) {
+  return /^\d{2}:\d{2}$/.test(String(value || '').trim())
 }
 
 function inferCategory(key) {

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date
+
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -64,6 +66,10 @@ async def setup_complete(
     await config_store.set("embedding.base_url", payload.embedding_base_url, category="embedding")
     await config_store.set("embedding.api_key", payload.embedding_api_key, category="embedding", encrypted=True)
     await config_store.set("embedding.model_id", payload.embedding_model_id, category="embedding")
+    await config_store.set("schedule.days_per_cycle", "1", category="schedule")
+    await config_store.set("schedule.posts_per_cycle", "1", category="schedule")
+    await config_store.set("schedule.publish_time", "21:02", category="schedule")
+    await config_store.set("schedule.cycle_anchor_date", date.today().isoformat(), category="schedule")
     await config_store.set("budget.daily_limit_usd", "99999", category="budget")
     await config_store.set("budget.monthly_limit_usd", "99999", category="budget")
     await config_store.set("panel.status_text", "{user} 正在守夜", category="panel")

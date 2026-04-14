@@ -118,16 +118,38 @@ export const settingsSections = [
   {
     id: 'schedule',
     title: '发文节奏与预算',
-    description: '这里只保留最常改的三项：每天写几篇、多久采样一次、每天最多花多少钱。',
+    description: '用“几天几篇”和一个固定时间来安排发文。若一轮里要发多篇，第一篇固定，剩余篇数会在当天随机分布。',
     fields: [
       {
-        key: 'schedule.posts_per_day',
-        label: '每天发文数',
+        key: 'schedule.days_per_cycle',
+        label: '几天一轮',
         type: 'number',
         placeholder: '1',
-        help: '系统每天最多自动生成多少篇文章。填 0 表示只手动触发。',
+        defaultValue: '1',
+        help: '例如填 3，表示每 3 天作为一轮来安排发文。改动后会从今天重新开始计算新轮次。',
+        min: 1,
+        step: 1,
+      },
+      {
+        key: 'schedule.posts_per_cycle',
+        label: '一轮发几篇',
+        type: 'number',
+        placeholder: '1',
+        defaultValue: '1',
+        help: '例如填 2，配合上面的 3 天一轮，就表示 3 天内发 2 篇。填 0 表示只手动发文。',
         min: 0,
         step: 1,
+      },
+      {
+        key: 'schedule.publish_time',
+        label: '默认发文时间',
+        type: 'time',
+        placeholder: '21:02',
+        defaultValue: '21:02',
+        help: [
+          '使用 24 小时制，例如 21:02。',
+          '如果一轮内会发多篇，第一篇固定在这个时间点，剩余篇数会在当天其他时间随机发出。',
+        ],
       },
       {
         key: 'schedule.sample_interval_minutes',
@@ -225,13 +247,6 @@ export const settingsSections = [
         help: '默认 99999，适合不做月度限制的场景。只有你确实需要封顶时再调小。',
         min: 0,
         step: 0.01,
-      },
-      {
-        key: 'schedule.cron_expression',
-        label: '自动发文时间（Cron）',
-        type: 'text',
-        placeholder: '0 2 * * *',
-        help: '只在你明确知道 Cron 写法时再修改。留默认即可按系统内置节奏运行。',
       },
       {
         key: 'schedule.review_cron',

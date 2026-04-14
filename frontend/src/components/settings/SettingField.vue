@@ -90,6 +90,7 @@ const isDisabled = computed(() => props.disabled || props.field.readonly)
 const inputType = computed(() => {
   if (props.field.type === 'number') return 'number'
   if (props.field.type === 'url') return 'url'
+  if (props.field.type === 'time') return 'time'
   return 'text'
 })
 const stringValue = computed(() => (props.modelValue ?? '').toString())

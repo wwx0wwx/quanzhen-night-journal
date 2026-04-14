@@ -74,7 +74,9 @@ def test_schedule_config_update_does_not_fail_with_scheduler_lock(authed_client)
         "/api/config",
         json={
             "items": [
-                {"key": "schedule.cron_expression", "value": "0 1 * * *", "category": "schedule"},
+                {"key": "schedule.days_per_cycle", "value": "3", "category": "schedule"},
+                {"key": "schedule.posts_per_cycle", "value": "2", "category": "schedule"},
+                {"key": "schedule.publish_time", "value": "21:02", "category": "schedule"},
                 {"key": "schedule.review_cron", "value": "0 2 * * 0", "category": "schedule"},
                 {"key": "schedule.decay_cron", "value": "0 3 * * *", "category": "schedule"},
                 {"key": "schedule.sample_interval_minutes", "value": "7", "category": "schedule"},
@@ -82,7 +84,7 @@ def test_schedule_config_update_does_not_fail_with_scheduler_lock(authed_client)
         },
     )
     assert response.status_code == 200
-    assert response.json()["data"]["updated"] == 4
+    assert response.json()["data"]["updated"] == 6
 
 
 def test_cloudflare_proxy_domain_can_be_allowed(monkeypatch, authed_client):

@@ -71,15 +71,19 @@ async def ensure_seed_persona() -> None:
             await db.commit()
 
 
-async def scheduled_generation_job() -> None:
+async def scheduled_generation_job(*, slot_index: int = 0, scheduled_for: str | None = None) -> None:
     async for _db, config_store, persona_engine, _memory_engine, _qa, _cost, _sensory, event_engine, orchestrator in _runtime():
         initialized = await config_store.get("system.initialized", "0")
         if initialized != "1":
             return
         event = await event_engine.create_scheduler_event(
             source="scheduler",
-            payload={"scheduled_at": utcnow_iso()},
-            semantic_hint="定时发文任务触发",
+            payload={
+                "scheduled_at": utcnow_iso(),
+                "scheduled_for": scheduled_for or utcnow_iso(),
+                "slot_index": slot_index,
+            },
+            semantic_hint="定时发文任务触发" if slot_index == 0 else f"定时补发任务触发 #{slot_index + 1}",
         )
         persona = await persona_engine.get_active_persona()
         await orchestrator.execute(event, persona=persona)

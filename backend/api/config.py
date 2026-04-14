@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date
+
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -48,6 +50,8 @@ async def update_config(
 ) -> object:
     changed_keys = {item.key for item in payload.items}
     await config_store.bulk_update([item.model_dump(exclude_unset=True) for item in payload.items])
+    if changed_keys.intersection({"schedule.days_per_cycle", "schedule.posts_per_cycle"}):
+        await config_store.set("schedule.cycle_anchor_date", date.today().isoformat(), category="schedule")
     runtime_status = await site_runtime.apply()
     await db.commit()
     if any(key.startswith("schedule.") for key in changed_keys):
