@@ -7,3 +7,24 @@
     <span>·</span>
     <a href="/index.xml">RSS</a>
 </div>
+<script>
+(() => {
+  if (typeof window === 'undefined' || typeof fetch !== 'function') return
+  if (window.location.pathname.startsWith('/admin')) return
+
+  const payload = {
+    path: window.location.pathname || '/',
+    page_title: document.title || '',
+    referrer: document.referrer || '',
+  }
+
+  window.addEventListener('load', () => {
+    fetch('/api/telemetry/page-view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => {})
+  }, { once: true })
+})()
+</script>

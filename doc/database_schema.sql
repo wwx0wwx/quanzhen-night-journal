@@ -46,6 +46,9 @@ INSERT OR IGNORE INTO system_config (key, value, category) VALUES
     ('site.subtitle',        '',                   'site'),
     ('site.domain',          '',                   'site'),
     ('site.domain_enabled',  '0',                  'site'),
+    ('site.domain_status',   'disabled',           'site'),
+    ('site.domain_reason',   '',                   'site'),
+    ('site.domain_checked_at', '',                 'site'),
     ('llm.base_url',         '',                   'llm'),
     ('llm.api_key',          '',                   'llm'),
     ('llm.model_id',         '',                   'llm'),
@@ -198,6 +201,23 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE INDEX IF NOT EXISTS idx_events_type ON events (event_type);
 CREATE INDEX IF NOT EXISTS idx_events_dedup ON events (dedup_key);
 CREATE INDEX IF NOT EXISTS idx_events_created ON events (created_at);
+
+-- ============================================================
+-- 6.1 公开访问统计 (Public Page Views)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS public_page_views (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    path            TEXT    NOT NULL DEFAULT '/',
+    page_title      TEXT    NOT NULL DEFAULT '',
+    referrer        TEXT    NOT NULL DEFAULT '',
+    ip_address      TEXT    NOT NULL DEFAULT '',
+    user_agent      TEXT    NOT NULL DEFAULT '',
+    created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_public_page_views_created ON public_page_views (created_at);
+CREATE INDEX IF NOT EXISTS idx_public_page_views_path_created ON public_page_views (path, created_at);
 
 -- ============================================================
 -- 7. 生成任务 (Generation Task)

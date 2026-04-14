@@ -18,6 +18,7 @@ from backend.api import (
     sensory,
     setup,
     tasks,
+    telemetry,
     webhook,
 )
 
@@ -33,6 +34,7 @@ router.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
 router.include_router(sensory.router, prefix="/sensory", tags=["sensory"])
 router.include_router(events.router, prefix="/events", tags=["events"])
 router.include_router(webhook.router, prefix="/webhook", tags=["webhook"])
+router.include_router(telemetry.router, prefix="/telemetry", tags=["telemetry"])
 router.include_router(cost.router, prefix="/cost", tags=["cost"])
 router.include_router(health.router, prefix="/health", tags=["health"])
 router.include_router(ghost.router, prefix="/ghost", tags=["ghost"])

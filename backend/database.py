@@ -86,6 +86,31 @@ async def init_database(settings: Settings | None = None) -> None:
             );
             """
         )
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS public_page_views (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                path TEXT NOT NULL DEFAULT '/',
+                page_title TEXT NOT NULL DEFAULT '',
+                referrer TEXT NOT NULL DEFAULT '',
+                ip_address TEXT NOT NULL DEFAULT '',
+                user_agent TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_public_page_views_created
+            ON public_page_views (created_at);
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_public_page_views_path_created
+            ON public_page_views (path, created_at);
+            """
+        )
         await _ensure_column(conn, "generation_tasks", "queue_wait_ms", "INTEGER NOT NULL DEFAULT 0")
         await _ensure_column(conn, "generation_tasks", "trace_json", "TEXT NOT NULL DEFAULT '[]'")
         await _ensure_column(conn, "generation_tasks", "error_code", "TEXT")

@@ -48,6 +48,15 @@ describe('Dashboard view', () => {
         },
       ],
       cost: { cost: 0.12, limit: 2 },
+      click_stats: { today_page_views: 27 },
+      domain_status: {
+        domain: 'iuaa.de',
+        enabled: true,
+        status: 'enabled',
+        reason: '域名解析与访问设置正常。',
+        checked_at: '2026-04-12T04:20:00+00:00',
+        base_url: 'https://iuaa.de/',
+      },
       persona_stability: 82,
       memory_coherence: 77,
       risk_overview: { failed: 1, circuit_open: 0, waiting_human_signoff: 1 },
@@ -88,6 +97,9 @@ describe('Dashboard view', () => {
     expect(wrapper.text()).toContain('人工签发（历史推断）')
     expect(wrapper.text()).toContain('大脑接入')
     expect(wrapper.text()).toContain('今日精力消耗')
+    expect(wrapper.text()).toContain('站点访问状态')
+    expect(wrapper.text()).toContain('当日点击数')
+    expect(wrapper.text()).toContain('27')
     expect(wrapper.text()).not.toContain('立即发文')
     expect(wrapper.text()).not.toContain('解除休眠')
   })
@@ -97,6 +109,15 @@ describe('Dashboard view', () => {
       recent_posts: [],
       recent_tasks: [],
       cost: { cost: 0, limit: 1 },
+      click_stats: { today_page_views: 0 },
+      domain_status: {
+        domain: '',
+        enabled: false,
+        status: 'disabled',
+        reason: '未配置域名，系统当前运行于 IP 模式。',
+        checked_at: '',
+        base_url: '/',
+      },
       persona_stability: 0,
       memory_coherence: 0,
       risk_overview: { failed: 0, circuit_open: 0, waiting_human_signoff: 0 },
@@ -122,5 +143,6 @@ describe('Dashboard view', () => {
     expect(wrapper.text()).toContain('还没有文章')
     expect(wrapper.text()).toContain('还没有任务记录')
     expect(wrapper.text()).toContain('可以开始今晚写作')
+    expect(wrapper.text()).toContain('当前为 IP 模式')
   })
 })

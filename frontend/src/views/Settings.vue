@@ -3,7 +3,7 @@
     <AppLoading
       v-if="isLoading"
       title="正在加载设置"
-      description="正在获取系统配置与域名状态，请稍候。"
+      description="正在获取系统配置，请稍候。"
     />
 
     <AppError
@@ -114,39 +114,6 @@
           </template>
         </SettingsSection>
 
-        <div class="panel panel-pad domain-status-card">
-          <div class="settings-section-head">
-            <div>
-              <h2>域名状态</h2>
-              <p class="muted">展示当前博客域名诊断结果与公开 Base URL。</p>
-            </div>
-            <div class="button-row">
-              <span class="tag" :class="domainStatus.enabled ? 'tag-success' : 'tag-warning'">
-                {{ domainStatus.enabled ? '已启用' : '未启用' }}
-              </span>
-              <span class="tag">{{ domainStatus.status || 'unknown' }}</span>
-            </div>
-          </div>
-
-          <div class="domain-status-grid">
-            <div class="metric">
-              <div class="muted">域名</div>
-              <strong>{{ domainStatus.domain || '未配置' }}</strong>
-            </div>
-            <div class="metric">
-              <div class="muted">Base URL</div>
-              <strong>{{ domainStatus.base_url || '/' }}</strong>
-            </div>
-            <div class="metric">
-              <div class="muted">最近检查时间</div>
-              <strong>{{ domainStatus.checked_at || '-' }}</strong>
-            </div>
-          </div>
-
-          <div class="status-banner info">
-            {{ domainStatus.reason || '尚未生成域名诊断信息。' }}
-          </div>
-        </div>
       </template>
     </template>
   </section>
@@ -163,19 +130,7 @@ import SettingsSection from '../components/settings/SettingsSection.vue'
 import { settingFields, settingsSections } from '../config/settingsSchema'
 import { describeError } from '../utils/errors'
 
-function createDomainStatus() {
-  return {
-    domain: '',
-    enabled: false,
-    status: 'disabled',
-    reason: '',
-    checked_at: '',
-    base_url: '/',
-  }
-}
-
 const formValues = reactive({})
-const domainStatus = reactive(createDomainStatus())
 const fieldMeta = reactive({})
 
 const isLoading = ref(true)
@@ -325,19 +280,12 @@ function updateField(key, value) {
   saveSuccess.value = ''
 }
 
-async function loadDomainStatus() {
-  Object.assign(domainStatus, createDomainStatus(), await unwrap(api.get('/config/status/domain')))
-}
-
 async function load() {
   isLoading.value = true
   loadError.value = ''
 
   try {
-    const [configData, domainData] = await Promise.all([
-      unwrap(api.get('/config')),
-      unwrap(api.get('/config/status/domain')),
-    ]) 
+    const configData = await unwrap(api.get('/config'))
 
     for (const field of settingFields) {
       formValues[field.key] = normalizeValue(field, configData[field.key]?.value)
@@ -347,7 +295,6 @@ async function load() {
       }
     }
 
-    Object.assign(domainStatus, createDomainStatus(), domainData)
     initialSnapshot.value = createSnapshot()
     hasLoaded.value = true
   } catch (error) {
@@ -372,7 +319,6 @@ async function save() {
       return
     }
     const result = await unwrap(api.put('/config', { items }))
-    await loadDomainStatus()
     initialSnapshot.value = createSnapshot()
     broadcastPanelConfig()
     saveSuccess.value = result.site_runtime?.reason || '配置已保存。'

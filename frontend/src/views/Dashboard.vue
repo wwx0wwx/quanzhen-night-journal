@@ -22,6 +22,48 @@
         </div>
       </div>
 
+      <div class="panel panel-pad stack">
+        <div class="settings-section-head">
+          <div>
+            <h2>站点访问状态</h2>
+            <p class="muted">先看公开访问是否正常，再看系统状态与风险。</p>
+          </div>
+          <div class="button-row">
+            <span class="tag" :class="data.domain_status.enabled ? 'tag-success' : 'tag-warning'">
+              {{ data.domain_status.enabled ? '域名已启用' : '当前为 IP 模式' }}
+            </span>
+            <span class="tag">{{ data.domain_status.status || 'unknown' }}</span>
+          </div>
+        </div>
+
+        <div class="card-row">
+          <div class="metric">
+            <div class="muted">绑定域名</div>
+            <strong>{{ data.domain_status.domain || '未配置' }}</strong>
+            <div class="muted">只填域名时，这里会显示当前公开入口。</div>
+          </div>
+          <div class="metric">
+            <div class="muted">公开地址</div>
+            <strong>{{ data.domain_status.base_url || '/' }}</strong>
+            <div class="muted">博客前台当前对外使用的 Base URL。</div>
+          </div>
+          <div class="metric">
+            <div class="muted">最近检查时间</div>
+            <strong>{{ data.domain_status.checked_at || '-' }}</strong>
+            <div class="muted">用于确认域名诊断是否已刷新。</div>
+          </div>
+          <div class="metric">
+            <div class="muted">当日点击数</div>
+            <strong>{{ Number(data.click_stats.today_page_views || 0) }}</strong>
+            <div class="muted">统计公开博客页面今日累计访问次数。</div>
+          </div>
+        </div>
+
+        <div class="status-banner info">
+          {{ data.domain_status.reason || '尚未生成站点访问诊断。' }}
+        </div>
+      </div>
+
       <div class="stack" v-if="configWarnings.length">
         <div v-for="item in configWarnings" :key="item" class="status-banner warning">{{ item }}</div>
       </div>
@@ -186,6 +228,15 @@ function createDashboardState() {
     recent_posts: [],
     recent_tasks: [],
     cost: { cost: 0, limit: 1 },
+    click_stats: { today_page_views: 0 },
+    domain_status: {
+      domain: '',
+      enabled: false,
+      status: 'disabled',
+      reason: '',
+      checked_at: '',
+      base_url: '/',
+    },
     persona_stability: 0,
     memory_coherence: 0,
     risk_overview: { failed: 0, circuit_open: 0, waiting_human_signoff: 0 },

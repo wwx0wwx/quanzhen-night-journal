@@ -119,6 +119,18 @@ class Event(Base):
     )
 
 
+class PublicPageView(Base):
+    __tablename__ = "public_page_views"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    path: Mapped[str] = mapped_column(Text, nullable=False, default="/")
+    page_title: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    referrer: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    ip_address: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    user_agent: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class GenerationTask(Base):
     __tablename__ = "generation_tasks"
 

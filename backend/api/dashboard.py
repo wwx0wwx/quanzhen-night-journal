@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import Counter
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.deps import get_config_store, get_cost_monitor, get_memory_engine, get_persona_engine
@@ -13,9 +13,10 @@ from backend.engine.config_store import ConfigStore
 from backend.engine.cost_monitor import CostMonitor
 from backend.engine.memory_engine import MemoryEngine
 from backend.engine.persona_engine import PersonaEngine
-from backend.models import GenerationTask, Post
+from backend.models import GenerationTask, Post, PublicPageView
 from backend.security.auth import get_current_user
 from backend.utils.response import success
+from datetime import date
 router = APIRouter()
 
 
@@ -94,6 +95,18 @@ async def dashboard(
     )
     system_initialized = (await config_store.get("system.initialized", "0")) == "1"
     domain_enabled = (await config_store.get("site.domain_enabled", "0")) == "1"
+    today_prefix = date.today().isoformat()
+    today_page_views = await db.scalar(
+        select(func.count(PublicPageView.id)).where(PublicPageView.created_at.like(f"{today_prefix}%"))
+    ) or 0
+    domain_status = {
+        "domain": await config_store.get("site.domain", "") or "",
+        "enabled": domain_enabled,
+        "status": await config_store.get("site.domain_status", "disabled") or "disabled",
+        "reason": await config_store.get("site.domain_reason", "") or "",
+        "checked_at": await config_store.get("site.domain_checked_at", "") or "",
+        "base_url": await config_store.get("hugo.base_url", "/") or "/",
+    }
 
     return success(
         {
@@ -108,6 +121,10 @@ async def dashboard(
                 "waiting_human_signoff": task_counter["waiting_human_signoff"],
             },
             "attention_items": attention_items[:5],
+            "domain_status": domain_status,
+            "click_stats": {
+                "today_page_views": int(today_page_views),
+            },
             "config_status": {
                 "system_initialized": system_initialized,
                 "llm_ready": llm_ready,
