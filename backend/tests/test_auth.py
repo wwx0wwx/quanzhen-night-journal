@@ -140,3 +140,6 @@ def test_audit_exposes_processed_event_for_task_logs(authed_client):
     assert audit.status_code == 200
     items = audit.json()["data"]["items"]
     assert any(item["processed_event"] == normalized_semantic for item in items)
+    assert any(item["display_action"] == "任务状态变更" for item in items)
+    assert any(item["display_target"].startswith("写作任务 #") for item in items)
+    assert any(item["event_mapping"] == normalized_semantic for item in items)

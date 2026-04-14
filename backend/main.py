@@ -20,6 +20,7 @@ from backend.models import GenerationTask, Persona, SystemConfig
 from backend.scheduler.jobs import ensure_seed_persona
 from backend.scheduler.scheduler import setup_scheduler
 from backend.utils.audit import log_audit
+from backend.utils.audit_catalog import ensure_audit_event_definitions
 from backend.utils.legacy_import import import_legacy_assets
 from backend.utils.response import error
 from backend.utils.time import utcnow_iso
@@ -46,6 +47,7 @@ async def startup_self_check() -> None:
     settings.validate_runtime()
     session_factory = get_sessionmaker()
     async with session_factory() as db:
+        await ensure_audit_event_definitions(db)
         stuck_rows = await db.scalars(
             select(GenerationTask).where(
                 GenerationTask.status.notin_(["published", "failed", "circuit_open", "aborted", "draft_saved"])

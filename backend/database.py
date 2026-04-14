@@ -75,6 +75,17 @@ async def init_database(settings: Settings | None = None) -> None:
             );
             """
         )
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS audit_event_definitions (
+                action TEXT PRIMARY KEY,
+                display_name TEXT NOT NULL,
+                target_label TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            """
+        )
         await _ensure_column(conn, "generation_tasks", "queue_wait_ms", "INTEGER NOT NULL DEFAULT 0")
         await _ensure_column(conn, "generation_tasks", "trace_json", "TEXT NOT NULL DEFAULT '[]'")
         await _ensure_column(conn, "generation_tasks", "error_code", "TEXT")

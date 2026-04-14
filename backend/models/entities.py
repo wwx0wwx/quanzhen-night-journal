@@ -222,6 +222,16 @@ class AuditLog(Base):
     severity: Mapped[str] = mapped_column(Text, nullable=False, default="info")
 
 
+class AuditEventDefinition(Base):
+    __tablename__ = "audit_event_definitions"
+
+    action: Mapped[str] = mapped_column(Text, primary_key=True)
+    display_name: Mapped[str] = mapped_column(Text, nullable=False)
+    target_label: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[str] = mapped_column(Text, nullable=False)
+    updated_at: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class CostRecord(Base):
     __tablename__ = "cost_records"
 

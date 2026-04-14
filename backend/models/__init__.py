@@ -1,6 +1,7 @@
 from backend.models.base import Base
 from backend.models.entities import (
     AuditLog,
+    AuditEventDefinition,
     CostRecord,
     Event,
     FolderMonitor,
@@ -18,6 +19,7 @@ from backend.models.entities import (
 
 __all__ = [
     "AuditLog",
+    "AuditEventDefinition",
     "Base",
     "CostRecord",
     "Event",
