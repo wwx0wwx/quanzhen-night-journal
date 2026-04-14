@@ -88,6 +88,8 @@ describe('Dashboard view', () => {
     expect(wrapper.text()).toContain('人工签发（历史推断）')
     expect(wrapper.text()).toContain('大脑接入')
     expect(wrapper.text()).toContain('今日精力消耗')
+    expect(wrapper.text()).not.toContain('立即发文')
+    expect(wrapper.text()).not.toContain('解除休眠')
   })
 
   it('renders empty states when there are no posts or tasks', async () => {

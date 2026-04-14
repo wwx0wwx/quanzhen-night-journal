@@ -18,21 +18,11 @@
       <div class="hero">
         <div>
           <h1>运营总览</h1>
-          <p>先看系统结论和下一步，再决定今天是否继续发文。</p>
-        </div>
-        <div class="button-row">
-          <button class="btn primary" type="button" :disabled="actionBusy" @click="triggerTask">
-            {{ isTriggering ? '发文中…' : '立即发文' }}
-          </button>
-          <button class="btn ghost" type="button" :disabled="actionBusy" @click="wakeUp">
-            {{ isWakingUp ? '处理中…' : '解除休眠' }}
-          </button>
+          <p>这里仅保留状态、风险和成本展示，实际发文与休眠操作请去文章页处理。</p>
         </div>
       </div>
 
-      <div class="stack" v-if="actionError || actionSuccess || configWarnings.length">
-        <div v-if="actionError" class="status-banner error">{{ actionError }}</div>
-        <div v-if="actionSuccess" class="status-banner success">{{ actionSuccess }}</div>
+      <div class="stack" v-if="configWarnings.length">
         <div v-for="item in configWarnings" :key="item" class="status-banner warning">{{ item }}</div>
       </div>
 
@@ -153,10 +143,7 @@
           v-if="!data.recent_posts.length"
           inline
           title="还没有文章"
-          description="可以先触发一次生成，确认当前模型和配置工作正常。"
-          :action-label="isTriggering ? '' : '立即发文'"
-          :disabled="actionBusy"
-          @action="triggerTask"
+          description="去文章页手动发文或新建文章后，这里会显示最近内容。"
         />
 
         <div v-else class="list">
@@ -216,12 +203,6 @@ const data = reactive(createDashboardState())
 const isLoading = ref(true)
 const loadError = ref('')
 const hasLoadedOnce = ref(false)
-const isTriggering = ref(false)
-const isWakingUp = ref(false)
-const actionError = ref('')
-const actionSuccess = ref('')
-
-const actionBusy = computed(() => isTriggering.value || isWakingUp.value)
 const totalRiskCount = computed(
   () => Number(data.risk_overview.failed || 0) + Number(data.risk_overview.circuit_open || 0) + Number(data.risk_overview.waiting_human_signoff || 0),
 )
@@ -337,45 +318,9 @@ async function load(showLoading = !hasLoadedOnce.value) {
     hasLoadedOnce.value = true
     loadError.value = ''
   } catch (error) {
-    const message = describeError(error, '加载总览失败，请稍后重试。')
-    if (!hasLoadedOnce.value) loadError.value = message
-    else actionError.value = message
+    loadError.value = describeError(error, '加载总览失败，请稍后重试。')
   } finally {
     if (showLoading) isLoading.value = false
-  }
-}
-
-async function triggerTask() {
-  if (actionBusy.value) return
-
-  actionError.value = ''
-  actionSuccess.value = ''
-  isTriggering.value = true
-  try {
-    const result = await unwrap(api.post('/tasks/trigger', { trigger_source: 'manual', semantic_hint: '请开始今晚的写作' }))
-    actionSuccess.value = `任务 #${result.id} 已创建。`
-    await load(false)
-  } catch (error) {
-    actionError.value = describeError(error, '触发任务失败，请稍后重试。')
-  } finally {
-    isTriggering.value = false
-  }
-}
-
-async function wakeUp() {
-  if (actionBusy.value) return
-
-  actionError.value = ''
-  actionSuccess.value = ''
-  isWakingUp.value = true
-  try {
-    await unwrap(api.post('/cost/wake-up'))
-    actionSuccess.value = '系统已解除休眠。'
-    await load(false)
-  } catch (error) {
-    actionError.value = describeError(error, '解除休眠失败，请稍后重试。')
-  } finally {
-    isWakingUp.value = false
   }
 }
 

@@ -3,9 +3,15 @@
     <div class="hero">
       <div>
         <h1>文章管理</h1>
-        <p>先看内容本身，再决定审核、发布或归档。</p>
+        <p>这里负责发文、解除休眠，以及文章的审核、发布和归档。</p>
       </div>
       <div class="button-row">
+        <button class="btn primary" type="button" :disabled="actionBusy" @click="triggerTask">
+          {{ isTriggering ? '发文中…' : '立即发文' }}
+        </button>
+        <button class="btn ghost" type="button" :disabled="actionBusy" @click="wakeUp">
+          {{ isWakingUp ? '处理中…' : '解除休眠' }}
+        </button>
         <button class="btn ghost" type="button" :disabled="isLoading" @click="load">刷新</button>
         <RouterLink class="btn primary" to="/admin/posts/new">新建文章</RouterLink>
       </div>
@@ -62,7 +68,7 @@
     <AppEmpty
       v-else-if="!posts.length"
       title="还没有文章"
-      description="可以先手动新建一篇，或从总览页触发一次自动生成。"
+      description="可以先手动新建一篇，或直接在这里触发一次自动生成。"
       action-label="新建文章"
       @action="router.push('/admin/posts/new')"
     />
@@ -187,7 +193,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { api, unwrap } from '../api'
@@ -211,6 +217,10 @@ const loadError = ref('')
 const activeActionKey = ref('')
 const actionError = ref('')
 const actionSuccess = ref('')
+const isTriggering = ref(false)
+const isWakingUp = ref(false)
+
+const actionBusy = computed(() => !!activeActionKey.value || isTriggering.value || isWakingUp.value)
 
 function personaName(personaId) {
   if (!personaId) return '未指定'
@@ -273,7 +283,7 @@ async function load() {
 }
 
 async function runAction(post, action) {
-  if (activeActionKey.value) return
+  if (actionBusy.value) return
   if (!window.confirm(confirmMessage(post, action))) return
 
   actionError.value = ''
@@ -289,6 +299,39 @@ async function runAction(post, action) {
     actionError.value = describeError(error, '文章操作失败，请稍后重试。')
   } finally {
     activeActionKey.value = ''
+  }
+}
+
+async function triggerTask() {
+  if (actionBusy.value) return
+
+  actionError.value = ''
+  actionSuccess.value = ''
+  isTriggering.value = true
+  try {
+    const result = await unwrap(api.post('/tasks/trigger', { trigger_source: 'manual', semantic_hint: '请开始今晚的写作' }))
+    actionSuccess.value = `任务 #${result.id} 已创建。`
+    await load()
+  } catch (error) {
+    actionError.value = describeError(error, '触发任务失败，请稍后重试。')
+  } finally {
+    isTriggering.value = false
+  }
+}
+
+async function wakeUp() {
+  if (actionBusy.value) return
+
+  actionError.value = ''
+  actionSuccess.value = ''
+  isWakingUp.value = true
+  try {
+    await unwrap(api.post('/cost/wake-up'))
+    actionSuccess.value = '系统已解除休眠。'
+  } catch (error) {
+    actionError.value = describeError(error, '解除休眠失败，请稍后重试。')
+  } finally {
+    isWakingUp.value = false
   }
 }
 
