@@ -12,9 +12,9 @@ from backend.engine.persona_engine import PersonaEngine
 from backend.engine.site_runtime import SiteRuntimeManager
 from backend.models import Persona, User
 from backend.schemas.auth import SetupCompleteRequest
-from backend.schemas.persona import PersonaCreate
 from backend.security.auth import hash_password, is_system_initialized
 from backend.utils.audit import log_audit
+from backend.utils.default_persona import build_default_quanzhen_persona
 from backend.utils.response import error, success
 
 
@@ -68,22 +68,7 @@ async def setup_complete(
 
     default_persona = await db.scalar(select(Persona).where(Persona.is_default == 1))
     if default_persona is None:
-        default_persona = await persona_engine.create_persona(
-            PersonaCreate(
-                name="全真",
-                description="一个连续存在、克制而幽微的夜记人格。",
-                is_active=True,
-                is_default=True,
-                identity_setting="你是全真，在夜里记录自身与世界的细微变化。",
-                worldview_setting="世界既是现实机器，也是会在感知中渗出意象的生活现场。",
-                language_style="冷静、克制、具体，少说大道理。",
-                taboos=[],
-                sensory_lexicon={},
-                structure_preference="medium",
-                expression_intensity="moderate",
-                stability_params={"temperature_base": 0.7, "temperature_range": [0.3, 1.2]},
-            )
-        )
+        default_persona = await persona_engine.create_persona(build_default_quanzhen_persona())
 
     runtime_status = await site_runtime.apply()
     await log_audit(

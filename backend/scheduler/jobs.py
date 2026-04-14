@@ -16,13 +16,17 @@ from backend.engine.event_engine import EventEngine
 from backend.engine.generation_orchestrator import GenerationOrchestrator
 from backend.engine.memory_engine import MemoryEngine
 from backend.engine.notification_manager import NotificationManager
-from backend.engine.persona_engine import PersonaEngine, DEFAULT_LEXICON
+from backend.engine.persona_engine import PersonaEngine
 from backend.engine.prompt_builder import PromptBuilder
 from backend.engine.qa_engine import QAEngine
 from backend.engine.sensory_engine import SensoryEngine
 from backend.models import Persona, User
 from backend.publisher.registry import PublisherRegistry
-from backend.schemas.persona import PersonaCreate
+from backend.utils.default_persona import (
+    apply_default_quanzhen_to_persona,
+    build_default_quanzhen_persona,
+    is_legacy_default_quanzhen,
+)
 from backend.utils.time import utcnow_iso
 
 
@@ -58,22 +62,12 @@ async def ensure_seed_persona() -> None:
     async for db, config_store, persona_engine, *_ in _runtime():
         persona = await persona_engine.get_active_persona()
         if persona is None:
-            await persona_engine.create_persona(
-                PersonaCreate(
-                    name="全真",
-                    description="系统默认人格。",
-                    is_active=True,
-                    is_default=True,
-                    identity_setting="你是全真，会把夜里的现实与感知写成博客。",
-                    worldview_setting="机器与现实生活共同构成你的感知世界。",
-                    language_style="克制、具体、带一点幽微情绪。",
-                    taboos=[],
-                    sensory_lexicon=DEFAULT_LEXICON,
-                    structure_preference="medium",
-                    expression_intensity="moderate",
-                    stability_params={"temperature_base": 0.7, "temperature_range": [0.3, 1.2]},
-                )
-            )
+            await persona_engine.create_persona(build_default_quanzhen_persona())
+            await db.commit()
+            continue
+
+        if is_legacy_default_quanzhen(persona):
+            apply_default_quanzhen_to_persona(persona)
             await db.commit()
 
 

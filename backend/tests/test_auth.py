@@ -31,6 +31,11 @@ def test_setup_and_login_flow(client):
     )
     assert setup.status_code == 200
     assert setup.json()["data"]["system_initialized"] is True
+    default_persona = setup.json()["data"]["default_persona"]
+    assert default_persona["name"] == "全真"
+    assert "王爷" in default_persona["identity_setting"]
+    assert "武侠" in default_persona["worldview_setting"]
+    assert any("不要让全真真正实施伤害王爷或姐姐" in item for item in default_persona["taboos"])
 
     login = client.post("/api/auth/login", json={"username": "admin", "password": "quanzhen123"})
     assert login.status_code == 200
