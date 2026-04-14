@@ -117,19 +117,12 @@ const sections = [
     ],
   },
   {
-    id: 'observe',
-    label: '观察',
-    to: '/admin/observatory',
-    items: [
-      { label: '观测中心', to: '/admin/observatory' },
-    ],
-  },
-  {
     id: 'advanced',
     label: '高级',
     to: '/admin/ghost',
     items: [
       { label: '迁移与备份', to: '/admin/ghost' },
+      { label: '系统日志', to: '/admin/audit' },
     ],
   },
 ]

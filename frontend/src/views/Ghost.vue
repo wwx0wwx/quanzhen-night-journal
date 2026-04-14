@@ -2,8 +2,8 @@
   <section class="stack">
     <div class="hero">
       <div>
-        <h1>Ghost 迁移</h1>
-        <p>管理导出、预览和导入，明确看到文件、冲突和恢复结果。</p>
+        <h1>迁移与备份</h1>
+        <p>管理 .ghost 导出、预览和导入，明确看到文件、冲突和恢复结果。</p>
       </div>
       <button class="btn primary" type="button" :disabled="isExporting" @click="exportGhost">
         {{ isExporting ? '导出中…' : '导出 .ghost' }}

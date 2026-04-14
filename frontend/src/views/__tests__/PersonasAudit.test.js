@@ -77,6 +77,7 @@ describe('Personas and Audit views', () => {
           target_id: '7',
           ip_address: '127.0.0.1',
           detail: { to: 'waiting_human_signoff' },
+          processed_event: '夜里下雨，机房风扇声更清楚了',
         },
       ],
       total: 1,
@@ -87,6 +88,7 @@ describe('Personas and Audit views', () => {
 
     expect(wrapper.text()).toContain('task.status_change')
     expect(wrapper.text()).toContain('waiting_human_signoff')
+    expect(wrapper.text()).toContain('夜里下雨，机房风扇声更清楚了')
     expect(wrapper.text()).toContain('第 1 / 1 页，共 1 条')
   })
 })

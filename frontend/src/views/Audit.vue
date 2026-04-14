@@ -70,6 +70,10 @@
               <dd>{{ item.target_type || '-' }} #{{ item.target_id || '-' }}</dd>
             </div>
             <div>
+              <dt>加工后事件</dt>
+              <dd class="processed-event">{{ item.processed_event || '-' }}</dd>
+            </div>
+            <div>
               <dt>来源 IP</dt>
               <dd>{{ item.ip_address || '-' }}</dd>
             </div>
@@ -172,3 +176,10 @@ function exportCurrent() {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.processed-event {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+</style>

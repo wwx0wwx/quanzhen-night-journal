@@ -5,7 +5,8 @@ import asyncio
 from sqlalchemy import select
 
 from backend.database import get_sessionmaker
-from backend.models import SystemConfig, User
+from backend.models import Event, GenerationTask, Persona, SystemConfig, User
+from backend.utils.audit import log_audit
 
 
 def test_setup_and_login_flow(client):
@@ -86,3 +87,56 @@ def test_startup_self_heal_actions_are_audited(authed_client):
     assert "system.ensure_seed_persona" in actions
     assert "system.apply_site_runtime" in actions
     assert any(action.startswith("system.") for action in actions)
+
+
+def test_audit_exposes_processed_event_for_task_logs(authed_client):
+    normalized_semantic = "雨声被机柜冷光磨得更薄。"
+
+    async def _seed() -> None:
+        async with get_sessionmaker()() as db:
+            persona = await db.scalar(select(Persona).where(Persona.is_default == 1))
+            assert persona is not None
+
+            task = GenerationTask(
+                trigger_source="manual_test",
+                event_id=None,
+                persona_id=persona.id,
+                context_snapshot="{}",
+                memory_hits="[]",
+                prompt_summary="{}",
+                qa_result="{}",
+                started_at="2026-04-15T00:00:00+00:00",
+            )
+            db.add(task)
+            await db.flush()
+
+            event = Event(
+                event_type="manual_test",
+                source="pytest",
+                raw_payload="{}",
+                normalized_semantic=normalized_semantic,
+                auth_status="not_required",
+                cooldown_status="ready",
+                created_at="2026-04-15T00:00:01+00:00",
+                task_id=task.id,
+            )
+            db.add(event)
+            await db.flush()
+
+            task.event_id = event.id
+            await log_audit(
+                db,
+                "system",
+                "task.status_change",
+                "task",
+                str(task.id),
+                {"to": "queued"},
+            )
+            await db.commit()
+
+    asyncio.run(_seed())
+
+    audit = authed_client.get("/api/audit", params={"action": "task.status_change"})
+    assert audit.status_code == 200
+    items = audit.json()["data"]["items"]
+    assert any(item["processed_event"] == normalized_semantic for item in items)
