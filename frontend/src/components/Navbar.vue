@@ -2,10 +2,10 @@
   <header class="nav-wrap">
     <div class="nav-inner panel">
       <div class="nav-brand">
-        <div class="brand">全真夜记</div>
+        <div class="brand">{{ brandTitle }}</div>
         <div class="brand-status">
           <span class="brand-status-dot"></span>
-          <span>{{ auth.username || 'admin' }} 正在守夜</span>
+          <span>{{ brandStatus }}</span>
         </div>
       </div>
 
@@ -90,9 +90,10 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import { api, unwrap } from '../api'
 import { useAuthStore } from '../stores/auth'
 
 const overview = { label: '总览', to: '/admin/' }
@@ -131,6 +132,11 @@ const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 const drawerOpen = ref(false)
+const branding = reactive({
+  siteTitle: '',
+  panelTitle: '',
+  panelStatusText: '{user} 正在守夜',
+})
 
 const isOverviewActive = computed(() => route.path === overview.to)
 const currentSection = computed(() => sections.find((section) => isSectionActive(section)) || null)
@@ -138,6 +144,8 @@ const showSubmenu = computed(() => {
   if (!currentSection.value) return false
   return currentSection.value.items.length > 1 || currentSection.value.id === 'advanced'
 })
+const brandTitle = computed(() => branding.panelTitle.trim() || branding.siteTitle.trim() || '全真夜记')
+const brandStatus = computed(() => renderStatusText(branding.panelStatusText))
 
 function isActive(path) {
   if (path === overview.to) return route.path === path
@@ -148,6 +156,42 @@ function isSectionActive(section) {
   return section.items.some((item) => isActive(item.to))
 }
 
+function renderStatusText(template) {
+  const value = String(template || '').trim() || '{user} 正在守夜'
+  return value.includes('{user}')
+    ? value.replaceAll('{user}', auth.username || 'admin')
+    : value
+}
+
+function applyBranding(detail = {}) {
+  if (Object.prototype.hasOwnProperty.call(detail, 'site.title')) {
+    branding.siteTitle = String(detail['site.title'] || '')
+  }
+  if (Object.prototype.hasOwnProperty.call(detail, 'panel.title')) {
+    branding.panelTitle = String(detail['panel.title'] || '')
+  }
+  if (Object.prototype.hasOwnProperty.call(detail, 'panel.status_text')) {
+    branding.panelStatusText = String(detail['panel.status_text'] || '')
+  }
+}
+
+async function loadBranding() {
+  try {
+    const data = await unwrap(api.get('/config'))
+    applyBranding({
+      'site.title': data['site.title']?.value,
+      'panel.title': data['panel.title']?.value,
+      'panel.status_text': data['panel.status_text']?.value,
+    })
+  } catch {
+    // Keep local fallbacks when config cannot be loaded.
+  }
+}
+
+function handleConfigUpdated(event) {
+  applyBranding(event.detail || {})
+}
+
 async function handleLogout() {
   drawerOpen.value = false
   await auth.logout()
@@ -156,6 +200,15 @@ async function handleLogout() {
 
 watch(() => route.path, () => {
   drawerOpen.value = false
+})
+
+onMounted(async () => {
+  window.addEventListener('admin-config-updated', handleConfigUpdated)
+  await loadBranding()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('admin-config-updated', handleConfigUpdated)
 })
 </script>
 

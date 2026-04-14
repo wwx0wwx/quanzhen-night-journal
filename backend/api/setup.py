@@ -64,6 +64,9 @@ async def setup_complete(
     await config_store.set("embedding.base_url", payload.embedding_base_url, category="embedding")
     await config_store.set("embedding.api_key", payload.embedding_api_key, category="embedding", encrypted=True)
     await config_store.set("embedding.model_id", payload.embedding_model_id, category="embedding")
+    await config_store.set("budget.daily_limit_usd", "99999", category="budget")
+    await config_store.set("budget.monthly_limit_usd", "99999", category="budget")
+    await config_store.set("panel.status_text", "{user} 正在守夜", category="panel")
     await config_store.set("system.initialized", "1", category="system")
 
     default_persona = await db.scalar(select(Persona).where(Persona.is_default == 1))

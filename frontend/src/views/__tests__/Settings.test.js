@@ -23,6 +23,8 @@ function makeConfig() {
     'site.title': { value: '全真夜记', category: 'site', encrypted: false },
     'site.subtitle': { value: '', category: 'site', encrypted: false },
     'site.domain': { value: 'iuaa.de', category: 'site', encrypted: false },
+    'panel.title': { value: '', category: 'panel', encrypted: false },
+    'panel.status_text': { value: '{user} 正在守夜', category: 'panel', encrypted: false },
     'llm.base_url': { value: 'https://688.qzz.io/v1', category: 'llm', encrypted: false },
     'llm.api_key': { value: '******', category: 'llm', encrypted: true },
     'llm.model_id': { value: 'Qwen--3.5-max', category: 'llm', encrypted: false },
@@ -34,8 +36,8 @@ function makeConfig() {
     'schedule.review_cron': { value: '0 3 * * 0', category: 'schedule', encrypted: false },
     'schedule.decay_cron': { value: '0 4 * * *', category: 'schedule', encrypted: false },
     'schedule.sample_interval_minutes': { value: '5', category: 'schedule', encrypted: false },
-    'budget.daily_limit_usd': { value: '1.00', category: 'budget', encrypted: false },
-    'budget.monthly_limit_usd': { value: '20.00', category: 'budget', encrypted: false },
+    'budget.daily_limit_usd': { value: '99999', category: 'budget', encrypted: false },
+    'budget.monthly_limit_usd': { value: '99999', category: 'budget', encrypted: false },
     'qa.max_retries': { value: '3', category: 'qa', encrypted: false },
     'qa.min_length': { value: '200', category: 'qa', encrypted: false },
     'qa.max_length': { value: '5000', category: 'qa', encrypted: false },
@@ -91,14 +93,16 @@ describe('Settings view', () => {
 
     expect(wrapper.text()).toContain('当前发文结论')
     expect(wrapper.text()).toContain('发文能力受限')
+    expect(wrapper.text()).toContain('博客信息')
+    expect(wrapper.text()).toContain('面板设置')
     expect(wrapper.text()).toContain('大脑接入（LLM）')
     expect(wrapper.text()).toContain('记忆检索（Embedding）')
     expect(wrapper.text()).toContain('测试大脑接入')
     expect(wrapper.text()).toContain('测试记忆检索')
 
     const fields = wrapper.findAll('.field')
-    const dailyField = fields.find((item) => item.text().includes('每日预算（USD）'))
-    const monthlyField = fields.find((item) => item.text().includes('每月预算（USD）'))
+    const dailyField = fields.find((item) => item.text().includes('每日预算上限（USD）'))
+    const monthlyField = fields.find((item) => item.text().includes('每月预算上限（USD）'))
     await dailyField.find('input').setValue('100')
     await monthlyField.find('input').setValue('2000')
     await wrapper.find('button.btn.primary').trigger('click')

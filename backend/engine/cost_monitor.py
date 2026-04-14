@@ -51,7 +51,7 @@ class CostMonitor:
         return record
 
     async def check_budget(self) -> BudgetStatus:
-        limit = float(await self.config_store.get("budget.daily_limit_usd", "1.00") or 1.0)
+        limit = float(await self.config_store.get("budget.daily_limit_usd", "99999") or 99999.0)
         today_prefix = date.today().isoformat()
         spent = await self.db.scalar(
             select(func.coalesce(func.sum(CostRecord.cost_estimate), 0.0)).where(

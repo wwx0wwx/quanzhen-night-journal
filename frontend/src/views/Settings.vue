@@ -18,7 +18,7 @@
       <div class="hero settings-hero">
         <div>
           <h1>系统设置</h1>
-          <p>按业务分组维护站点信息、大脑接入、记忆检索、预算和质量策略。</p>
+          <p>按业务分组维护博客信息、面板显示、大脑接入、记忆检索与发文节奏。</p>
         </div>
         <div class="settings-toolbar">
           <div class="button-row">
@@ -194,7 +194,7 @@ const isDirty = computed(() => hasLoaded.value && createSnapshot() !== initialSn
 const isBusy = computed(() => isSaving.value || isTestingLLM.value || isTestingEmbedding.value)
 const llmReady = computed(() => hasValue('llm.base_url') && hasValue('llm.model_id') && hasSecretValue('llm.api_key'))
 const embeddingReady = computed(() => hasValue('embedding.base_url') && hasValue('embedding.model_id') && hasSecretValue('embedding.api_key'))
-const automationReady = computed(() => Number(formValues['schedule.posts_per_day'] || 0) > 0 && hasValue('schedule.cron_expression'))
+const automationReady = computed(() => Number(formValues['schedule.posts_per_day'] || 0) > 0)
 const configConclusion = computed(() => {
   if (!hasValue('site.title') || !llmReady.value) {
     return {
@@ -219,7 +219,7 @@ const configConclusion = computed(() => {
   }
   return {
     label: '可正常自动发文',
-    description: '站点信息、大脑接入、记忆检索和调度配置已达到自动发文要求。',
+    description: '博客信息、大脑接入、记忆检索和发文节奏已达到自动发文要求。',
     className: 'tag-success',
   }
 })
@@ -237,6 +237,7 @@ function inferCategory(key) {
   const prefix = key.split('.')[0]
   const categoryMap = {
     site: 'site',
+    panel: 'panel',
     llm: 'llm',
     embedding: 'embedding',
     schedule: 'schedule',
@@ -252,6 +253,9 @@ function inferCategory(key) {
 }
 
 function normalizeValue(field, rawValue) {
+  if ((rawValue === undefined || rawValue === null) && Object.prototype.hasOwnProperty.call(field, 'defaultValue')) {
+    return field.defaultValue
+  }
   if (field.type === 'boolean') {
     const value = String(rawValue ?? '').trim().toLowerCase()
     return ['1', 'true', 'yes', 'on'].includes(value)
@@ -302,6 +306,17 @@ function resetTransientMessages() {
   saveSuccess.value = ''
   testError.value = ''
   testSuccess.value = ''
+}
+
+function broadcastPanelConfig() {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent('admin-config-updated', {
+    detail: {
+      'site.title': serializeValue({ type: 'text' }, formValues['site.title']),
+      'panel.title': serializeValue({ type: 'text' }, formValues['panel.title']),
+      'panel.status_text': serializeValue({ type: 'text' }, formValues['panel.status_text']),
+    },
+  }))
 }
 
 function updateField(key, value) {
@@ -359,6 +374,7 @@ async function save() {
     const result = await unwrap(api.put('/config', { items }))
     await loadDomainStatus()
     initialSnapshot.value = createSnapshot()
+    broadcastPanelConfig()
     saveSuccess.value = result.site_runtime?.reason || '配置已保存。'
   } catch (error) {
     saveError.value = describeError(error, '保存配置失败，请检查填写内容后重试。')
