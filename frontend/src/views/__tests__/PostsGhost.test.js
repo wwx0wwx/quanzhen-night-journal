@@ -77,9 +77,11 @@ describe('Posts and Ghost views', () => {
     expect(wrapper.text()).toContain('发布判定')
     expect(wrapper.text()).toContain('历史记录推断')
     expect(wrapper.text()).toContain('默认风格')
-    expect(wrapper.text()).toContain('开始写一篇')
-    expect(wrapper.text()).toContain('进入休眠')
-    expect(wrapper.text()).toContain('恢复写作')
+    expect(wrapper.text()).toContain('立即创作')
+    expect(wrapper.text()).toContain('立即休眠')
+    expect(wrapper.text()).toContain('解除休眠')
+    expect(wrapper.find('button[title="运行一次 AI 创作流程"]').exists()).toBe(true)
+    expect(wrapper.findComponent(RouterLinkStub).attributes('title')).toBe('手动新建一篇文章草稿')
   })
 
   it('triggers publish, hibernate and wake actions from posts page header', async () => {
@@ -104,11 +106,11 @@ describe('Posts and Ghost views', () => {
     await flushPromises()
 
     const buttons = wrapper.findAll('button')
-    await buttons.find((button) => button.text().includes('开始写一篇')).trigger('click')
+    await buttons.find((button) => button.text().includes('立即创作')).trigger('click')
     await flushPromises()
-    await buttons.find((button) => button.text().includes('进入休眠')).trigger('click')
+    await buttons.find((button) => button.text().includes('立即休眠')).trigger('click')
     await flushPromises()
-    await buttons.find((button) => button.text().includes('恢复写作')).trigger('click')
+    await buttons.find((button) => button.text().includes('解除休眠')).trigger('click')
     await flushPromises()
 
     expect(api.post).toHaveBeenNthCalledWith(1, '/tasks/trigger', { trigger_source: 'manual', semantic_hint: '请开始今晚的写作' })

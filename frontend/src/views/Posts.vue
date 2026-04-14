@@ -6,17 +6,25 @@
         <p>这里负责查看文章、手动开始写作，以及控制自动写作是暂停还是恢复。</p>
       </div>
       <div class="button-row">
-        <button class="btn primary" type="button" :disabled="actionBusy" @click="triggerTask">
-          {{ isTriggering ? '写作中…' : '开始写一篇' }}
-        </button>
-        <button class="btn ghost" type="button" :disabled="actionBusy" @click="hibernate">
-          {{ isHibernating ? '处理中…' : '进入休眠' }}
-        </button>
-        <button class="btn ghost" type="button" :disabled="actionBusy" @click="wakeUp">
-          {{ isWakingUp ? '处理中…' : '恢复写作' }}
+        <button
+          class="btn primary"
+          type="button"
+          :disabled="actionBusy"
+          title="运行一次 AI 创作流程"
+          @click="triggerTask"
+        >
+          {{ isTriggering ? '创作中…' : '立即创作' }}
         </button>
         <button class="btn ghost" type="button" :disabled="isLoading" @click="load">刷新列表</button>
-        <RouterLink class="btn primary" to="/admin/posts/new">新建文章</RouterLink>
+        <RouterLink class="btn primary" to="/admin/posts/new" title="手动新建一篇文章草稿">
+          新建文章
+        </RouterLink>
+        <button class="btn ghost" type="button" :disabled="actionBusy" @click="hibernate">
+          {{ isHibernating ? '处理中…' : '立即休眠' }}
+        </button>
+        <button class="btn ghost" type="button" :disabled="actionBusy" @click="wakeUp">
+          {{ isWakingUp ? '处理中…' : '解除休眠' }}
+        </button>
       </div>
     </div>
 
