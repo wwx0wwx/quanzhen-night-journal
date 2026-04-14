@@ -1,0 +1,75 @@
+services:
+  core:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: qz-core
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:////app/data/quanzhen.db}
+      HUGO_CONTENT_DIR: /app/hugo/content
+      HUGO_PUBLIC_DIR: /app/hugo/public
+      BUILD_SIGNAL_FILE: /app/data/.build_signal
+      BUILD_STATUS_FILE: /app/data/build_status.json
+      SEED_CONTENT_DIR: /seed/content
+      SEED_DRAFT_DIR: /seed/draft_review
+      AUTOMATION_DIR: /seed/automation
+      SITE_BASE_URL: ${SITE_BASE_URL:-http://localhost:5210}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set for production deployments}
+      ALLOW_FAKE_LLM: ${ALLOW_FAKE_LLM:-false}
+      IMPORT_LEGACY_ASSETS: ${IMPORT_LEGACY_ASSETS:-false}
+      PUBLIC_SERVER_IP: ${PUBLIC_SERVER_IP:-}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+      CADDY_RELOAD_ENABLED: ${CADDY_RELOAD_ENABLED:-true}
+      CADDY_RELOAD_URL: ${CADDY_RELOAD_URL:-http://caddy:2019/load}
+      ALLOW_CLOUDFLARE_PROXY_DOMAIN: ${ALLOW_CLOUDFLARE_PROXY_DOMAIN:-false}
+    volumes:
+      - app_data:/app/data
+      - hugo_content:/app/hugo/content
+      - hugo_public:/app/hugo/public
+      - ./content:/seed/content:ro
+      - ./draft_review:/seed/draft_review:ro
+      - ./automation:/seed/automation:ro
+
+  hugo-builder:
+    image: hugomods/hugo:exts-0.152.2
+    container_name: qz-hugo
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    volumes:
+      - hugo_content:/hugo/content
+      - hugo_public:/hugo/public
+      - app_data:/hugo/data
+      - ./hugo/config.toml:/hugo/config.toml:ro
+      - ./themes:/hugo/themes:ro
+      - ./archetypes:/hugo/archetypes:ro
+      - ./layouts:/hugo/layouts:ro
+      - ./hugo-builder/entrypoint.sh:/entrypoint.sh:ro
+
+  caddy:
+    build:
+      context: .
+      dockerfile: caddy/Dockerfile
+    container_name: qz-caddy
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    ports:
+      - "5210:5210"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - hugo_public:/srv/hugo:ro
+      - app_data:/runtime
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - core
+      - hugo-builder
+
+volumes:
+  app_data:
+  hugo_content:
+  hugo_public:
+  caddy_data:
+  caddy_config:

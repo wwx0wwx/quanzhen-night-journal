@@ -1,0 +1,26 @@
+.env
+.claude/
+.hugo_build.lock
+public/
+resources/_gen/
+logs/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.venv/
+frontend/node_modules/
+frontend/dist/
+test-results/
+quanzhen_night_journal.egg-info/
+.DS_Store
+
+# Runtime/generated state kept local unless explicitly exported
+automation/backups/
+automation/night_journal_stats.json
+automation/recent_memories.json
+automation/world_state.json
+data/.build_signal
+data/build_status.json
+data/ghosts/
+data/quanzhen.db
