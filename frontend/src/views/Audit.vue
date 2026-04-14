@@ -52,32 +52,27 @@
       />
 
       <div v-else class="list">
-        <div v-for="item in items" :key="item.id" class="list-item panel stack">
-          <div class="split">
-            <div>
-              <strong>{{ item.action }}</strong>
-              <div class="muted">{{ item.timestamp }}</div>
-            </div>
-            <div class="button-row">
-              <span class="tag">{{ item.actor || 'system' }}</span>
-              <span class="tag" :class="severityClass(item.severity)">{{ item.severity }}</span>
-            </div>
-          </div>
+        <div class="panel panel-pad audit-table-head">
+          <div>事件</div>
+          <div>事件映射</div>
+          <div>目标</div>
+          <div>来源 IP</div>
+        </div>
 
-          <dl class="meta-grid">
-            <div>
-              <dt>目标</dt>
-              <dd>{{ item.target_type || '-' }} #{{ item.target_id || '-' }}</dd>
+        <div v-for="item in items" :key="item.id" class="list-item panel stack audit-item">
+          <div class="audit-row">
+            <div class="audit-cell stack" style="gap: 6px;">
+              <strong>{{ item.action }}</strong>
+              <div class="muted audit-subline">{{ item.timestamp }}</div>
+              <div class="button-row audit-tags">
+                <span class="tag">{{ item.actor || 'system' }}</span>
+                <span class="tag" :class="severityClass(item.severity)">{{ item.severity }}</span>
+              </div>
             </div>
-            <div>
-              <dt>加工后事件</dt>
-              <dd class="processed-event">{{ item.processed_event || '-' }}</dd>
-            </div>
-            <div>
-              <dt>来源 IP</dt>
-              <dd>{{ item.ip_address || '-' }}</dd>
-            </div>
-          </dl>
+            <div class="audit-cell processed-event">{{ item.processed_event || '-' }}</div>
+            <div class="audit-cell">{{ item.target_type || '-' }} #{{ item.target_id || '-' }}</div>
+            <div class="audit-cell">{{ item.ip_address || '-' }}</div>
+          </div>
 
           <pre class="code-block">{{ prettyDetail(item.detail) }}</pre>
         </div>
@@ -178,8 +173,51 @@ onMounted(load)
 </script>
 
 <style scoped>
+.audit-table-head,
+.audit-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) minmax(260px, 2fr) minmax(140px, 1fr) minmax(120px, 0.9fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.audit-table-head {
+  color: var(--secondary);
+  font-size: 0.84rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.audit-item {
+  gap: 16px;
+}
+
+.audit-cell {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.audit-subline {
+  line-height: 1.5;
+}
+
+.audit-tags {
+  gap: 8px;
+}
+
 .processed-event {
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+@media (max-width: 960px) {
+  .audit-table-head {
+    display: none;
+  }
+
+  .audit-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 </style>

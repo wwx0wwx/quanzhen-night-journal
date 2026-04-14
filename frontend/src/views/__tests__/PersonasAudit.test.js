@@ -86,6 +86,7 @@ describe('Personas and Audit views', () => {
     const wrapper = mount(Audit)
     await flushPromises()
 
+    expect(wrapper.text()).toContain('事件映射')
     expect(wrapper.text()).toContain('task.status_change')
     expect(wrapper.text()).toContain('waiting_human_signoff')
     expect(wrapper.text()).toContain('夜里下雨，机房风扇声更清楚了')
