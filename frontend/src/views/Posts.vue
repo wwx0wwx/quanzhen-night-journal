@@ -3,16 +3,19 @@
     <div class="hero">
       <div>
         <h1>文章管理</h1>
-        <p>这里负责发文、解除休眠，以及文章的审核、发布和归档。</p>
+        <p>这里负责查看文章、手动开始写作，以及控制自动写作是暂停还是恢复。</p>
       </div>
       <div class="button-row">
         <button class="btn primary" type="button" :disabled="actionBusy" @click="triggerTask">
-          {{ isTriggering ? '发文中…' : '立即发文' }}
+          {{ isTriggering ? '写作中…' : '开始写一篇' }}
+        </button>
+        <button class="btn ghost" type="button" :disabled="actionBusy" @click="hibernate">
+          {{ isHibernating ? '处理中…' : '进入休眠' }}
         </button>
         <button class="btn ghost" type="button" :disabled="actionBusy" @click="wakeUp">
-          {{ isWakingUp ? '处理中…' : '解除休眠' }}
+          {{ isWakingUp ? '处理中…' : '恢复写作' }}
         </button>
-        <button class="btn ghost" type="button" :disabled="isLoading" @click="load">刷新</button>
+        <button class="btn ghost" type="button" :disabled="isLoading" @click="load">刷新列表</button>
         <RouterLink class="btn primary" to="/admin/posts/new">新建文章</RouterLink>
       </div>
     </div>
@@ -218,9 +221,10 @@ const activeActionKey = ref('')
 const actionError = ref('')
 const actionSuccess = ref('')
 const isTriggering = ref(false)
+const isHibernating = ref(false)
 const isWakingUp = ref(false)
 
-const actionBusy = computed(() => !!activeActionKey.value || isTriggering.value || isWakingUp.value)
+const actionBusy = computed(() => !!activeActionKey.value || isTriggering.value || isHibernating.value || isWakingUp.value)
 
 function personaName(personaId) {
   if (!personaId) return '未指定'
@@ -310,12 +314,28 @@ async function triggerTask() {
   isTriggering.value = true
   try {
     const result = await unwrap(api.post('/tasks/trigger', { trigger_source: 'manual', semantic_hint: '请开始今晚的写作' }))
-    actionSuccess.value = `任务 #${result.id} 已创建。`
+    actionSuccess.value = `写作任务 #${result.id} 已开始。`
     await load()
   } catch (error) {
     actionError.value = describeError(error, '触发任务失败，请稍后重试。')
   } finally {
     isTriggering.value = false
+  }
+}
+
+async function hibernate() {
+  if (actionBusy.value) return
+
+  actionError.value = ''
+  actionSuccess.value = ''
+  isHibernating.value = true
+  try {
+    await unwrap(api.post('/cost/hibernate'))
+    actionSuccess.value = '系统已进入休眠，自动写作会先暂停。'
+  } catch (error) {
+    actionError.value = describeError(error, '进入休眠失败，请稍后重试。')
+  } finally {
+    isHibernating.value = false
   }
 }
 
@@ -327,7 +347,7 @@ async function wakeUp() {
   isWakingUp.value = true
   try {
     await unwrap(api.post('/cost/wake-up'))
-    actionSuccess.value = '系统已解除休眠。'
+    actionSuccess.value = '系统已恢复写作。'
   } catch (error) {
     actionError.value = describeError(error, '解除休眠失败，请稍后重试。')
   } finally {

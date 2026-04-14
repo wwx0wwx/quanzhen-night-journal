@@ -64,3 +64,12 @@ async def wake_up(
 ) -> object:
     await monitor.wake_up()
     return success({"woke_up": True})
+
+
+@router.post("/hibernate")
+async def hibernate(
+    monitor: CostMonitor = Depends(get_cost_monitor),
+    _user=Depends(get_current_user),
+) -> object:
+    await monitor.hibernate()
+    return success({"hibernating": True})

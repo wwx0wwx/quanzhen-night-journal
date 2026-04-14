@@ -77,11 +77,12 @@ describe('Posts and Ghost views', () => {
     expect(wrapper.text()).toContain('发布判定')
     expect(wrapper.text()).toContain('历史记录推断')
     expect(wrapper.text()).toContain('默认风格')
-    expect(wrapper.text()).toContain('立即发文')
-    expect(wrapper.text()).toContain('解除休眠')
+    expect(wrapper.text()).toContain('开始写一篇')
+    expect(wrapper.text()).toContain('进入休眠')
+    expect(wrapper.text()).toContain('恢复写作')
   })
 
-  it('triggers publish and wake actions from posts page header', async () => {
+  it('triggers publish, hibernate and wake actions from posts page header', async () => {
     api.get
       .mockResolvedValueOnce({ items: [], total: 0 })
       .mockResolvedValueOnce([])
@@ -89,6 +90,7 @@ describe('Posts and Ghost views', () => {
       .mockResolvedValueOnce({ id: 19 })
       .mockResolvedValueOnce({ items: [], total: 0 })
       .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({ hibernating: true })
       .mockResolvedValueOnce({ ok: true })
 
     const wrapper = mount(Posts, {
@@ -102,13 +104,16 @@ describe('Posts and Ghost views', () => {
     await flushPromises()
 
     const buttons = wrapper.findAll('button')
-    await buttons.find((button) => button.text().includes('立即发文')).trigger('click')
+    await buttons.find((button) => button.text().includes('开始写一篇')).trigger('click')
     await flushPromises()
-    await buttons.find((button) => button.text().includes('解除休眠')).trigger('click')
+    await buttons.find((button) => button.text().includes('进入休眠')).trigger('click')
+    await flushPromises()
+    await buttons.find((button) => button.text().includes('恢复写作')).trigger('click')
     await flushPromises()
 
     expect(api.post).toHaveBeenNthCalledWith(1, '/tasks/trigger', { trigger_source: 'manual', semantic_hint: '请开始今晚的写作' })
-    expect(api.post).toHaveBeenNthCalledWith(2, '/cost/wake-up')
+    expect(api.post).toHaveBeenNthCalledWith(2, '/cost/hibernate')
+    expect(api.post).toHaveBeenNthCalledWith(3, '/cost/wake-up')
   })
 
   it('renders ghost empty export state', async () => {

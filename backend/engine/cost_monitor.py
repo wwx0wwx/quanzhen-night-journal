@@ -52,19 +52,26 @@ class CostMonitor:
 
     async def check_budget(self) -> BudgetStatus:
         limit = float(await self.config_store.get("budget.daily_limit_usd", "99999") or 99999.0)
+        manual_hibernation = (await self.config_store.get("budget.manual_hibernation", "0")) == "1"
         today_prefix = date.today().isoformat()
         spent = await self.db.scalar(
             select(func.coalesce(func.sum(CostRecord.cost_estimate), 0.0)).where(
                 CostRecord.created_at.like(f"{today_prefix}%")
             )
         ) or 0.0
-        is_hibernating = spent >= limit
+        is_hibernating = manual_hibernation or spent >= limit
         await self.config_store.set("budget.is_hibernating", "1" if is_hibernating else "0", category="budget")
         remaining = max(0.0, limit - float(spent))
         return BudgetStatus(remaining=round(remaining, 4), limit=limit, is_hibernating=is_hibernating)
 
+    async def hibernate(self) -> None:
+        await self.config_store.set("budget.manual_hibernation", "1", category="budget")
+        await self.config_store.set("budget.is_hibernating", "1", category="budget")
+
     async def wake_up(self) -> None:
-        await self.config_store.set("budget.is_hibernating", "0", category="budget")
+        await self.config_store.set("budget.manual_hibernation", "0", category="budget")
+        status = await self.check_budget()
+        await self.config_store.set("budget.is_hibernating", "1" if status.is_hibernating else "0", category="budget")
 
     async def estimate_cost(self, token_in: int, token_out: int, model_id: str) -> float:
         input_price, output_price = PRICING.get(model_id, PRICING["default"])
