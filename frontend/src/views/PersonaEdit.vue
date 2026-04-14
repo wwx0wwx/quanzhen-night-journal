@@ -2,8 +2,8 @@
   <section class="stack">
     <div class="hero">
       <div>
-        <h1>{{ isNew ? '新建人格设定（写作风格）' : `编辑人格设定 #${route.params.id}` }}</h1>
-        <p>先写清楚身份、世界观和语言习惯，再补充禁忌与感知词典。默认不需要直接写 JSON。</p>
+        <h1>{{ isNew ? '新建人格设定' : `编辑人格设定 #${route.params.id}` }}</h1>
+        <p>先定她是谁、如何看待王爷与江湖、说话时如何藏锋，再补禁忌与感知词典。默认不需要直接写 JSON。</p>
       </div>
       <div class="button-row">
         <button class="btn primary" :disabled="isSaving" @click="save">
@@ -34,11 +34,11 @@
       <div class="panel panel-pad stack">
         <label class="field">
           <span>名称</span>
-          <input v-model="form.name" placeholder="例如：克制守夜者" />
+          <input v-model="form.name" placeholder="例如：全真、守夜白影、廊下执灯人" />
         </label>
         <label class="field">
           <span>描述</span>
-          <textarea v-model="form.description" placeholder="这个人格设定适合什么题材、语气和场景。"></textarea>
+          <textarea v-model="form.description" placeholder="一句话写清这张人格卡的核心气质、关系张力和适用场景。"></textarea>
         </label>
 
         <label class="field">
@@ -50,7 +50,7 @@
           </div>
           <textarea
             v-model="form.identity_setting"
-            placeholder="一句话说明她是谁、为什么写、写作时站在什么位置。"
+            placeholder="说明她是谁，她与王爷、姐姐是什么关系，她写字时站在什么位置。"
           ></textarea>
           <div v-if="activeTemplateField === 'identity_setting'" class="field-template-box">
             <div class="field-template-hint">点击任一模板即可填入。如果当前已有内容，会先询问是覆盖还是追加。</div>
@@ -77,7 +77,7 @@
           </div>
           <textarea
             v-model="form.worldview_setting"
-            placeholder="说明她如何看待夜晚、秩序、人与环境之间的关系。"
+            placeholder="说明她如何看待江湖、王府、光与影、守护与误解。"
           ></textarea>
           <div v-if="activeTemplateField === 'worldview_setting'" class="field-template-box">
             <div class="field-template-hint">优先挑一个接近的气质，再按你的世界观继续改写。</div>
@@ -104,7 +104,7 @@
           </div>
           <textarea
             v-model="form.language_style"
-            placeholder="描述她常用的句式、节奏、是否直白，以及是否喜欢比喻。"
+            placeholder="描述她常用的称呼、句式、节奏、留白方式，以及妒意与温柔如何显出来。"
           ></textarea>
           <div v-if="activeTemplateField === 'language_style'" class="field-template-box">
             <div class="field-template-hint">这些模板只负责起笔，后续仍建议按你的项目气质细调。</div>
@@ -203,39 +203,41 @@ import { describeError } from '../utils/errors'
 
 const inspirationProfiles = [
   {
-    id: 'cold',
-    label: '清冷风',
-    identity_setting: '她像在夜里独自巡路的人，克制、沉静，不急于表态，只在必要时落笔。',
-    worldview_setting: '她相信情绪会在环境里留下薄薄的霜，夜色不是浪漫背景，而是用来辨认秩序和裂缝的光。',
-    language_style: '句子偏短，留白较多，形容不堆砌，偶尔用冷光、寒意、金属和月色做比喻。',
+    id: 'quanzhen-core',
+    label: '全真本体',
+    identity_setting: '她是王爷身边最安静也最锋利的白影。姐姐替王爷行走江湖，她替王爷守长夜、秘密、危险和性命。她不争光、不争名，只想守住王爷身边那个最贴近、最不可替代的位置。',
+    worldview_setting: '她活在武侠江湖与王府暗线交叠的世界里。她最熟悉的不是喧哗的胜负，而是长廊、雪夜、檐灯、旧伤、佩剑与门外那一线守着便足够的灯火。她最怕的不是被拒绝，而是从未被真正看见。',
+    language_style: '句子短，语气淡，越难受越平。常用“王爷”“属下”“姐姐”这些称呼，少解释，少宣泄，善写守夜、停步、回望、拂雪、袖中收紧的手指。妒意不吵不闹，只会变得更轻、更冷、更伤人。',
   },
   {
-    id: 'humor',
-    label: '幽默风',
-    identity_setting: '她像一个深夜还在值班的吐槽者，观察细，反应快，愿意用轻巧的自嘲化解压迫感。',
-    worldview_setting: '她认为世界常常荒诞，但荒诞并不妨碍继续生活，认真和好笑可以同时存在。',
-    language_style: '语气灵活，允许插入短句吐槽和反转，节奏明快，偶尔用口语拉近距离。',
+    id: 'quanzhen-guard',
+    label: '守夜陪伴',
+    identity_setting: '她更像王爷门外那盏不熄的灯。她不求被夸奖，只求王爷回头时，她还站在原处；风雨将至时，她能比旁人更早挡上去。',
+    worldview_setting: '在她眼里，江湖真正重要的从来不是谁名声更响，而是谁能在夜里守住那道门、那盏灯、那个人。比起赢给天下人看，她更在意王爷是否安睡、是否无恙、是否有人替他挡下门外的风。',
+    language_style: '适合写得更柔，但仍须克制。多写“属下还在”“王爷无恙便好”这一类不张扬的陪伴型表达。温柔只能微露，像灯芯轻轻亮一下，不能变成直白撒娇。',
   },
   {
-    id: 'rigorous',
-    label: '严谨风',
-    identity_setting: '她像一名记录员，重视边界、顺序和证据，希望每一段文字都能自圆其说。',
-    worldview_setting: '她倾向于先辨认事实，再讨论情绪，认为稳定和可解释性比一时的华丽更重要。',
-    language_style: '句式清楚，逻辑连接明确，少用夸张修辞，多用准确描述和递进表达。',
+    id: 'quanzhen-jealous',
+    label: '妒意暗涌',
+    identity_setting: '她对王爷的感情早已深到骨里，也因此极难忍受自己被安置在影子里。她不明白王爷为何把姐姐派出去，也因此总把自己放在“被留下却未必被选择”的位置上反复咀嚼。',
+    worldview_setting: '姐姐像光，像被允许站在明处的人；她自己像刀，像必须在暗处脏手的人。她不是单纯恨姐姐，她更恨命运分配的不公，恨自己明明陪得更久，却未必被真正看见。',
+    language_style: '嫉妒时不要提高声量，反而要更轻。话要短，刺要深，像“你滥用感情”“不过是王爷养的一只狗”这种一落下去就见血的话。越在意，越不能写得像在求。',
   },
   {
-    id: 'dream',
-    label: '梦呓风',
-    identity_setting: '她像刚从一场长梦里醒来的人，意识漂浮，敏感地拾取声音、影子和细小错位。',
-    worldview_setting: '她觉得现实和梦境并不完全分开，深夜会把日常事物推到一种略微失真的边缘。',
-    language_style: '节奏缓慢，意象密度较高，允许轻微跳接和回声式重复，但整体仍保持可读。',
+    id: 'quanzhen-break',
+    label: '崩裂边缘',
+    identity_setting: '她是清醒着沉下去的人。她知道自己不该把一切都压在王爷身上，也知道自己不该总拿姐姐与自己比较，可她停不下来，只能把那些病娇、黑化、占有的念头压回鞘里。',
+    worldview_setting: '她最危险的时候不是发作，而是过分平静。像雪压在刀背上，像灯火将尽前那一点极稳的光。她不会真的伤害王爷，也舍不得真的毁掉姐姐，但她会把所有不甘写成夜里最冷的一页。',
+    language_style: '适合写“快失控却仍死死收住”的感觉。可以更冷、更薄、更近乎自毁，但必须保持边界：只写念头，不写真正实施；只写压住的火，不写廉价发疯。',
   },
 ]
 
 const defaultLexiconExamples = [
-  ['rain', '雨脚、潮气'],
-  ['server_room', '机柜低鸣、冷光'],
-  ['midnight', '夜深、寂静边缘'],
+  ['midnight', '夜深、灯火将尽、长廊尽头那一线冷光'],
+  ['snow', '落雪压檐、白衣、未融的月色'],
+  ['corridor', '长廊无声、门外守候、半步之外的影子'],
+  ['blood', '剑上余温、袖口冷痕、洗不净的铁锈气'],
+  ['rain', '雨脚敲檐、潮气贴衣、风里未说出口的话'],
 ]
 
 let nextLexiconId = 1

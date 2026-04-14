@@ -20,7 +20,10 @@
     @console_root path /
     redir @console_root /admin/ 308
 
-    respond 404
+    handle {
+        root * /srv/hugo
+        file_server
+    }
 }
 
 (qz_blog) {

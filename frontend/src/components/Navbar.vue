@@ -104,7 +104,6 @@ const sections = [
     to: '/admin/posts',
     items: [
       { label: '文章', to: '/admin/posts' },
-      { label: '记忆碎片', to: '/admin/memories' },
     ],
   },
   {
@@ -114,6 +113,7 @@ const sections = [
     items: [
       { label: '系统设置', to: '/admin/settings' },
       { label: '人格设定', to: '/admin/personas' },
+      { label: '记忆碎片', to: '/admin/memories' },
     ],
   },
   {

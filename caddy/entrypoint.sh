@@ -4,8 +4,6 @@ set -eu
 
 mkdir -p /runtime
 
-if [ ! -f /runtime/Caddyfile ]; then
-  cp /etc/caddy/Caddyfile /runtime/Caddyfile
-fi
+cp /etc/caddy/Caddyfile /runtime/Caddyfile
 
 exec caddy run --config /runtime/Caddyfile --adapter caddyfile
