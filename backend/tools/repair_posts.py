@@ -9,9 +9,9 @@ from sqlalchemy import select
 
 from backend.config import get_settings
 from backend.database import get_sessionmaker
-from backend.models import Post
+from backend.models import Post, SystemConfig
 from backend.publisher.hugo_publisher import HugoPublisher
-from backend.utils.post_content import derive_summary, extract_title, normalize_title
+from backend.utils.post_content import derive_summary, extract_title, is_generic_title, normalize_title
 from backend.utils.slug import is_placeholder_slug, slugify
 from backend.utils.time import utcnow_iso
 
@@ -24,19 +24,25 @@ class RepairResult:
     slug_changed: int = 0
 
 
-def _desired_title(post: Post) -> str:
+def _desired_title(post: Post, site_title: str) -> str:
     current_title = normalize_title(post.title, max_length=64)
-    extracted = normalize_title(extract_title(post.content_markdown), max_length=64)
+    invalid_titles = {site_title, "全真夜记", "夜记", "无题", "未命名夜记"}
+    extracted = normalize_title(
+        extract_title(post.content_markdown, invalid_titles=invalid_titles),
+        max_length=64,
+    )
     if post.status == "archived" and "损坏稿件已隔离" in (post.title or ""):
         return "异常稿件（已归档）"
-    return current_title or extracted or f"夜记 {post.id}"
+    if current_title and not is_generic_title(current_title, site_title=site_title):
+        return current_title
+    return extracted or f"夜记 {post.id}"
 
 
-def _desired_summary(post: Post, title: str) -> str:
+def _desired_summary(post: Post, title: str, *, force_refresh: bool = False) -> str:
     if post.status == "archived" and "损坏稿件已隔离" in (post.title or ""):
         return "内容异常，已从前台归档。"
     summary = normalize_title(post.summary, max_length=180)
-    if summary and summary != title:
+    if summary and summary != title and not force_refresh:
         return summary
     return derive_summary(post.content_markdown, title=title, max_length=180) or title
 
@@ -83,13 +89,22 @@ async def repair_posts(*, apply_changes: bool) -> RepairResult:
     settings = get_settings()
 
     async with session_factory() as db:
+        site_title = (
+            await db.scalar(select(SystemConfig.value).where(SystemConfig.key == "site.title"))
+            or "全真夜记"
+        )
         posts = list(await db.scalars(select(Post).order_by(Post.id.asc())))
         result.scanned = len(posts)
         reserved_slugs: set[str] = set()
 
         for post in posts:
-            title = _desired_title(post)
-            summary = _desired_summary(post, title)
+            title = _desired_title(post, site_title)
+            title_changed = post.title != title
+            summary = _desired_summary(
+                post,
+                title,
+                force_refresh=title_changed or is_generic_title(post.title, site_title=site_title),
+            )
             slug = await _ensure_unique_slug(db, post.id, _desired_slug(post, title), reserved_slugs)
             old_slug = post.slug
 

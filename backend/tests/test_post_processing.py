@@ -29,6 +29,13 @@ def test_extract_title_falls_back_to_first_sentence_and_summary_skips_heading():
     assert derive_summary("# 全真夜记：雨点与屏息\n\n窗户在回声里轻轻震动。", title="全真夜记：雨点与屏息") == "窗户在回声里轻轻震动。"
 
 
+def test_extract_title_skips_generic_site_heading_and_summary_skips_opening_line():
+    content = "# 全真夜记\n\n檐外消息撞得门环响，像急雨，也像刀尖子蹭着阶石响。\n\n我靠在廊柱，站在王爷书房半步外。"
+    title = extract_title(content, invalid_titles={"全真夜记"})
+    assert title == "檐外消息撞得门环响"
+    assert derive_summary(content, title=title) == "我靠在廊柱，站在王爷书房半步外。"
+
+
 def test_generation_uses_clean_title_and_unicode_slug(monkeypatch, authed_client):
     async def titled_chat(self, **_kwargs):  # noqa: ANN001
         content = "# 全真夜记：雨点与屏息\n\n窗外的风沿着机房的壳体慢慢滑过去。"
@@ -57,6 +64,37 @@ def test_generation_uses_clean_title_and_unicode_slug(monkeypatch, authed_client
     assert latest["title"] == "全真夜记：雨点与屏息"
     assert latest["slug"] == f"{task['id']}-全真夜记-雨点与屏息"
     assert latest["summary"].startswith("窗外的风沿着机房的壳体慢慢滑过去")
+
+
+def test_generation_skips_generic_site_title_heading(monkeypatch, authed_client):
+    async def generic_heading_chat(self, **_kwargs):  # noqa: ANN001
+        content = (
+            "# 全真夜记\n\n"
+            "檐外消息撞得门环响，像急雨，也像刀尖子蹭着阶石响。\n\n"
+            "我靠在廊柱，站在王爷书房半步外。"
+        )
+        usage = {"prompt_tokens": 12, "completion_tokens": 30}
+        return content, usage, 5
+
+    monkeypatch.setattr(LLMAdapter, "chat", generic_heading_chat)
+
+    config = authed_client.put(
+        "/api/config",
+        json={"items": [{"key": "qa.min_length", "value": "1", "category": "qa"}]},
+    )
+    assert config.status_code == 200
+
+    response = authed_client.post(
+        "/api/tasks/trigger",
+        json={"trigger_source": "manual", "semantic_hint": "write a Chinese note", "payload": {"kind": "manual"}},
+    )
+    assert response.status_code == 200
+
+    posts = authed_client.get("/api/posts")
+    assert posts.status_code == 200
+    latest = posts.json()["data"]["items"][0]
+    assert latest["title"] == "檐外消息撞得门环响"
+    assert latest["summary"] == "我靠在廊柱，站在王爷书房半步外。"
 
 
 def test_manual_post_create_derives_clean_title_and_unique_slug(authed_client):

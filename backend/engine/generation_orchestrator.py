@@ -515,7 +515,13 @@ class GenerationOrchestrator:
         status: str,
     ) -> Post:
         now = utcnow_iso()
-        title = extract_title(content, fallback=f"夜记 {task.id}")
+        site_title = (await self.config_store.get("site.title", "全真夜记") or "全真夜记").strip() or "全真夜记"
+        invalid_titles = {site_title, "全真夜记", "夜记", "无题", "未命名夜记"}
+        title = extract_title(
+            content,
+            fallback=f"夜记 {task.id}",
+            invalid_titles=invalid_titles,
+        )
         title = sanitize_plain_text(title, max_length=64) or f"夜记 {task.id}"
         slug = f"{task.id}-{slugify(title, fallback_prefix=f'task-{task.id}')}"
         summary = sanitize_plain_text(derive_summary(content, title=title), max_length=180) or title
