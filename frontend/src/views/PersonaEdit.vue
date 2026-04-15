@@ -1,37 +1,64 @@
 <template>
   <section class="stack">
-    <div class="hero">
+    <div class="hero persona-edit-hero">
       <div>
+        <div class="hero-kicker">Persona Drafting Room</div>
         <h1>{{ isNew ? '新建人格设定' : `编辑人格设定 #${route.params.id}` }}</h1>
         <p>先定她是谁、如何看待王爷与江湖、说话时如何藏锋，再补禁忌与感知词典。默认不需要直接写 JSON。</p>
       </div>
-      <div class="button-row">
-        <button class="btn primary" :disabled="isSaving" @click="save">
-          {{ isSaving ? '保存中...' : '保存' }}
-        </button>
-        <button
-          v-if="!isNew"
-          class="btn ghost"
-          :disabled="isActivating || isDeleting"
-          @click="activate"
-        >
-          {{ isActivating ? '切换中...' : '设为默认' }}
-        </button>
-        <button
-          v-if="!isNew"
-          class="btn ghost"
-          :disabled="isDeleting || isActivating"
-          @click="removePersona"
-        >
-          {{ isDeleting ? '删除中...' : '删除人格设定' }}
-        </button>
+      <div class="persona-edit-hero-side">
+        <div class="persona-edit-summary-card">
+          <div class="persona-edit-summary-grid">
+            <div>
+              <span>禁忌条目</span>
+              <strong>{{ tabooCount }}</strong>
+            </div>
+            <div>
+              <span>感知词典</span>
+              <strong>{{ lexiconCount }}</strong>
+            </div>
+            <div>
+              <span>当前篇幅</span>
+              <strong>{{ structureLabel }}</strong>
+            </div>
+          </div>
+          <div class="muted">{{ form.description || '先用一句话定义这张人格卡的核心气质。' }}</div>
+        </div>
+        <div class="button-row">
+          <button class="btn primary" :disabled="isSaving" @click="save">
+            {{ isSaving ? '保存中...' : '保存' }}
+          </button>
+          <button
+            v-if="!isNew"
+            class="btn ghost"
+            :disabled="isActivating || isDeleting"
+            @click="activate"
+          >
+            {{ isActivating ? '切换中...' : '设为默认' }}
+          </button>
+          <button
+            v-if="!isNew"
+            class="btn ghost"
+            :disabled="isDeleting || isActivating"
+            @click="removePersona"
+          >
+            {{ isDeleting ? '删除中...' : '删除人格设定' }}
+          </button>
+        </div>
       </div>
     </div>
 
     <div v-if="message" class="status-banner" :class="messageType">{{ message }}</div>
 
-    <div class="grid two">
-      <div class="panel panel-pad stack">
+    <div class="grid two persona-edit-grid">
+      <div class="panel panel-pad stack persona-story-panel">
+        <div class="persona-panel-head">
+          <div>
+            <div class="hero-kicker">Core Profile</div>
+            <div class="section-title">人物叙述</div>
+          </div>
+          <div class="muted">先写身份、世界观与说话方式，这三块决定了后续风格是否稳定。</div>
+        </div>
         <label class="field">
           <span>名称</span>
           <input v-model="form.name" placeholder="例如：全真、守夜白影、廊下执灯人" />
@@ -123,7 +150,14 @@
         </label>
       </div>
 
-      <div class="panel panel-pad stack">
+      <div class="panel panel-pad stack persona-meta-panel">
+        <div class="persona-panel-head">
+          <div>
+            <div class="hero-kicker">Behavior Envelope</div>
+            <div class="section-title">行为约束</div>
+          </div>
+          <div class="muted">控制篇幅、强度、禁忌与词典边界，让人格卡保持可重复使用。</div>
+        </div>
         <label class="field">
           <span>文章长度偏好</span>
           <select v-model="form.structure_preference">
@@ -144,12 +178,24 @@
           <span>禁忌（每行一条）</span>
           <textarea v-model="taboosText" placeholder="输入这个人格设定不希望出现的词、表达或套路。"></textarea>
         </label>
+
+        <div class="persona-tone-note">
+          <div class="persona-tone-item">
+            <span>情绪档位</span>
+            <strong>{{ intensityLabel }}</strong>
+          </div>
+          <div class="persona-tone-item">
+            <span>写作节奏</span>
+            <strong>{{ structureLabel }}</strong>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="panel panel-pad stack">
-      <div class="split">
+    <div class="panel panel-pad stack persona-lexicon-panel">
+      <div class="split persona-lexicon-head">
         <div>
+          <div class="hero-kicker">Sensory Lexicon</div>
           <div class="section-title">感知词典</div>
           <div class="muted">当系统感知到某些环境词时，会优先借用你设定的意象来写作。</div>
           <div class="muted">左边填环境词，右边填这个人格更常使用的意象、措辞或联想。</div>
@@ -271,6 +317,18 @@ const isActivating = ref(false)
 const isDeleting = ref(false)
 const message = ref('')
 const messageType = ref('info')
+const tabooCount = computed(() => taboosText.value.split('\n').map((item) => item.trim()).filter(Boolean).length)
+const lexiconCount = computed(() => lexiconRows.value.filter((item) => item.key.trim() || item.value.trim()).length)
+const structureLabel = computed(() => ({
+  short: '短篇',
+  medium: '中篇',
+  long: '长篇',
+}[form.structure_preference] || '未设'))
+const intensityLabel = computed(() => ({
+  calm: '克制',
+  moderate: '适中',
+  intense: '强烈',
+}[form.expression_intensity] || '未设'))
 
 function setLexiconRows(lexicon) {
   const rows = Object.entries(lexicon || {}).map(([key, value]) => createLexiconRow(key, value))
@@ -433,3 +491,112 @@ async function removePersona() {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.persona-edit-hero {
+  align-items: end;
+}
+
+.persona-edit-hero-side {
+  display: grid;
+  gap: 14px;
+  justify-items: end;
+  max-width: 360px;
+}
+
+.persona-edit-summary-card {
+  width: 100%;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(155, 176, 198, 0.14);
+  background:
+    linear-gradient(180deg, rgba(232, 238, 245, 0.04), transparent 100%),
+    rgba(10, 14, 21, 0.76);
+}
+
+.persona-edit-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.persona-edit-summary-grid span,
+.persona-tone-item span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.persona-edit-summary-grid strong,
+.persona-tone-item strong {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+}
+
+.persona-edit-grid {
+  align-items: start;
+}
+
+.persona-story-panel,
+.persona-meta-panel,
+.persona-lexicon-panel {
+  gap: 20px;
+}
+
+.persona-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.persona-panel-head .muted {
+  max-width: 28ch;
+  text-align: right;
+  line-height: 1.7;
+}
+
+.persona-tone-note {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.persona-tone-item {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(155, 176, 198, 0.12);
+  background: rgba(157, 183, 207, 0.03);
+}
+
+.persona-lexicon-head {
+  align-items: end;
+}
+
+@media (max-width: 900px) {
+  .persona-edit-hero-side {
+    justify-items: start;
+    max-width: none;
+  }
+
+  .persona-panel-head .muted {
+    max-width: none;
+    text-align: left;
+  }
+}
+
+@media (max-width: 680px) {
+  .persona-edit-summary-grid,
+  .persona-tone-note {
+    grid-template-columns: 1fr;
+  }
+
+  .persona-panel-head {
+    flex-direction: column;
+  }
+}
+</style>

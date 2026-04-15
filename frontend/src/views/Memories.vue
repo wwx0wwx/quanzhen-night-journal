@@ -1,17 +1,53 @@
 <template>
-  <section class="stack">
-    <div class="hero">
+  <section class="stack memories-page">
+    <div class="hero memories-hero">
       <div>
+        <div class="hero-kicker">Memory Ledger</div>
         <h1>记忆碎片（素材）</h1>
-        <p>按人格设定维护长期设定、检索结果和手动补充的关键素材。</p>
+        <p>按人格设定维护长期设定、检索结果和手动补充的关键素材。先确认该写作人格记得什么，再决定应该继续补写哪一层。</p>
+      </div>
+      <div class="memories-hero-aside">
+        <div class="button-row">
+          <span class="tag">{{ personas.length }} 组人格</span>
+          <span class="tag">{{ memories.length }} 条素材</span>
+        </div>
+        <div class="muted">搜索负责唤回旧记忆，补录负责把新的冷线索收入档案。</div>
       </div>
     </div>
 
     <div v-if="message" class="status-banner" :class="messageType">{{ message }}</div>
 
-    <div class="grid two">
-      <div class="panel panel-pad stack">
-        <div class="section-title">快速搜索</div>
+    <div class="card-row">
+      <div class="metric">
+        <div class="muted">当前检索人格</div>
+        <strong>{{ currentPersonaName }}</strong>
+        <div class="muted">检索时会优先使用该人格对应的长期设定与近期线索。</div>
+      </div>
+      <div class="metric">
+        <div class="muted">最近命中</div>
+        <strong>{{ hits.length }}</strong>
+        <div class="muted">{{ hits.length ? '已返回相关素材，可直接比对摘要与全文。' : '当前还没有检索结果。' }}</div>
+      </div>
+      <div class="metric">
+        <div class="muted">已归档素材</div>
+        <strong>{{ memories.length }}</strong>
+        <div class="muted">分层总数越稳定，后续写作时的语气与事实漂移越少。</div>
+      </div>
+    </div>
+
+    <div class="grid two memories-grid">
+      <div class="panel panel-pad stack memory-search-card">
+        <div class="memory-card-head">
+          <div>
+            <div class="hero-kicker">Recall Desk</div>
+            <div class="section-title">快速搜索</div>
+            <p class="muted">输入场景、意象或动作词，检索当前人格下最接近的记忆条目。</p>
+          </div>
+          <div class="memory-card-glyph" aria-hidden="true">
+            <span></span>
+            <span></span>
+          </div>
+        </div>
         <div class="form-grid">
           <label class="field">
             <span>人格设定（写作风格）</span>
@@ -41,20 +77,33 @@
           description="输入一个关键词后，系统会从当前风格的记忆中找相关素材。"
         />
         <div v-else class="list">
-          <div v-for="item in hits" :key="item.id" class="list-item stack">
-            <div class="button-row">
-              <span class="tag">{{ levelLabel(item.level) }}</span>
-              <span class="tag">{{ personaName(search.persona_id) }}</span>
+          <div v-for="item in hits" :key="item.id" class="list-item stack memory-hit">
+            <div class="split memories-hit-head">
+              <div class="button-row">
+                <span class="tag">{{ levelLabel(item.level) }}</span>
+                <span class="tag">{{ personaName(search.persona_id) }}</span>
+              </div>
+              <span class="memory-score">综合分 {{ formatScore(item.weighted_score) }}</span>
             </div>
             <strong>{{ item.summary || item.content }}</strong>
-            <div class="muted">相似度 {{ formatScore(item.similarity) }}，综合分 {{ formatScore(item.weighted_score) }}</div>
+            <div class="muted">相似度 {{ formatScore(item.similarity) }}，越高说明与当前搜索语句越接近。</div>
             <div class="muted">{{ item.content }}</div>
           </div>
         </div>
       </div>
 
-      <div class="panel panel-pad stack">
-        <div class="section-title">新增长期设定</div>
+      <div class="panel panel-pad stack memory-create-card">
+        <div class="memory-card-head">
+          <div>
+            <div class="hero-kicker">Manual Entry</div>
+            <div class="section-title">新增长期设定</div>
+            <p class="muted">把新确认的事实、意象或长期线索直接补录进记忆层级，避免后续写作时漂移。</p>
+          </div>
+          <div class="memory-card-glyph memory-card-glyph-right" aria-hidden="true">
+            <span></span>
+            <span></span>
+          </div>
+        </div>
         <label class="field">
           <span>人格设定（写作风格）</span>
           <select v-model.number="form.persona_id">
@@ -84,7 +133,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 import { api, unwrap } from '../api'
 import AppEmpty from '../components/AppEmpty.vue'
@@ -117,6 +166,7 @@ const form = reactive({
   is_core: true,
 })
 const tagsText = ref('')
+const currentPersonaName = computed(() => personaName(search.persona_id) || '未选择')
 
 function levelLabel(level) {
   return levelOptions.find((item) => item.value === level)?.label || level
@@ -198,3 +248,94 @@ async function createMemory() {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.memories-page {
+  gap: 22px;
+}
+
+.memories-hero {
+  align-items: end;
+}
+
+.memories-hero-aside {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+  max-width: 280px;
+  text-align: right;
+}
+
+.memories-grid {
+  align-items: start;
+}
+
+.memory-search-card,
+.memory-create-card {
+  min-height: 100%;
+}
+
+.memory-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.memory-card-head p {
+  margin: 10px 0 0;
+  max-width: 46ch;
+  line-height: 1.7;
+}
+
+.memory-card-glyph {
+  display: grid;
+  gap: 10px;
+  min-width: 96px;
+  padding-top: 10px;
+}
+
+.memory-card-glyph span {
+  display: block;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(216, 229, 240, 0.5), transparent);
+}
+
+.memory-card-glyph span:last-child {
+  width: 70%;
+}
+
+.memory-card-glyph-right span {
+  background: linear-gradient(90deg, transparent, rgba(216, 229, 240, 0.5));
+  justify-self: end;
+}
+
+.memory-hit {
+  gap: 12px;
+}
+
+.memories-hit-head {
+  align-items: center;
+}
+
+.memory-score {
+  color: var(--accent-soft);
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+}
+
+@media (max-width: 900px) {
+  .memories-hero-aside {
+    justify-items: start;
+    max-width: none;
+    text-align: left;
+  }
+}
+
+@media (max-width: 680px) {
+  .memory-card-head,
+  .memories-hit-head {
+    flex-direction: column;
+  }
+}
+</style>

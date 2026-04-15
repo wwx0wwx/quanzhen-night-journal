@@ -1026,8 +1026,17 @@ pre {
     grid-template-columns: 1fr;
   }
 
+  .hero {
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+
   .split {
     flex-direction: column;
+  }
+
+  .card-row {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 
   .post-card-actions {
@@ -1053,5 +1062,74 @@ pre {
   .secret-input-wrap {
     justify-items: stretch;
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .view-shell {
+    width: calc(100vw - 16px);
+    padding-top: 116px;
+    padding-bottom: 24px;
+  }
+
+  .panel-pad {
+    padding: 18px;
+  }
+
+  .hero h1 {
+    font-size: clamp(1.82rem, 8vw, 2.3rem);
+    letter-spacing: 0.08em;
+  }
+
+  .hero p {
+    margin-top: 8px;
+    max-width: none;
+  }
+
+  .hero-kicker {
+    margin-bottom: 12px;
+    letter-spacing: 0.22em;
+  }
+
+  .button-row {
+    gap: 10px;
+  }
+
+  .button-row > .btn,
+  .button-row > a.btn,
+  .button-row > button.btn {
+    width: 100%;
+  }
+
+  .btn {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .metric strong {
+    font-size: 1.55rem;
+  }
+
+  .list-item {
+    padding: 16px;
+  }
+
+  .meta-grid,
+  .card-row,
+  .toolbar,
+  .form-grid,
+  .domain-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field input,
+  .field textarea,
+  .field select,
+  .lexicon-row input {
+    font-size: 16px;
+  }
+
+  .section-title {
+    line-height: 1.35;
   }
 }

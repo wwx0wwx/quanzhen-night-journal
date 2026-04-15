@@ -1,13 +1,17 @@
 <template>
   <section class="stack">
-    <div class="hero">
+    <div class="hero ghost-hero">
       <div>
+        <div class="hero-kicker">Archive Transfer</div>
         <h1>迁移与备份</h1>
-        <p>管理 .ghost 导出、预览和导入，明确看到文件、冲突和恢复结果。</p>
+        <p>管理 .ghost 导出、预览和导入，明确看到文件、冲突和恢复结果。这里更像档案转运台，而不是单纯的上传窗口。</p>
       </div>
-      <button class="btn primary" type="button" :disabled="isExporting" @click="exportGhost">
-        {{ isExporting ? '导出中…' : '导出 .ghost' }}
-      </button>
+      <div class="ghost-hero-actions">
+        <div class="muted">建议在较大导入前先做一次导出，保留当前状态的回退包。</div>
+        <button class="btn primary" type="button" :disabled="isExporting" @click="exportGhost">
+          {{ isExporting ? '导出中…' : '导出 .ghost' }}
+        </button>
+      </div>
     </div>
 
     <div class="stack" v-if="actionError || actionSuccess">
@@ -261,3 +265,25 @@ async function importGhost() {
 
 onMounted(loadExports)
 </script>
+
+<style scoped>
+.ghost-hero {
+  align-items: end;
+}
+
+.ghost-hero-actions {
+  display: grid;
+  gap: 12px;
+  justify-items: end;
+  max-width: 320px;
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .ghost-hero-actions {
+    justify-items: start;
+    max-width: none;
+    text-align: left;
+  }
+}
+</style>
