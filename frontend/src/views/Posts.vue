@@ -1,11 +1,12 @@
 <template>
   <section class="stack">
-    <div class="hero">
+    <div class="hero posts-hero">
       <div>
+        <div class="hero-kicker">Manuscript Registry</div>
         <h1>文章管理</h1>
-        <p>这里负责查看文章、手动开始写作，以及控制自动写作是暂停还是恢复。</p>
+        <p>这里像夜间卷宗台一样整理稿件、生成任务与发布动作，先判断每篇稿件的状态，再决定是否继续推进。</p>
       </div>
-      <div class="button-row">
+      <div class="button-row posts-hero-actions">
         <button
           class="btn primary"
           type="button"
@@ -28,7 +29,7 @@
       </div>
     </div>
 
-    <form class="toolbar" @submit.prevent="load">
+    <form class="panel panel-pad toolbar posts-toolbar" @submit.prevent="load">
       <label class="field">
         <span>状态筛选</span>
         <select v-model="status" :disabled="isLoading">
@@ -85,7 +86,13 @@
     />
 
     <template v-else>
-      <div class="muted">共 {{ total }} 篇，当前显示 {{ posts.length }} 篇。</div>
+      <div class="panel panel-pad posts-ledger-meta">
+        <div>
+          <div class="hero-kicker">Registry Count</div>
+          <strong>共 {{ total }} 篇，当前显示 {{ posts.length }} 篇。</strong>
+        </div>
+        <div class="muted">主操作优先处理“待审核 / 可发布 / 失败待排查”的稿件，其余状态可延后整理。</div>
+      </div>
 
       <div class="list">
         <article v-for="post in posts" :key="post.id" class="panel panel-pad stack post-card">
@@ -105,7 +112,8 @@
                 </span>
               </div>
 
-              <div class="stack" style="gap: 8px;">
+              <div class="stack post-card-heading" style="gap: 8px;">
+                <div class="post-card-kicker">卷宗 #{{ post.id }}</div>
                 <RouterLink class="post-title-link" :to="`/admin/posts/${post.id}`">
                   {{ post.title || `未命名文章 #${post.id}` }}
                 </RouterLink>
@@ -164,6 +172,7 @@
             </div>
 
             <div class="button-row post-card-actions">
+              <div class="post-card-actions-label">处置动作</div>
               <RouterLink class="btn ghost btn-small" :to="`/admin/posts/${post.id}`">编辑</RouterLink>
               <RouterLink v-if="post.task_id" class="btn ghost btn-small" :to="`/admin/tasks/${post.task_id}`">
                 查看任务
@@ -365,3 +374,62 @@ async function wakeUp() {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.posts-hero {
+  align-items: end;
+}
+
+.posts-hero-actions {
+  justify-content: flex-end;
+}
+
+.posts-toolbar {
+  margin-bottom: 4px;
+}
+
+.posts-ledger-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.posts-ledger-meta strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  letter-spacing: 0.06em;
+}
+
+.post-card {
+  background:
+    linear-gradient(180deg, rgba(232, 238, 245, 0.035), transparent 100%),
+    linear-gradient(145deg, rgba(13, 17, 24, 0.94), rgba(8, 11, 17, 0.98));
+}
+
+.post-card-heading {
+  position: relative;
+}
+
+.post-card-kicker,
+.post-card-actions-label {
+  color: var(--accent-soft);
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.post-card-actions {
+  min-width: 138px;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .posts-hero-actions,
+  .posts-ledger-meta {
+    justify-content: flex-start;
+  }
+}
+</style>

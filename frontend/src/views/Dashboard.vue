@@ -15,10 +15,30 @@
     />
 
     <template v-else>
-      <div class="hero">
+      <div class="hero dashboard-hero">
         <div>
+          <div class="hero-kicker">Night Watch Console</div>
           <h1>运营总览</h1>
-          <p>这里仅保留状态、风险和成本展示，实际发文与休眠操作请去文章页处理。</p>
+          <p>把今夜的站点、任务、风险与生成状态收束在同一处，先看夜况是否安稳，再决定是否继续发文。</p>
+        </div>
+        <div class="dashboard-hero-aside">
+          <span class="tag" :class="configConclusionTagClass">{{ systemState.label }}</span>
+          <div class="muted">建议动作：{{ nextStep.title }}</div>
+        </div>
+      </div>
+
+      <div class="panel panel-pad stack dashboard-overview-card">
+        <div class="dashboard-overview-grid">
+          <div class="dashboard-overview-main">
+            <div class="dashboard-overview-label">今夜状态</div>
+            <h2>{{ systemState.label }}</h2>
+            <p>{{ systemState.description }}</p>
+          </div>
+          <div class="dashboard-overview-side">
+            <div class="dashboard-overview-label">下一步</div>
+            <strong>{{ nextStep.title }}</strong>
+            <div class="muted">{{ nextStep.description }}</div>
+          </div>
         </div>
       </div>
 
@@ -26,7 +46,7 @@
         <div class="settings-section-head">
           <div>
             <h2>站点访问状态</h2>
-            <p class="muted">先看公开访问是否正常，再看系统状态与风险。</p>
+            <p class="muted">先确认对外入口是否稳定，再决定是否需要排查构建、域名或回源问题。</p>
           </div>
           <div class="button-row">
             <span class="tag" :class="data.domain_status.enabled ? 'tag-success' : 'tag-warning'">
@@ -69,7 +89,7 @@
       </div>
 
       <div class="card-row">
-        <div class="metric">
+        <div class="metric dashboard-state-metric">
           <div class="muted">当前系统状态</div>
           <strong>{{ systemState.label }}</strong>
           <div class="muted">{{ systemState.description }}</div>
@@ -82,7 +102,7 @@
           :cost="Number(data.cost?.cost || 0)"
           :limit="Number(data.cost?.limit || 1)"
         />
-        <div class="metric">
+        <div class="metric dashboard-state-metric">
           <div class="muted">推荐下一步</div>
           <strong>{{ nextStep.title }}</strong>
           <div class="muted">{{ nextStep.description }}</div>
@@ -112,7 +132,7 @@
         </div>
       </div>
 
-      <div class="grid two">
+      <div class="grid two dashboard-columns">
         <div class="panel panel-pad stack">
           <div class="section-title">近期风险提醒</div>
 
@@ -257,6 +277,13 @@ const hasLoadedOnce = ref(false)
 const totalRiskCount = computed(
   () => Number(data.risk_overview.failed || 0) + Number(data.risk_overview.circuit_open || 0) + Number(data.risk_overview.waiting_human_signoff || 0),
 )
+const configConclusionTagClass = computed(() => {
+  if (!data.config_status.system_initialized || !data.config_status.llm_ready) return 'tag-danger'
+  if (Number(data.risk_overview.failed || 0) > 0 || Number(data.risk_overview.circuit_open || 0) > 0 || Number(data.risk_overview.waiting_human_signoff || 0) > 0) {
+    return 'tag-warning'
+  }
+  return 'tag-success'
+})
 
 const systemState = computed(() => {
   if (!data.config_status.system_initialized) {
@@ -377,3 +404,95 @@ async function load(showLoading = !hasLoadedOnce.value) {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.dashboard-hero {
+  align-items: end;
+}
+
+.dashboard-hero-aside {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+  text-align: right;
+}
+
+.dashboard-overview-card {
+  gap: 22px;
+}
+
+.dashboard-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.8fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+.dashboard-overview-main,
+.dashboard-overview-side {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid rgba(155, 176, 198, 0.14);
+  background:
+    linear-gradient(180deg, rgba(220, 230, 240, 0.04), transparent 100%),
+    rgba(12, 16, 24, 0.62);
+}
+
+.dashboard-overview-main::before,
+.dashboard-overview-side::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at top right, rgba(216, 229, 240, 0.08), transparent 22%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.02), transparent 40%);
+}
+
+.dashboard-overview-main h2,
+.dashboard-overview-side strong {
+  margin: 0;
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+}
+
+.dashboard-overview-main h2 {
+  font-size: clamp(1.6rem, 2.8vw, 2.4rem);
+}
+
+.dashboard-overview-main p,
+.dashboard-overview-side .muted {
+  margin: 0;
+  line-height: 1.8;
+}
+
+.dashboard-overview-label {
+  color: var(--accent-soft);
+  font-size: 0.76rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.dashboard-overview-side strong {
+  font-size: 1.14rem;
+}
+
+.dashboard-state-metric strong {
+  font-size: 1.58rem;
+}
+
+@media (max-width: 960px) {
+  .dashboard-hero-aside {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .dashboard-overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
