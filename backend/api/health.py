@@ -5,20 +5,14 @@ import shutil
 
 import httpx
 from fastapi import APIRouter, Depends, Request
-from sqlalchemy import desc, select, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api.deps import get_config_store, get_cost_monitor, get_memory_engine, get_persona_engine
-from backend.api.serializers import post_to_dict
+from backend.api.deps import get_config_store
 from backend.config import get_settings
 from backend.database import get_session
 from backend.engine.config_store import ConfigStore
-from backend.engine.cost_monitor import CostMonitor
-from backend.engine.memory_engine import MemoryEngine
-from backend.engine.persona_engine import PersonaEngine
-from backend.models import GenerationTask, Post
 from backend.publisher.hugo_publisher import HugoPublisher
-from backend.security.auth import get_current_user
 from backend.utils.response import success
 
 
@@ -208,51 +202,3 @@ async def system_health(
             "checks": checks,
         }
     )
-
-
-@router.get("/dashboard")
-async def health_dashboard(
-    db: AsyncSession = Depends(get_session),
-    cost_monitor: CostMonitor = Depends(get_cost_monitor),
-    persona_engine: PersonaEngine = Depends(get_persona_engine),
-    memory_engine: MemoryEngine = Depends(get_memory_engine),
-    _user=Depends(get_current_user),
-) -> object:
-    posts = list(await db.scalars(select(Post).order_by(desc(Post.created_at)).limit(5)))
-    tasks = list(await db.scalars(select(GenerationTask).order_by(desc(GenerationTask.started_at)).limit(5)))
-    latest_post = posts[0] if posts else None
-    persona_score = 80.0
-    memory_score = 80.0
-    if latest_post and latest_post.persona_id:
-        persona_score = await persona_engine.calculate_stability_score(latest_post.persona_id)
-        memory_score = await memory_engine.calculate_coherence_score(latest_post.persona_id)
-    return success(
-        {
-            "recent_posts": [post_to_dict(item) for item in posts],
-            "recent_tasks": [
-                {"id": task.id, "status": task.status, "started_at": task.started_at, "persona_id": task.persona_id}
-                for task in tasks
-            ],
-            "cost": await cost_monitor.get_summary("daily"),
-            "persona_stability": persona_score,
-            "memory_coherence": memory_score,
-        }
-    )
-
-
-@router.get("/persona-stability")
-async def persona_stability(
-    persona_id: int,
-    engine: PersonaEngine = Depends(get_persona_engine),
-    _user=Depends(get_current_user),
-) -> object:
-    return success({"persona_id": persona_id, "score": await engine.calculate_stability_score(persona_id)})
-
-
-@router.get("/memory-coherence")
-async def memory_coherence(
-    persona_id: int,
-    engine: MemoryEngine = Depends(get_memory_engine),
-    _user=Depends(get_current_user),
-) -> object:
-    return success({"persona_id": persona_id, "score": await engine.calculate_coherence_score(persona_id)})

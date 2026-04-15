@@ -14,7 +14,33 @@ SECRET_KEYS = {
     "llm.api_key",
     "embedding.api_key",
     "webhook.auth_token",
+    "notify.bearer_token",
 }
+DEPRECATED_CONFIG_KEYS = {
+    "schedule.posts_per_day",
+    "schedule.cron_expression",
+    "system.version",
+}
+CATEGORY_BY_PREFIX = {
+    "site": "site",
+    "panel": "panel",
+    "llm": "llm",
+    "embedding": "embedding",
+    "schedule": "schedule",
+    "budget": "budget",
+    "qa": "qa",
+    "webhook": "webhook",
+    "notify": "notify",
+    "anti_perfection": "anti_perfection",
+    "sensory": "sensory",
+    "hugo": "hugo",
+    "system": "system",
+}
+
+
+def infer_category(key: str, fallback: str = "general") -> str:
+    prefix = key.split(".", 1)[0]
+    return CATEGORY_BY_PREFIX.get(prefix, fallback)
 
 
 class ConfigStore:
@@ -51,12 +77,17 @@ class ConfigStore:
     ) -> SystemConfig:
         entry = await self.db.get(SystemConfig, key)
         if entry is None:
-            entry = SystemConfig(key=key, value="", category=category or "general", encrypted=0, updated_at="")
+            entry = SystemConfig(
+                key=key,
+                value="",
+                category=infer_category(key, category or "general"),
+                encrypted=0,
+                updated_at="",
+            )
             self.db.add(entry)
             await self.db.flush()
-        if category is not None:
-            entry.category = category
-        should_encrypt = encrypted if encrypted is not None else key in SECRET_KEYS
+        entry.category = infer_category(key, category or entry.category or "general")
+        should_encrypt = key in SECRET_KEYS or bool(encrypted)
         entry.encrypted = 1 if should_encrypt else 0
         if value is None:
             entry.value = None
@@ -95,6 +126,15 @@ class ConfigStore:
                 "encrypted": bool(entry.encrypted),
             }
         return data
+
+    async def purge_deprecated_keys(self) -> list[str]:
+        rows = await self.db.scalars(select(SystemConfig).where(SystemConfig.key.in_(tuple(DEPRECATED_CONFIG_KEYS))))
+        stale = list(rows)
+        for row in stale:
+            await self.db.delete(row)
+        if stale:
+            await self.db.flush()
+        return sorted(item.key for item in stale)
 
     async def get_json(self, key: str, default: list | dict) -> list | dict:
         return json_loads(await self.get(key, "", decrypt=False), default)

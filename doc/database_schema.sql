@@ -56,12 +56,10 @@ INSERT OR IGNORE INTO system_config (key, value, category) VALUES
     ('embedding.api_key',    '',                   'embedding'),
     ('embedding.model_id',   '',                   'embedding'),
     ('embedding.dimensions', '1536',               'embedding'),
-    ('schedule.posts_per_day',    '1',             'schedule'),
     ('schedule.days_per_cycle',   '1',             'schedule'),
     ('schedule.posts_per_cycle',  '1',             'schedule'),
     ('schedule.publish_time',     '21:02',         'schedule'),
     ('schedule.cycle_anchor_date', '',             'schedule'),
-    ('schedule.cron_expression',  '0 2 * * *',     'schedule'),
     ('schedule.review_cron',      '0 3 * * 0',     'schedule'),
     ('schedule.decay_cron',       '0 4 * * *',     'schedule'),
     ('schedule.sample_interval_minutes', '5',      'schedule'),
@@ -87,7 +85,6 @@ INSERT OR IGNORE INTO system_config (key, value, category) VALUES
     ('webhook.cooldown_seconds',  '1800',          'webhook'),
     ('system.initialized',        '0',             'system'),
     ('system.encryption_key',     '',              'system'),
-    ('system.version',            '2.0.0',         'system'),
     ('hugo.theme',                'PaperMod',      'hugo'),
     ('hugo.base_url',             '/',             'hugo');
 

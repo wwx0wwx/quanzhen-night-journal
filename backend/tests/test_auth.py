@@ -103,7 +103,7 @@ def test_audit_exposes_processed_event_for_task_logs(authed_client):
             assert persona is not None
 
             task = GenerationTask(
-                trigger_source="manual_test",
+                trigger_source="manual",
                 event_id=None,
                 persona_id=persona.id,
                 context_snapshot="{}",
@@ -116,7 +116,7 @@ def test_audit_exposes_processed_event_for_task_logs(authed_client):
             await db.flush()
 
             event = Event(
-                event_type="manual_test",
+                event_type="manual",
                 source="pytest",
                 raw_payload="{}",
                 normalized_semantic=normalized_semantic,

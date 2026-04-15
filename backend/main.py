@@ -79,7 +79,7 @@ async def startup_self_check() -> None:
             )
 
         had_default_persona = await db.scalar(select(Persona.id).where(Persona.is_default == 1))
-        await ensure_seed_persona()
+        await ensure_seed_persona(db)
         if had_default_persona is None:
             default_persona = await db.scalar(select(Persona.id).where(Persona.is_default == 1))
             if default_persona is not None:
@@ -100,6 +100,14 @@ async def startup_self_check() -> None:
                     severity="warning",
                 )
         config_store = ConfigStore(db)
+        deprecated_keys = await config_store.purge_deprecated_keys()
+        if deprecated_keys:
+            await _record_startup_action(
+                db,
+                "system.purge_deprecated_config_keys",
+                {"removed_keys": deprecated_keys},
+                severity="warning",
+            )
         runtime_status = await SiteRuntimeManager(config_store).apply()
         await _record_startup_action(
             db,

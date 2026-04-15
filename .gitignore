@@ -22,5 +22,7 @@ automation/recent_memories.json
 automation/world_state.json
 data/.build_signal
 data/build_status.json
+data/Caddyfile
+data/hugo.toml
 data/ghosts/
 data/quanzhen.db

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.adapters.embedding_adapter import EmbeddingAdapter
 from backend.adapters.llm_adapter import LLMAdapter
 from backend.api.deps import get_encryptor
-from backend.config import get_settings
 from backend.database import get_sessionmaker
 from backend.engine.anti_perfection import AntiPerfectionEngine
 from backend.engine.config_store import ConfigStore
@@ -20,7 +19,6 @@ from backend.engine.persona_engine import PersonaEngine
 from backend.engine.prompt_builder import PromptBuilder
 from backend.engine.qa_engine import QAEngine
 from backend.engine.sensory_engine import SensoryEngine
-from backend.models import Persona, User
 from backend.publisher.registry import PublisherRegistry
 from backend.utils.default_persona import (
     apply_default_quanzhen_to_persona,
@@ -58,17 +56,29 @@ async def _runtime():
         yield db, config_store, persona_engine, memory_engine, qa_engine, cost_monitor, SensoryEngine(db, config_store), EventEngine(db, config_store), orchestrator
 
 
-async def ensure_seed_persona() -> None:
-    async for db, config_store, persona_engine, *_ in _runtime():
-        persona = await persona_engine.get_active_persona()
-        if persona is None:
-            await persona_engine.create_persona(build_default_quanzhen_persona())
-            await db.commit()
-            continue
+async def _ensure_seed_persona_in_session(db: AsyncSession, *, commit: bool) -> None:
+    persona_engine = PersonaEngine(db)
+    persona = await persona_engine.get_active_persona()
+    changed = False
 
-        if is_legacy_default_quanzhen(persona):
-            apply_default_quanzhen_to_persona(persona)
-            await db.commit()
+    if persona is None:
+        await persona_engine.create_persona(build_default_quanzhen_persona())
+        changed = True
+    elif is_legacy_default_quanzhen(persona):
+        apply_default_quanzhen_to_persona(persona)
+        changed = True
+
+    if changed and commit:
+        await db.commit()
+
+
+async def ensure_seed_persona(db: AsyncSession | None = None) -> None:
+    if db is not None:
+        await _ensure_seed_persona_in_session(db, commit=False)
+        return
+
+    async for runtime_db, *_ in _runtime():
+        await _ensure_seed_persona_in_session(runtime_db, commit=True)
 
 
 async def scheduled_generation_job(*, slot_index: int = 0, scheduled_for: str | None = None) -> None:
