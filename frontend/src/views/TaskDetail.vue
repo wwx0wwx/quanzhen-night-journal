@@ -15,10 +15,11 @@
     />
 
     <template v-else>
-      <div class="hero">
+      <div class="hero task-hero">
         <div>
+          <div class="hero-kicker">Execution Trace</div>
           <h1>任务 #{{ route.params.id }}</h1>
-          <p>这里查看任务阶段、失败原因、关联文章和完整 Trace。</p>
+          <p>这里查看一次写作任务从触发到结束的全部轨迹。先判断是否稳，再决定是人工签发还是直接中止。</p>
         </div>
         <div class="button-row">
           <button class="btn primary" :disabled="actionBusy" @click="approve">
@@ -35,7 +36,7 @@
       <div class="grid two">
         <TaskTimeline :status="task.status || 'queued'" />
 
-        <div class="panel panel-pad stack">
+        <div class="panel panel-pad stack task-summary-card">
           <div class="section-title">任务摘要</div>
           <div class="button-row">
             <span class="tag" :class="getStatusClass('task', task.status)">{{ getStatusLabel('task', task.status) }}</span>
@@ -175,3 +176,15 @@ async function abort() {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.task-hero {
+  align-items: end;
+}
+
+.task-summary-card {
+  background:
+    linear-gradient(180deg, rgba(232, 238, 245, 0.03), transparent 100%),
+    rgba(10, 14, 21, 0.76);
+}
+</style>

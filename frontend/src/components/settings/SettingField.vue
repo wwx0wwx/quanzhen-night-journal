@@ -1,7 +1,7 @@
 <template>
   <label class="field" :class="{ wide: field.wide, 'field-boolean': field.type === 'boolean' }">
     <div class="field-head">
-      <span>{{ field.label }}</span>
+      <span class="setting-field-label">{{ field.label }}</span>
     </div>
 
     <template v-if="field.type === 'boolean'">
@@ -112,3 +112,9 @@ function toggleSecret() {
   showSecret.value = !showSecret.value
 }
 </script>
+
+<style scoped>
+.setting-field-label {
+  letter-spacing: 0.08em;
+}
+</style>

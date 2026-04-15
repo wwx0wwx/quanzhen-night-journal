@@ -2,6 +2,7 @@
   <details v-if="section.collapsible" class="panel panel-pad settings-section" :open="section.openByDefault">
     <summary class="settings-section-summary">
       <div>
+        <div class="settings-section-kicker">Advanced Section</div>
         <h2>{{ section.title }}</h2>
         <p v-if="section.description" class="muted">{{ section.description }}</p>
       </div>
@@ -27,6 +28,7 @@
   <div v-else class="panel panel-pad settings-section">
     <div class="settings-section-head">
       <div>
+        <div class="settings-section-kicker">Config Section</div>
         <h2>{{ section.title }}</h2>
         <p v-if="section.description" class="muted">{{ section.description }}</p>
       </div>

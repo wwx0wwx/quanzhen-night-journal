@@ -17,8 +17,9 @@
     <template v-else>
       <div class="hero settings-hero">
         <div>
+          <div class="hero-kicker">Configuration Ledger</div>
           <h1>系统设置</h1>
-          <p>按业务分组维护博客信息、面板显示、大脑接入、记忆检索与发文节奏。</p>
+          <p>把站点、面板、大脑接入与发文节奏统一收束在这本配置簿里。优先确保结论清晰，其次才是字段本身。</p>
         </div>
         <div class="settings-toolbar">
           <div class="button-row">
@@ -49,7 +50,7 @@
       />
 
       <template v-else>
-        <div class="panel panel-pad config-summary-card">
+        <div class="panel panel-pad config-summary-card settings-summary-card">
           <div class="settings-section-head">
             <div>
               <h2>当前发文结论</h2>
@@ -376,3 +377,11 @@ onMounted(async () => {
   await load()
 })
 </script>
+
+<style scoped>
+.settings-summary-card {
+  background:
+    linear-gradient(180deg, rgba(232, 238, 245, 0.03), transparent 100%),
+    rgba(10, 14, 21, 0.76);
+}
+</style>

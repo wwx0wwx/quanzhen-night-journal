@@ -1,9 +1,14 @@
 <template>
-  <section class="panel panel-pad" style="max-width: 920px; margin: 4vh auto 0;">
-    <div class="hero">
+  <section class="panel panel-pad setup-stage">
+    <div class="hero setup-hero">
       <div>
+        <div class="hero-kicker">First Night Sequence</div>
         <h1>初始化引导</h1>
-        <p>按顺序完成安全、站点和大脑接入后，系统就会解除锁定。更细的记忆检索配置可以稍后再补。</p>
+        <p>把安全、站点和大脑接入按顺序安放好，这个控制台才会真正醒来。初始化不是填表，更像把夜间守则一项项点亮。</p>
+      </div>
+      <div class="setup-hero-note">
+        <span class="tag">仅需三步</span>
+        <div class="muted">先让系统可登录、可命名、可生成，再继续补足细节。</div>
       </div>
     </div>
 
@@ -70,7 +75,7 @@
           </div>
         </div>
 
-        <div class="panel panel-pad stack">
+        <div class="panel panel-pad stack setup-provider-card">
           <div class="setup-subsection-head">
             <div class="section-title">LLM</div>
             <div class="muted">负责正文生成、改写和主要推理。</div>
@@ -150,3 +155,34 @@ async function submit() {
   }
 }
 </script>
+
+<style scoped>
+.setup-stage {
+  max-width: 980px;
+  margin: 4vh auto 0;
+}
+
+.setup-hero {
+  align-items: end;
+}
+
+.setup-hero-note {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+  text-align: right;
+}
+
+.setup-provider-card {
+  background:
+    linear-gradient(180deg, rgba(232, 238, 245, 0.03), transparent 100%),
+    rgba(10, 14, 21, 0.74);
+}
+
+@media (max-width: 900px) {
+  .setup-hero-note {
+    justify-items: start;
+    text-align: left;
+  }
+}
+</style>

@@ -15,17 +15,18 @@
     />
 
     <template v-else>
-      <div class="hero">
+      <div class="hero audit-hero">
         <div>
+          <div class="hero-kicker">Night Trace Archive</div>
           <h1>系统日志</h1>
-          <p>查看审计记录、筛选严重级别，并导出当前筛选结果。</p>
+          <p>把登录、初始化、发布、异常这些痕迹按时间归档。这里不只是日志表，更像夜巡留下的事件卷宗。</p>
         </div>
         <div class="button-row">
           <button class="btn ghost" :disabled="isLoading" @click="exportCurrent">导出当前结果</button>
         </div>
       </div>
 
-      <div class="panel panel-pad toolbar">
+      <div class="panel panel-pad toolbar audit-toolbar">
         <label class="field">
           <span>严重级别</span>
           <select v-model="filters.severity">
@@ -51,7 +52,7 @@
         description="当前筛选条件下没有可展示的审计日志。"
       />
 
-      <div v-else class="list">
+      <div v-else class="list audit-ledger">
         <div class="panel panel-pad audit-table-head">
           <div>事件</div>
           <div>事件映射</div>
@@ -203,13 +204,16 @@ onMounted(load)
 
 .audit-table-head {
   color: var(--secondary);
-  font-size: 0.84rem;
-  letter-spacing: 0.08em;
+  font-size: 0.76rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
 .audit-item {
   gap: 16px;
+  background:
+    linear-gradient(180deg, rgba(232, 238, 245, 0.03), transparent 100%),
+    rgba(11, 15, 22, 0.78);
 }
 
 .audit-cell {
@@ -228,6 +232,18 @@ onMounted(load)
 .processed-event {
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.audit-hero {
+  align-items: end;
+}
+
+.audit-toolbar {
+  margin-bottom: 4px;
+}
+
+.audit-ledger {
+  gap: 14px;
 }
 
 @media (max-width: 960px) {

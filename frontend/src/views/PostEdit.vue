@@ -15,10 +15,11 @@
     />
 
     <template v-else>
-      <div class="hero">
+      <div class="hero editor-hero">
         <div>
+          <div class="hero-kicker">Manuscript Workbench</div>
           <h1>{{ isNew ? '新建文章' : `编辑文章 #${route.params.id}` }}</h1>
-          <p>保存正文、查看预览，并在确认后执行发布或归档。</p>
+          <p>正文、元信息、版本和发布动作都在这张工作台上完成。保持语言冷静、结构清晰，再决定是否送它进入前台。</p>
         </div>
         <div class="button-row">
           <button class="btn primary" :disabled="actionBusy" @click="save">
@@ -67,7 +68,7 @@
         </div>
 
         <div class="stack">
-          <div class="panel panel-pad stack">
+          <div class="panel panel-pad stack editor-info-card">
             <div class="section-title">文章信息</div>
             <dl class="meta-grid">
               <div>
@@ -93,7 +94,7 @@
             </dl>
           </div>
 
-          <div class="panel panel-pad stack">
+          <div class="panel panel-pad stack editor-preview-card">
             <div class="section-title">Markdown 预览</div>
             <div v-if="form.summary" class="status-banner info">{{ form.summary }}</div>
             <article class="preview-content" v-html="previewHtml"></article>
@@ -327,3 +328,16 @@ async function revertRevision(revision) {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.editor-hero {
+  align-items: end;
+}
+
+.editor-info-card,
+.editor-preview-card {
+  background:
+    linear-gradient(180deg, rgba(232, 238, 245, 0.03), transparent 100%),
+    rgba(10, 14, 21, 0.76);
+}
+</style>
