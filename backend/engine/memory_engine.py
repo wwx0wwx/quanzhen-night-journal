@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import delete, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.adapters.embedding_adapter import EmbeddingAdapter
+from backend.adapters.embedding_adapter import EmbeddingAdapter, EmbeddingUnavailableError
 from backend.adapters.llm_adapter import LLMAdapter
 from backend.engine.config_store import ConfigStore
 from backend.models import Memory, MemoryVector, Persona, Post
@@ -26,6 +26,8 @@ SOURCE_WEIGHT = {
 
 
 class MemoryEngine:
+    ARTICLE_MEMORY_SNIPPET_LIMIT = 48
+
     def __init__(
         self,
         db: AsyncSession,
@@ -65,15 +67,18 @@ class MemoryEngine:
         api_key = await self.config_store.get("embedding.api_key", "") or await self.config_store.get("llm.api_key", "")
         model_id = await self.config_store.get("embedding.model_id", "") or await self.config_store.get("llm.model_id", "")
         dimensions = int(await self.config_store.get("embedding.dimensions", "1536") or 1536)
-        vector = (
-            await self.embedding_adapter.embed(
-                base_url=base_url or "",
-                api_key=api_key or "",
-                model_id=model_id or "",
-                texts=[text],
-                dimensions=dimensions,
-            )
-        )[0]
+        try:
+            vector = (
+                await self.embedding_adapter.embed(
+                    base_url=base_url or "",
+                    api_key=api_key or "",
+                    model_id=model_id or "",
+                    texts=[text],
+                    dimensions=dimensions,
+                )
+            )[0]
+        except EmbeddingUnavailableError:
+            return
         existing = await self.db.get(MemoryVector, memory_id)
         if existing is None:
             self.db.add(MemoryVector(memory_id=memory_id, embedding=json_dumps(vector)))
@@ -87,6 +92,7 @@ class MemoryEngine:
         persona_id: int,
         top_k: int = 5,
         level_filter: list[str] | None = None,
+        exclude_memory_ids: list[int] | None = None,
     ) -> list[MemoryHit]:
         rows = await self.db.scalars(
             select(Memory).where(Memory.persona_id == persona_id).order_by(desc(Memory.created_at))
@@ -94,6 +100,9 @@ class MemoryEngine:
         memories = list(rows)
         if level_filter:
             memories = [item for item in memories if item.level in level_filter]
+        if exclude_memory_ids:
+            excluded = set(exclude_memory_ids)
+            memories = [item for item in memories if item.id not in excluded]
         if not memories:
             return []
 
@@ -128,19 +137,28 @@ class MemoryEngine:
                 )
             hits.sort(key=lambda item: item.weighted_score, reverse=True)
             return hits[:top_k]
-        except (ValueError, TypeError, KeyError):
-            return await self.search_fallback_keyword(query, persona_id, top_k=top_k)
+        except (EmbeddingUnavailableError, ValueError, TypeError, KeyError):
+            return await self.search_fallback_keyword(
+                query,
+                persona_id,
+                top_k=top_k,
+                exclude_memory_ids=exclude_memory_ids,
+            )
 
     async def search_fallback_keyword(
         self,
         query: str,
         persona_id: int,
         top_k: int = 5,
+        exclude_memory_ids: list[int] | None = None,
     ) -> list[MemoryHit]:
         query_tokens = {token for token in query.lower().split() if token}
+        excluded = set(exclude_memory_ids or [])
         rows = await self.db.scalars(select(Memory).where(Memory.persona_id == persona_id))
         hits: list[MemoryHit] = []
         for memory in rows:
+            if memory.id in excluded:
+                continue
             text = f"{memory.content} {memory.summary}".lower()
             overlap = len([token for token in query_tokens if token in text])
             score = overlap * self._score_multiplier(memory)
@@ -239,17 +257,32 @@ class MemoryEngine:
         return round(max(0.0, score), 2)
 
     async def create_from_article(self, post: Post, persona_id: int) -> Memory:
-        summary = post.summary or post.content_markdown[:120]
+        content = self._build_article_memory_content(post)
+        summary = (post.summary or post.title)[:180]
         return await self.create_memory(
             MemoryCreate(
                 persona_id=persona_id,
                 level="L2",
-                content=post.content_markdown,
+                content=content,
                 summary=summary,
-                tags=["article"],
+                tags=["article", f"post:{post.id}"],
                 source="article",
             )
         )
+
+    async def recent_article_memory_ids(self, persona_id: int, *, limit: int, hours: int) -> list[int]:
+        rows = await self.db.scalars(
+            select(Memory)
+            .where(Memory.persona_id == persona_id, Memory.source == "article")
+            .order_by(desc(Memory.created_at), desc(Memory.id))
+        )
+        now = utcnow()
+        selected: list[int] = []
+        for index, item in enumerate(rows):
+            age_hours = (now - self._parse_time(item.created_at)).total_seconds() / 3600
+            if index < limit or age_hours <= hours:
+                selected.append(item.id)
+        return selected
 
     async def stats(self) -> dict:
         rows = await self.db.execute(
@@ -273,3 +306,18 @@ class MemoryEngine:
 
     def _parse_time(self, value: str) -> datetime:
         return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(UTC)
+
+    def _build_article_memory_content(self, post: Post) -> str:
+        lines = [line.strip() for line in post.content_markdown.splitlines() if line.strip() and not line.startswith("#")]
+        opening = lines[0][: self.ARTICLE_MEMORY_SNIPPET_LIMIT] if lines else (post.summary or post.title)[: self.ARTICLE_MEMORY_SNIPPET_LIMIT]
+        closing = lines[-1][: self.ARTICLE_MEMORY_SNIPPET_LIMIT] if lines else opening
+        return "\n".join(
+            [
+                f"标题：{post.title}",
+                f"发布时间：{post.published_at or post.created_at}",
+                f"摘要：{(post.summary or post.title)[:180]}",
+                f"开场动作：{opening}",
+                f"收束状态：{closing}",
+                "用途：用于保持长期叙事连续性，但新稿不得直接复写上述场景、动作或措辞。",
+            ]
+        ).strip()

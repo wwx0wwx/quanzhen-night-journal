@@ -86,14 +86,19 @@ async def scheduled_generation_job(*, slot_index: int = 0, scheduled_for: str | 
         initialized = await config_store.get("system.initialized", "0")
         if initialized != "1":
             return
+        slot_time = scheduled_for or utcnow_iso()
         event = await event_engine.create_scheduler_event(
             source="scheduler",
             payload={
                 "scheduled_at": utcnow_iso(),
-                "scheduled_for": scheduled_for or utcnow_iso(),
+                "scheduled_for": slot_time,
                 "slot_index": slot_index,
             },
-            semantic_hint="定时发文任务触发" if slot_index == 0 else f"定时补发任务触发 #{slot_index + 1}",
+            semantic_hint=(
+                f"定时发文任务触发（{slot_time}）"
+                if slot_index == 0
+                else f"定时补发任务触发 #{slot_index + 1}（{slot_time}）"
+            ),
         )
         persona = await persona_engine.get_active_persona()
         await orchestrator.execute(event, persona=persona)

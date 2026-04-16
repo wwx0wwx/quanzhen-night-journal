@@ -5,6 +5,7 @@ import asyncio
 import httpx
 import pytest
 
+from backend.adapters.embedding_adapter import EmbeddingUnavailableError
 from backend.adapters.llm_adapter import LLMAdapter
 from backend.scheduler.jobs import scheduled_generation_job
 
@@ -184,3 +185,42 @@ def test_failed_webhook_auth_does_not_poison_dedup_or_cooldown(authed_client):
     )
     assert succeeded.status_code == 200
     assert succeeded.json()["data"]["task_status"] == "published"
+
+
+def test_embedding_fallback_requires_manual_review(monkeypatch, authed_client):
+    create_post = authed_client.post(
+        "/api/posts",
+        json={
+            "title": "旧夜",
+            "content_markdown": "# 旧夜\n\n我靠在廊柱边，看雪落在剑鞘上。",
+            "status": "published",
+            "persona_id": 1,
+        },
+    )
+    assert create_post.status_code == 200
+    post_id = create_post.json()["data"]["id"]
+
+    async def stable_chat(self, **_kwargs):  # noqa: ANN001
+        content = "# 新夜\n\n我靠在廊柱边，看雪落在剑鞘上。" + " 夜色很深。" * 40
+        return content, {"prompt_tokens": 12, "completion_tokens": 120}, 5
+
+    async def missing_embeddings(self, **_kwargs):  # noqa: ANN001
+        raise EmbeddingUnavailableError("embedding_not_configured")
+
+    monkeypatch.setattr(LLMAdapter, "chat", stable_chat)
+    monkeypatch.setattr("backend.adapters.embedding_adapter.EmbeddingAdapter.embed", missing_embeddings)
+
+    response = authed_client.post(
+        "/api/tasks/trigger",
+        json={"trigger_source": "manual", "semantic_hint": "write a guarded night note", "payload": {"kind": "manual"}},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "waiting_human_signoff"
+
+    detail = authed_client.get(f"/api/tasks/{data['id']}")
+    assert detail.status_code == 200
+    task_data = detail.json()["data"]
+    assert task_data["duplicate_method"] == "fallback/manual_review"
+    assert task_data["duplicate_review_required"] is True
+    assert task_data["trace"]["qa_result"]["duplicate_post_id"] == post_id

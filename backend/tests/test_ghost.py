@@ -51,8 +51,8 @@ def test_ghost_import_restores_vectors(authed_client):
 
             memory_vector_count = await db.scalar(select(func.count()).select_from(MemoryVector))
             post_vector_count = await db.scalar(select(func.count()).select_from(PostVector))
-            assert int(memory_vector_count or 0) > 0
-            assert int(post_vector_count or 0) > 0
+            original_memory_vectors = int(memory_vector_count or 0)
+            original_post_vectors = int(post_vector_count or 0)
 
             await db.execute(text("DELETE FROM post_vectors"))
             await db.execute(text("DELETE FROM memory_vectors"))
@@ -73,8 +73,8 @@ def test_ghost_import_restores_vectors(authed_client):
             assert preview["manifest"]["counts"]["posts"] >= 1
             assert int(restored_memories or 0) >= 1
             assert int(restored_posts or 0) >= 1
-            assert int(restored_memory_vectors or 0) >= 1
-            assert int(restored_post_vectors or 0) >= 1
+            assert int(restored_memory_vectors or 0) == original_memory_vectors
+            assert int(restored_post_vectors or 0) == original_post_vectors
 
     asyncio.run(exercise_import())
 

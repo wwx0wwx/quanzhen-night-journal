@@ -182,6 +182,11 @@ class GenerationOrchestrator:
                         attempt=task.retry_count + 1,
                         passed=bool(qa_result.get("passed")),
                         risk_level=qa_result.get("risk_level", "unknown"),
+                        duplicate_ok=qa_result.get("duplicate_ok"),
+                        duplicate_method=qa_result.get("duplicate_method"),
+                        duplicate_post_id=qa_result.get("duplicate_post_id"),
+                        duplicate_score=qa_result.get("duplicate_score"),
+                        duplicate_review_required=qa_result.get("duplicate_review_required", False),
                         integrity_ok=bool(qa_result.get("integrity_ok", True)),
                         integrity_reason=qa_result.get("integrity_reason", ""),
                     )
@@ -569,7 +574,7 @@ class GenerationOrchestrator:
             f"{prompt}\n\n"
             f"Previous draft:\n{content}\n\n"
             f"Issues to fix: {issues}.\n"
-            "Rewrite it with the same scene and persona, but make it more concrete, natural, and non-template."
+            "Keep the same persona, but shift to a new scene, new concrete action, and new narrative progression."
         )
 
     def _append_trace(self, task: GenerationTask, stage: str, **detail: object) -> None:

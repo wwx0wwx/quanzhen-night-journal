@@ -7,12 +7,21 @@ from backend.schemas.memory import MemoryHit
 
 
 @dataclass(slots=True)
+class RecentPostContext:
+    id: int
+    title: str
+    summary: str
+    published_at: str | None
+
+
+@dataclass(slots=True)
 class GenerationContext:
     persona: Persona
     memory_hits: list[MemoryHit]
     sensory_text: str
     sensory_snapshot: SensorySnapshot | None
     event: Event | None
+    recent_posts: list[RecentPostContext]
     anti_perfection: bool
     cold_start: bool
 
@@ -45,6 +54,14 @@ class PromptBuilder:
             summary["memories"] = [
                 {"id": hit.id, "level": hit.level, "similarity": hit.similarity}
                 for hit in context.memory_hits
+            ]
+
+        if context.recent_posts:
+            recent_posts_block = self._build_recent_posts_block(context.recent_posts)
+            fragments.append(recent_posts_block)
+            summary["recent_posts"] = [
+                {"id": item.id, "title": item.title, "published_at": item.published_at}
+                for item in context.recent_posts
             ]
 
         format_block = self._build_format_block(context.persona)
@@ -81,6 +98,16 @@ class PromptBuilder:
         lines = ["命中记忆："]
         for hit in memory_hits:
             lines.append(f"- [{hit.level}] {hit.summary or hit.content[:90]}")
+        return "\n".join(lines)
+
+    def _build_recent_posts_block(self, recent_posts: list[RecentPostContext]) -> str:
+        lines = ["最近已发布文章回避清单："]
+        for item in recent_posts:
+            summary = (item.summary or item.title).strip()
+            lines.append(
+                f"- [{item.published_at or 'recent'}] {item.title}：避免复写其场景与推进，参考摘要：{summary[:80]}"
+            )
+        lines.append("新稿必须推进到新的夜晚、新的动作或新的关系变化，不能只换说法重写上一稿。")
         return "\n".join(lines)
 
     def _build_format_block(self, persona: Persona) -> str:
