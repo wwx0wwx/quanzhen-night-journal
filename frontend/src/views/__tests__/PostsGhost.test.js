@@ -7,6 +7,7 @@ const { api } = vi.hoisted(() => ({
   api: {
     get: vi.fn(),
     post: vi.fn(),
+    delete: vi.fn(),
   },
 }))
 
@@ -25,6 +26,7 @@ describe('Posts and Ghost views', () => {
   beforeEach(() => {
     api.get.mockReset()
     api.post.mockReset()
+    api.delete.mockReset()
     window.confirm = vi.fn(() => true)
   })
 
@@ -144,5 +146,25 @@ describe('Posts and Ghost views', () => {
     await input.trigger('change')
 
     expect(wrapper.text()).toContain('文件过大')
+  })
+
+  it('deletes a ghost export from the list', async () => {
+    api.get
+      .mockResolvedValueOnce([{ filename: 'night.ghost', path: '/tmp/night.ghost', size: 128 }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+    api.delete.mockResolvedValue({ deleted: true, filename: 'night.ghost' })
+
+    const wrapper = mount(Ghost)
+    await flushPromises()
+
+    const deleteButton = wrapper.findAll('button').find((button) => button.text().includes('删除'))
+    await deleteButton.trigger('click')
+    await flushPromises()
+
+    expect(window.confirm).toHaveBeenCalled()
+    expect(api.delete).toHaveBeenCalledWith('/ghost/night.ghost')
+    expect(wrapper.text()).toContain('已删除导出包：night.ghost')
   })
 })

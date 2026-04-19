@@ -91,6 +91,24 @@ def test_ghost_export_can_be_downloaded(authed_client):
     assert download.content
 
 
+def test_ghost_export_can_be_deleted(authed_client):
+    exported = authed_client.post("/api/ghost/export", json={"include_api_keys": False})
+    assert exported.status_code == 200
+    filename = exported.json()["data"]["filename"]
+
+    deleted = authed_client.delete(f"/api/ghost/{filename}")
+    assert deleted.status_code == 200
+    assert deleted.json()["data"]["deleted"] is True
+    assert deleted.json()["data"]["filename"] == filename
+
+    listing = authed_client.get("/api/ghost/list")
+    assert listing.status_code == 200
+    assert all(item["filename"] != filename for item in listing.json()["data"])
+
+    download = authed_client.get(f"/api/ghost/download/{filename}")
+    assert download.status_code == 404
+
+
 def test_database_backup_can_be_created_and_downloaded(authed_client):
     backup = authed_client.post("/api/ghost/backup-database")
     assert backup.status_code == 200

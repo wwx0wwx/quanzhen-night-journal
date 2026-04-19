@@ -143,6 +143,14 @@
               </div>
               <div class="button-row">
                 <a class="btn ghost btn-small" :href="downloadHref(item.filename)">下载</a>
+                <button
+                  class="btn ghost btn-small"
+                  type="button"
+                  :disabled="deletingExportFilename === item.filename"
+                  @click="deleteExport(item.filename)"
+                >
+                  {{ deletingExportFilename === item.filename ? '删除中…' : '删除' }}
+                </button>
               </div>
             </div>
           </div>
@@ -203,6 +211,7 @@ const isExporting = ref(false)
 const isBackingUp = ref(false)
 const isPreviewing = ref(false)
 const isImporting = ref(false)
+const deletingExportFilename = ref('')
 const actionError = ref('')
 const actionSuccess = ref('')
 
@@ -293,6 +302,27 @@ async function backupDatabase() {
     actionError.value = describeError(error, '数据库备份失败，请稍后重试。')
   } finally {
     isBackingUp.value = false
+  }
+}
+
+async function deleteExport(filename) {
+  if (deletingExportFilename.value) return
+  if (!window.confirm(`确认删除导出包 ${filename} 吗？删除后将不能再下载。`)) return
+
+  actionError.value = ''
+  actionSuccess.value = ''
+  deletingExportFilename.value = filename
+  try {
+    await unwrap(api.delete(`/ghost/${encodeURIComponent(filename)}`))
+    if (preview.value?.filename === filename) {
+      preview.value = null
+    }
+    actionSuccess.value = `已删除导出包：${filename}`
+    await loadExports()
+  } catch (error) {
+    actionError.value = describeError(error, '删除 Ghost 导出包失败，请稍后重试。')
+  } finally {
+    deletingExportFilename.value = ''
   }
 }
 

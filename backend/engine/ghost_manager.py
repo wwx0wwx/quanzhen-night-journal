@@ -178,6 +178,14 @@ class GhostManager:
             for file in sorted(self.ghost_dir.glob("*.ghost"), reverse=True)
         ]
 
+    async def delete_export(self, filename: str) -> Path | None:
+        self.ghost_dir.mkdir(parents=True, exist_ok=True)
+        target = self.ghost_dir / Path(filename).name
+        if not target.exists() or not target.is_file():
+            return None
+        target.unlink()
+        return target
+
     async def backup_database(self, source_database: Path) -> Path:
         self.backup_dir.mkdir(parents=True, exist_ok=True)
         target = self.backup_dir / f"quanzhen-db-{utcnow_iso().replace(':', '-')}.sqlite3"

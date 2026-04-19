@@ -115,6 +115,22 @@ async def list_ghost_exports(
     return success(await manager.list_exports())
 
 
+@router.delete("/{filename}")
+async def delete_ghost_export(
+    filename: str,
+    db: AsyncSession = Depends(get_session),
+    config_store: ConfigStore = Depends(get_config_store),
+    _user=Depends(get_current_user),
+) -> object:
+    manager = _manager(db, config_store)
+    deleted = await manager.delete_export(filename)
+    if deleted is None:
+        return error(1002, "Ghost 导出文件不存在", status_code=404)
+    await log_audit(db, "user", "ghost.delete_export", "ghost", deleted.name)
+    await db.commit()
+    return success({"deleted": True, "filename": deleted.name})
+
+
 @router.get("/database-backups")
 async def list_database_backups(
     db: AsyncSession = Depends(get_session),
