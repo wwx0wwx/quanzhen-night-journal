@@ -2,14 +2,22 @@
 
 全真夜记是一个围绕“人格、记忆、感知、事件、生成、发布”组织起来的数字生命博客系统。
 
+## 文档入口
+
+- [项目总纲](doc/项目总纲.md)
+- [工程实施文档](doc/工程实施文档.md)
+- [数据库 Schema](doc/database_schema.sql)
+
 ## 当前结构
 
 - `backend/`：FastAPI Core、任务状态机、记忆/人格/感知/成本/审计/迁移
 - `frontend/`：Vue 3 + Vite 管理后台
+- `content/`：Hugo 站点内容
 - `hugo/`：Hugo 配置
 - `hugo-builder/`：Hugo Sidecar 入口脚本
 - `caddy/`：Caddy 站点与后台网关
 - `doc/`：项目总纲、工程实施文档、数据库 Schema
+- `scripts/`：初始化、加密密钥、烟雾测试等辅助脚本
 
 ## 本地开发
 
@@ -32,7 +40,14 @@ npm run dev
 
 ```bash
 uv run pytest backend/tests
+cd frontend && npm test
 cd frontend && npm run build
+```
+
+如需做部署后烟雾验证，可运行：
+
+```bash
+QZ_PASSWORD='<admin-password>' python3 scripts/smoke_test.py
 ```
 
 ## 容器化部署
@@ -79,6 +94,13 @@ docker compose up -d --build
 - Cloudflare 代理模式下，系统会按代理域名生成 HTTPS 站点；但证书签发成功不等于公网一定可用，Cloudflare 仍需要能够回源访问服务器的 `80/443`。
 - 目录监控更适合监听宿主机投喂到挂载目录的文件；做自动化投喂时，建议等待服务健康检查通过后再写入文件。
 - Ghost 只导出“数字生命数据”，不包含容器镜像、主题目录和 Caddy 证书数据。
+- 数据库快照是原始 SQLite 备份，适合快速回滚运行态，不替代 `.ghost` 逻辑导出。
+
+## 仓库清理约定
+
+- 仓库只跟踪源码、正式文档、必要脚本和正式站点内容。
+- `__pycache__/`、`.pytest_cache/`、`frontend/dist/`、`node_modules/`、数据库、Ghost 导出包、数据库快照、运行时 Hugo/Caddy 配置都应留在本地或服务器，不进入 Git。
+- 当前后端与前端测试源码属于有效回归资产，不按“临时测试文件”处理。
 
 ## 默认初始化流程
 
@@ -91,5 +113,7 @@ docker compose up -d --build
 ## 运行校验
 
 - 后端：`pytest backend/tests`
+- 前端测试：`cd frontend && npm test`
 - 前端：`cd frontend && npm run build`
+- 烟雾验证：`QZ_PASSWORD='<admin-password>' python3 scripts/smoke_test.py`
 - 容器：`docker compose up -d --build`

@@ -1,8 +1,8 @@
 -- ============================================================
 -- 全真夜记 (Quanzhen Night Journal) — 完整数据库 Schema
--- 版本: v2.0 (终局形态)
+-- 版本: 2026-04-19
 -- 数据库: SQLite (WAL 模式)
--- 向量扩展: sqlite-vec
+-- 说明: 当前实现使用普通表存储 JSON embedding，由应用层完成相似度计算
 -- ============================================================
 
 -- 启用 WAL 模式
@@ -143,12 +143,11 @@ CREATE INDEX IF NOT EXISTS idx_memories_persona_level ON memories (persona_id, l
 CREATE INDEX IF NOT EXISTS idx_memories_created ON memories (created_at);
 CREATE INDEX IF NOT EXISTS idx_memories_weight ON memories (weight DESC);
 
--- 记忆向量表 (sqlite-vec 虚拟表, 维度在运行时根据配置创建)
--- 注意: 此表由应用层在启动时根据 embedding.dimensions 配置动态创建
--- 示例: CREATE VIRTUAL TABLE memory_vectors USING vec0(
---     memory_id INTEGER PRIMARY KEY,
---     embedding FLOAT[1536]
--- );
+CREATE TABLE IF NOT EXISTS memory_vectors (
+    memory_id    INTEGER PRIMARY KEY,
+    embedding    TEXT    NOT NULL DEFAULT '[]',
+    FOREIGN KEY (memory_id) REFERENCES memories(id) ON DELETE CASCADE
+);
 
 -- ============================================================
 -- 5. 感知快照 (Sensory Snapshot)
@@ -309,6 +308,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_posts_slug ON posts (slug) WHERE slug != '
 CREATE INDEX IF NOT EXISTS idx_posts_status ON posts (status);
 CREATE INDEX IF NOT EXISTS idx_posts_published ON posts (published_at);
 
+CREATE TABLE IF NOT EXISTS post_vectors (
+    post_id       INTEGER PRIMARY KEY,
+    embedding     TEXT    NOT NULL DEFAULT '[]',
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);
+
 -- ============================================================
 -- 9. 文章修订历史 (Post Revisions)
 -- ============================================================
@@ -349,6 +354,14 @@ CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs (timestamp);
 CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs (action);
 CREATE INDEX IF NOT EXISTS idx_audit_severity ON audit_logs (severity);
 CREATE INDEX IF NOT EXISTS idx_audit_target ON audit_logs (target_type, target_id);
+
+CREATE TABLE IF NOT EXISTS audit_event_definitions (
+    action       TEXT PRIMARY KEY,
+    display_name TEXT NOT NULL,
+    target_label TEXT,
+    created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
 
 -- ============================================================
 -- 11. 成本记录 (Cost Record) — append-only
