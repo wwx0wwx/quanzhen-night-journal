@@ -7,6 +7,7 @@ from pathlib import Path
 from sqlalchemy import func, select, text
 
 from backend.api.deps import get_encryptor
+from backend.api.ghost import _read_upload_payload
 from backend.config import get_settings
 from backend.database import get_sessionmaker
 from backend.engine.config_store import ConfigStore
@@ -88,3 +89,57 @@ def test_ghost_export_can_be_downloaded(authed_client):
     assert download.status_code == 200
     assert filename in unquote(download.headers.get("content-disposition", ""))
     assert download.content
+
+
+def test_database_backup_can_be_created_and_downloaded(authed_client):
+    backup = authed_client.post("/api/ghost/backup-database")
+    assert backup.status_code == 200
+    filename = backup.json()["data"]["filename"]
+
+    listing = authed_client.get("/api/ghost/database-backups")
+    assert listing.status_code == 200
+    assert any(item["filename"] == filename for item in listing.json()["data"])
+
+    download = authed_client.get(f"/api/ghost/download-database-backup/{filename}")
+    assert download.status_code == 200
+    assert filename in unquote(download.headers.get("content-disposition", ""))
+    assert download.content
+
+
+def test_ghost_upload_rejects_oversized_files(monkeypatch, authed_client):
+    monkeypatch.setattr("backend.api.ghost.MAX_GHOST_UPLOAD_BYTES", 128)
+
+    response = authed_client.post(
+        "/api/ghost/preview",
+        files={"file": ("too-large.ghost", b"x" * 256, "application/octet-stream")},
+    )
+
+    assert response.status_code == 413
+    assert "上传文件过大" in response.json()["message"]
+
+
+def test_ghost_upload_reader_stops_once_size_limit_is_exceeded(monkeypatch):
+    class FakeUpload:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        async def read(self, _size: int = -1) -> bytes:
+            self.calls += 1
+            if self.calls == 1:
+                return b"a" * 80
+            if self.calls == 2:
+                return b"b" * 80
+            return b"c" * 80
+
+    monkeypatch.setattr("backend.api.ghost.MAX_GHOST_UPLOAD_BYTES", 100)
+    monkeypatch.setattr("backend.api.ghost.UPLOAD_READ_CHUNK_BYTES", 80)
+
+    async def exercise() -> None:
+        upload = FakeUpload()
+        payload, error_response = await _read_upload_payload(upload)
+
+        assert payload is None
+        assert error_response is not None
+        assert upload.calls == 2
+
+    asyncio.run(exercise())

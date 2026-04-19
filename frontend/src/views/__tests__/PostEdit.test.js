@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils'
+import DOMPurify from 'dompurify'
 
 import PostEdit from '../PostEdit.vue'
 
@@ -33,13 +34,14 @@ describe('PostEdit view', () => {
   })
 
   it('renders preview and revision history for an existing post', async () => {
+    const sanitizeSpy = vi.spyOn(DOMPurify, 'sanitize')
     api.get
       .mockResolvedValueOnce({
         id: 12,
         title: '雨夜标题',
         slug: 'rain-night-note',
         summary: '一段摘要',
-        content_markdown: '# 雨夜标题\n\n第一段内容。',
+        content_markdown: '# 雨夜标题\n\n[危险链接](javascript:alert(1))\n\n第一段内容。',
         status: 'pending_review',
         revision: 3,
         task_id: 7,
@@ -66,5 +68,6 @@ describe('PostEdit view', () => {
     expect(wrapper.text()).toContain('版本 #2')
     expect(wrapper.text()).toContain('自动生成稿')
     expect(wrapper.html()).toContain('<h1>雨夜标题</h1>')
+    expect(sanitizeSpy).toHaveBeenCalled()
   })
 })

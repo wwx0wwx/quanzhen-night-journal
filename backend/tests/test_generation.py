@@ -5,8 +5,12 @@ import asyncio
 import httpx
 import pytest
 
-from backend.adapters.embedding_adapter import EmbeddingUnavailableError
+from backend.adapters.embedding_adapter import EmbeddingAdapter, EmbeddingUnavailableError
 from backend.adapters.llm_adapter import LLMAdapter
+from backend.database import get_sessionmaker
+from backend.engine.config_store import ConfigStore
+from backend.engine.qa_engine import QAEngine
+from backend.models import Post, PostVector
 from backend.scheduler.jobs import scheduled_generation_job
 
 
@@ -67,6 +71,20 @@ def test_high_risk_task_waits_for_human_signoff(monkeypatch, authed_client):
     assert post_data["human_approved"] is True
     assert post_data["final_publish_allowed"] is True
     assert post_data["publish_decision_path"] == "human_approved"
+
+
+def test_approve_rejects_tasks_not_waiting_human_signoff(authed_client):
+    response = authed_client.post(
+        "/api/tasks/trigger",
+        json={"trigger_source": "manual", "semantic_hint": "write a short night note", "payload": {"kind": "manual"}},
+    )
+    assert response.status_code == 200
+    task_id = response.json()["data"]["id"]
+    assert response.json()["data"]["status"] == "published"
+
+    approve = authed_client.post(f"/api/tasks/{task_id}/approve", json={"publish_immediately": True})
+    assert approve.status_code == 409
+    assert approve.json()["message"] == "任务当前状态不允许人工签发"
 
 
 def test_invalid_model_output_is_classified_and_blocked(monkeypatch, authed_client):
@@ -224,3 +242,59 @@ def test_embedding_fallback_requires_manual_review(monkeypatch, authed_client):
     assert task_data["duplicate_method"] == "fallback/manual_review"
     assert task_data["duplicate_review_required"] is True
     assert task_data["trace"]["qa_result"]["duplicate_post_id"] == post_id
+
+
+def test_duplicate_check_filters_post_vectors_to_candidate_posts(monkeypatch, authed_client):
+    async def fake_embed(self, **_kwargs):  # noqa: ANN001
+        return [[1.0, 0.0]]
+
+    async def exercise() -> None:
+        session_factory = get_sessionmaker()
+        async with session_factory() as db:
+            post = Post(
+                title="旧夜",
+                slug="old-night",
+                front_matter="{}",
+                content_markdown="# 旧夜\n\n我靠在廊柱边，看雪落在剑鞘上。",
+                summary="我靠在廊柱边，看雪落在剑鞘上。",
+                status="published",
+                persona_id=1,
+                task_id=None,
+                published_at="2026-04-18T21:02:29+00:00",
+                revision=1,
+                publish_target="hugo",
+                digital_stamp="",
+                review_info="{}",
+                created_at="2026-04-18T21:02:29+00:00",
+                updated_at="2026-04-18T21:02:29+00:00",
+            )
+            db.add(post)
+            await db.flush()
+            db.add_all(
+                [
+                    PostVector(post_id=post.id, embedding="[1.0, 0.0]"),
+                    PostVector(post_id=999999, embedding="[0.0, 1.0]"),
+                ]
+            )
+            await db.commit()
+
+            engine = QAEngine(db, ConfigStore(db), EmbeddingAdapter())
+            original_scalars = db.scalars
+            statements: list[str] = []
+
+            async def tracking_scalars(stmt, *args, **kwargs):  # noqa: ANN001
+                statements.append(str(stmt))
+                return await original_scalars(stmt, *args, **kwargs)
+
+            monkeypatch.setattr(db, "scalars", tracking_scalars)
+            monkeypatch.setattr(EmbeddingAdapter, "embed", fake_embed)
+
+            result = await engine._check_duplicate("我靠在廊柱边，看雪落在剑鞘上。", persona_id=1)
+
+            assert result["duplicate_method"] == "embedding"
+            assert result["duplicate_ok"] is False
+            assert result["duplicate_post_id"] == post.id
+            vector_stmt = next(stmt for stmt in statements if "FROM post_vectors" in stmt)
+            assert "WHERE post_vectors.post_id IN" in vector_stmt
+
+    asyncio.run(exercise())

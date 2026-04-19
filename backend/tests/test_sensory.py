@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import asyncio
 from collections import namedtuple
+from datetime import datetime, timezone
 
 from backend.database import get_sessionmaker
 from backend.engine.config_store import ConfigStore
 from backend.engine.sensory_engine import SensoryEngine
+from backend.models import SensorySnapshot
 
 
 DiskUsage = namedtuple("DiskUsage", ["total", "used", "free", "percent"])
@@ -48,5 +50,49 @@ def test_sensory_snapshot_tracks_delta_and_rate_without_sticky_io_spike(monkeypa
             assert second.network_rx_delta_bytes == 0
             assert second.network_rx_bytes_per_sec == 0.0
             assert "io_spike" not in second.tags
+
+    asyncio.run(exercise())
+
+
+def test_sensory_history_filters_by_hours(monkeypatch, authed_client):
+    monkeypatch.setattr(
+        "backend.engine.sensory_engine.utcnow",
+        lambda: datetime(2026, 4, 19, 12, 0, tzinfo=timezone.utc),
+    )
+
+    async def exercise() -> None:
+        session_factory = get_sessionmaker()
+        async with session_factory() as db:
+            db.add_all(
+                [
+                    SensorySnapshot(
+                        source="container",
+                        sampled_at="2026-04-19T10:00:00+00:00",
+                        cpu_percent=10.0,
+                        memory_percent=20.0,
+                        tags="[]",
+                        translated_text="",
+                        persona_id=None,
+                        is_in_blind_zone=0,
+                    ),
+                    SensorySnapshot(
+                        source="container",
+                        sampled_at="2026-04-18T08:00:00+00:00",
+                        cpu_percent=11.0,
+                        memory_percent=21.0,
+                        tags="[]",
+                        translated_text="",
+                        persona_id=None,
+                        is_in_blind_zone=0,
+                    ),
+                ]
+            )
+            await db.commit()
+
+            engine = SensoryEngine(db, ConfigStore(db))
+            rows = await engine.history(hours=24, limit=20)
+
+            assert len(rows) == 1
+            assert rows[0].sampled_at == "2026-04-19T10:00:00+00:00"
 
     asyncio.run(exercise())

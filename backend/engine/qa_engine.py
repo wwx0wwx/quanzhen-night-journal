@@ -117,7 +117,8 @@ class QAEngine:
                     texts=[content],
                 )
             )[0]
-            vectors = await self.db.scalars(select(PostVector))
+            candidate_post_ids = [post.id for post in published]
+            vectors = await self.db.scalars(select(PostVector).where(PostVector.post_id.in_(candidate_post_ids)))
             vector_map = {item.post_id: json_loads(item.embedding, []) for item in vectors}
             best_post_id = None
             best_score = 0.0

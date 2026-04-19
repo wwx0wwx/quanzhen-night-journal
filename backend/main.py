@@ -16,9 +16,10 @@ from backend.engine.folder_monitor_manager import FolderMonitorManager
 from backend.engine.persona_engine import PersonaEngine
 from backend.engine.site_runtime import SiteRuntimeManager
 from backend.middleware.rate_limit import RateLimitMiddleware
-from backend.models import GenerationTask, Persona, SystemConfig
+from backend.models import GenerationTask, Persona
 from backend.scheduler.jobs import ensure_seed_persona
 from backend.scheduler.scheduler import setup_scheduler
+from backend.security.encryption import ensure_encryptor
 from backend.utils.audit import log_audit
 from backend.utils.audit_catalog import ensure_audit_event_definitions
 from backend.utils.legacy_import import import_legacy_assets
@@ -60,17 +61,8 @@ async def startup_self_check() -> None:
             task.error_message = "container_restart"
             task.finished_at = utcnow_iso()
 
-        encryption_key = await db.get(SystemConfig, "system.encryption_key")
-        if encryption_key is None:
-            db.add(
-                SystemConfig(
-                    key="system.encryption_key",
-                    value="",
-                    encrypted=0,
-                    category="system",
-                    updated_at=utcnow_iso(),
-                )
-            )
+        _, created_encryption_key = await ensure_encryptor(db)
+        if created_encryption_key:
             await _record_startup_action(
                 db,
                 "system.ensure_encryption_key",

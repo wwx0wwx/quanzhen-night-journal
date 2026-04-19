@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import datetime, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.engine.config_store import ConfigStore
 from backend.models import CostRecord
 from backend.schemas.cost import BudgetStatus
-from backend.utils.time import utcnow_iso
+from backend.utils.time import UTC, utcnow, utcnow_iso
 
 
 PRICING = {
@@ -53,10 +53,11 @@ class CostMonitor:
     async def check_budget(self) -> BudgetStatus:
         limit = float(await self.config_store.get("budget.daily_limit_usd", "99999") or 99999.0)
         manual_hibernation = (await self.config_store.get("budget.manual_hibernation", "0")) == "1"
-        today_prefix = date.today().isoformat()
+        day_start, day_end = self._period_window("daily")
         spent = await self.db.scalar(
             select(func.coalesce(func.sum(CostRecord.cost_estimate), 0.0)).where(
-                CostRecord.created_at.like(f"{today_prefix}%")
+                CostRecord.created_at >= day_start,
+                CostRecord.created_at < day_end,
             )
         ) or 0.0
         is_hibernating = manual_hibernation or spent >= limit
@@ -79,20 +80,34 @@ class CostMonitor:
         return round(total, 6)
 
     async def get_summary(self, period: str) -> dict:
-        if period == "weekly":
-            pattern = date.today().strftime("%Y-%m")
-        elif period == "monthly":
-            pattern = date.today().strftime("%Y-%m")
-        else:
-            pattern = date.today().isoformat()
+        period_key = period if period in {"daily", "weekly", "monthly"} else "daily"
+        start_at, end_at = self._period_window(period_key)
         total_cost = await self.db.scalar(
             select(func.coalesce(func.sum(CostRecord.cost_estimate), 0.0)).where(
-                CostRecord.created_at.like(f"{pattern}%")
+                CostRecord.created_at >= start_at,
+                CostRecord.created_at < end_at,
             )
         ) or 0.0
         total_tokens = await self.db.scalar(
             select(func.coalesce(func.sum(CostRecord.token_total), 0)).where(
-                CostRecord.created_at.like(f"{pattern}%")
+                CostRecord.created_at >= start_at,
+                CostRecord.created_at < end_at,
             )
         ) or 0
-        return {"period": period, "cost": round(float(total_cost), 6), "tokens": int(total_tokens)}
+        return {"period": period_key, "cost": round(float(total_cost), 6), "tokens": int(total_tokens)}
+
+    def _period_window(self, period: str) -> tuple[str, str]:
+        now = utcnow()
+        if period == "weekly":
+            start = datetime(now.year, now.month, now.day, tzinfo=UTC) - timedelta(days=now.weekday())
+            end = start + timedelta(days=7)
+        elif period == "monthly":
+            start = datetime(now.year, now.month, 1, tzinfo=UTC)
+            if now.month == 12:
+                end = datetime(now.year + 1, 1, 1, tzinfo=UTC)
+            else:
+                end = datetime(now.year, now.month + 1, 1, tzinfo=UTC)
+        else:
+            start = datetime(now.year, now.month, now.day, tzinfo=UTC)
+            end = start + timedelta(days=1)
+        return start.isoformat(), end.isoformat()

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 import io
 import json
+import sqlite3
 import zipfile
 from pathlib import Path
 
@@ -17,10 +19,11 @@ from backend.utils.time import utcnow_iso
 class GhostManager:
     GHOST_VERSION = "2.0"
 
-    def __init__(self, db: AsyncSession, config_store: ConfigStore, ghost_dir: Path):
+    def __init__(self, db: AsyncSession, config_store: ConfigStore, ghost_dir: Path, backup_dir: Path | None = None):
         self.db = db
         self.config_store = config_store
         self.ghost_dir = ghost_dir
+        self.backup_dir = backup_dir or (ghost_dir.parent / "backups")
 
     async def export(self, include_api_keys: bool = False) -> Path:
         self.ghost_dir.mkdir(parents=True, exist_ok=True)
@@ -174,6 +177,24 @@ class GhostManager:
             {"filename": file.name, "path": str(file), "size": file.stat().st_size}
             for file in sorted(self.ghost_dir.glob("*.ghost"), reverse=True)
         ]
+
+    async def backup_database(self, source_database: Path) -> Path:
+        self.backup_dir.mkdir(parents=True, exist_ok=True)
+        target = self.backup_dir / f"quanzhen-db-{utcnow_iso().replace(':', '-')}.sqlite3"
+        await asyncio.to_thread(self._copy_database_file, source_database, target)
+        return target
+
+    async def list_database_backups(self) -> list[dict]:
+        self.backup_dir.mkdir(parents=True, exist_ok=True)
+        return [
+            {"filename": file.name, "path": str(file), "size": file.stat().st_size}
+            for file in sorted(self.backup_dir.glob("*.sqlite3"), reverse=True)
+        ]
+
+    @staticmethod
+    def _copy_database_file(source_database: Path, target: Path) -> None:
+        with sqlite3.connect(source_database) as source, sqlite3.connect(target) as destination:
+            source.backup(destination)
 
     def _persona_payload(self, persona: Persona) -> dict:
         return {

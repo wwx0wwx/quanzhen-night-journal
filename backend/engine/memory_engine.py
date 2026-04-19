@@ -94,15 +94,14 @@ class MemoryEngine:
         level_filter: list[str] | None = None,
         exclude_memory_ids: list[int] | None = None,
     ) -> list[MemoryHit]:
-        rows = await self.db.scalars(
-            select(Memory).where(Memory.persona_id == persona_id).order_by(desc(Memory.created_at))
-        )
-        memories = list(rows)
+        stmt = select(Memory).where(Memory.persona_id == persona_id)
         if level_filter:
-            memories = [item for item in memories if item.level in level_filter]
-        if exclude_memory_ids:
-            excluded = set(exclude_memory_ids)
-            memories = [item for item in memories if item.id not in excluded]
+            stmt = stmt.where(Memory.level.in_(level_filter))
+        excluded = set(exclude_memory_ids or [])
+        if excluded:
+            stmt = stmt.where(Memory.id.notin_(excluded))
+        rows = await self.db.scalars(stmt.order_by(desc(Memory.created_at)))
+        memories = list(rows)
         if not memories:
             return []
 
@@ -118,7 +117,9 @@ class MemoryEngine:
                     texts=[query],
                 )
             )[0]
-            vector_rows = await self.db.scalars(select(MemoryVector))
+            vector_rows = await self.db.scalars(
+                select(MemoryVector).where(MemoryVector.memory_id.in_([memory.id for memory in memories]))
+            )
             vector_map = {item.memory_id: json_loads(item.embedding, []) for item in vector_rows}
             hits: list[MemoryHit] = []
             for memory in memories:

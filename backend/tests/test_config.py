@@ -141,3 +141,23 @@ def test_production_requires_custom_jwt_secret():
 def test_production_allows_custom_jwt_secret():
     settings = Settings(_env_file=None, ENVIRONMENT="production", JWT_SECRET="custom-prod-secret-123456789")
     settings.validate_runtime()
+
+
+def test_get_encryptor_backfills_empty_encryption_key(client):
+    async def exercise() -> None:
+        session_factory = get_sessionmaker()
+        async with session_factory() as db:
+            entry = await db.get(SystemConfig, "system.encryption_key")
+            assert entry is not None
+            entry.value = ""
+            await db.commit()
+
+        async with session_factory() as db:
+            encryptor = await get_encryptor(db)
+            refreshed = await db.get(SystemConfig, "system.encryption_key")
+            assert encryptor is not None
+            assert refreshed is not None
+            assert refreshed.value
+            assert refreshed.updated_at
+
+    asyncio.run(exercise())

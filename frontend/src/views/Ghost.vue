@@ -11,6 +11,9 @@
         <button class="btn primary" type="button" :disabled="isExporting" @click="exportGhost">
           {{ isExporting ? '导出中…' : '导出 .ghost' }}
         </button>
+        <button class="btn ghost" type="button" :disabled="isBackingUp" @click="backupDatabase">
+          {{ isBackingUp ? '备份中…' : '备份数据库' }}
+        </button>
       </div>
     </div>
 
@@ -144,6 +147,36 @@
             </div>
           </div>
         </div>
+
+        <div class="split">
+          <div>
+            <div class="section-title">数据库快照</div>
+            <div class="muted">用于快速回滚 SQLite 运行态，不替代 `.ghost` 逻辑导出。</div>
+          </div>
+          <div class="muted">{{ databaseBackups.length }} 个文件</div>
+        </div>
+
+        <AppEmpty
+          v-if="!databaseBackups.length"
+          inline
+          title="还没有数据库快照"
+          description="执行一次“备份数据库”后，这里会出现可下载的 SQLite 快照。"
+        />
+
+        <div v-else class="list">
+          <div v-for="item in databaseBackups" :key="item.filename" class="list-item stack">
+            <div class="split">
+              <div class="stack" style="gap: 6px;">
+                <strong>{{ item.filename }}</strong>
+                <div class="muted">{{ formatBytes(item.size) }}</div>
+                <div class="muted">{{ item.path }}</div>
+              </div>
+              <div class="button-row">
+                <a class="btn ghost btn-small" :href="downloadDatabaseBackupHref(item.filename)">下载</a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -158,13 +191,16 @@ import AppError from '../components/AppError.vue'
 import AppLoading from '../components/AppLoading.vue'
 import { describeError } from '../utils/errors'
 
+const MAX_GHOST_FILE_BYTES = 20 * 1024 * 1024
 const selectedFile = ref(null)
 const selectedFileName = ref('')
 const preview = ref(null)
 const exports = ref([])
+const databaseBackups = ref([])
 const isLoading = ref(true)
 const loadError = ref('')
 const isExporting = ref(false)
+const isBackingUp = ref(false)
 const isPreviewing = ref(false)
 const isImporting = ref(false)
 const actionError = ref('')
@@ -179,6 +215,10 @@ function downloadHref(filename) {
   return `/api/ghost/download/${encodeURIComponent(filename)}`
 }
 
+function downloadDatabaseBackupHref(filename) {
+  return `/api/ghost/download-database-backup/${encodeURIComponent(filename)}`
+}
+
 function formatBytes(value) {
   if (!value) return '0 B'
   if (value < 1024) return `${value} B`
@@ -191,7 +231,12 @@ async function loadExports() {
   loadError.value = ''
 
   try {
-    exports.value = await unwrap(api.get('/ghost/list'))
+    const [ghostExports, databaseSnapshotList] = await Promise.all([
+      unwrap(api.get('/ghost/list')),
+      unwrap(api.get('/ghost/database-backups')),
+    ])
+    exports.value = ghostExports
+    databaseBackups.value = databaseSnapshotList
   } catch (error) {
     loadError.value = describeError(error, '加载 Ghost 记录失败，请稍后重试。')
   } finally {
@@ -200,7 +245,17 @@ async function loadExports() {
 }
 
 function onFileChange(event) {
-  selectedFile.value = event.target.files?.[0] || null
+  const file = event.target.files?.[0] || null
+  if (file && file.size > MAX_GHOST_FILE_BYTES) {
+    selectedFile.value = null
+    selectedFileName.value = ''
+    preview.value = null
+    actionSuccess.value = ''
+    actionError.value = `文件过大，最大允许 ${(MAX_GHOST_FILE_BYTES / (1024 * 1024)).toFixed(0)} MB。`
+    event.target.value = ''
+    return
+  }
+  selectedFile.value = file
   selectedFileName.value = selectedFile.value?.name || ''
   preview.value = null
   actionError.value = ''
@@ -221,6 +276,23 @@ async function exportGhost() {
     actionError.value = describeError(error, '导出 Ghost 失败，请稍后重试。')
   } finally {
     isExporting.value = false
+  }
+}
+
+async function backupDatabase() {
+  if (isBackingUp.value) return
+
+  actionError.value = ''
+  actionSuccess.value = ''
+  isBackingUp.value = true
+  try {
+    const result = await unwrap(api.post('/ghost/backup-database'))
+    actionSuccess.value = `数据库备份完成：${result.filename}`
+    await loadExports()
+  } catch (error) {
+    actionError.value = describeError(error, '数据库备份失败，请稍后重试。')
+  } finally {
+    isBackingUp.value = false
   }
 }
 

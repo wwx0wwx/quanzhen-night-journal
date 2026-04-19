@@ -8,7 +8,7 @@ from backend.api.deps import get_event_engine, get_orchestrator, get_persona_eng
 from backend.api.serializers import task_to_dict
 from backend.database import get_session
 from backend.engine.event_engine import EventEngine
-from backend.engine.generation_orchestrator import GenerationOrchestrator
+from backend.engine.generation_orchestrator import GenerationOrchestrator, InvalidTransition
 from backend.engine.persona_engine import PersonaEngine
 from backend.models import GenerationTask, Persona, Post
 from backend.schemas.task import TaskApproveRequest, TaskTriggerRequest
@@ -102,7 +102,15 @@ async def approve_task(
     orchestrator: GenerationOrchestrator = Depends(get_orchestrator),
     _user=Depends(get_current_user),
 ) -> object:
-    task = await orchestrator.approve_task(task_id, publish_immediately=payload.publish_immediately)
+    current = await orchestrator.db.get(GenerationTask, task_id)
+    if current is None:
+        return error(1002, "任务不存在", status_code=404)
+    if current.status != "waiting_human_signoff":
+        return error(1001, "任务当前状态不允许人工签发", status_code=409)
+    try:
+        task = await orchestrator.approve_task(task_id, publish_immediately=payload.publish_immediately)
+    except InvalidTransition:
+        return error(1001, "任务当前状态不允许人工签发", status_code=409)
     if task is None:
         return error(1002, "任务不存在", status_code=404)
     return success({"id": task.id, "status": task.status, "post_id": task.post_id})

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import psutil
 from sqlalchemy import desc, select
@@ -73,8 +73,12 @@ class SensoryEngine:
         return snapshot
 
     async def history(self, hours: int = 24, limit: int = 200) -> list[SensorySnapshot]:
+        cutoff = (utcnow() - timedelta(hours=max(hours, 0))).isoformat()
         rows = await self.db.scalars(
-            select(SensorySnapshot).order_by(desc(SensorySnapshot.sampled_at)).limit(limit)
+            select(SensorySnapshot)
+            .where(SensorySnapshot.sampled_at >= cutoff)
+            .order_by(desc(SensorySnapshot.sampled_at))
+            .limit(limit)
         )
         return list(rows)
 

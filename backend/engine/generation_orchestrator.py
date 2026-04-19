@@ -311,8 +311,10 @@ class GenerationOrchestrator:
 
     async def approve_task(self, task_id: int, publish_immediately: bool = True) -> GenerationTask | None:
         task = await self.db.get(GenerationTask, task_id)
-        if task is None or task.status != "waiting_human_signoff":
+        if task is None:
             return task
+        if task.status != "waiting_human_signoff":
+            raise InvalidTransition(f"task {task.id} is not waiting_human_signoff")
         qa_result = json_loads(task.qa_result, {})
         if not qa_result.get("integrity_ok", True):
             self._append_trace(task, "approval_blocked", reason=qa_result.get("integrity_reason", "invalid_model_output"))

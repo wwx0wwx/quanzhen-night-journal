@@ -26,7 +26,7 @@ from backend.engine.prompt_builder import PromptBuilder
 from backend.engine.qa_engine import QAEngine
 from backend.models import FolderMonitor
 from backend.publisher.registry import PublisherRegistry
-from backend.security.encryption import ConfigEncryptor
+from backend.security.encryption import ConfigEncryptor, ensure_encryptor
 
 
 class _FolderHandler(FileSystemEventHandler):
@@ -145,22 +145,7 @@ class FolderMonitorManager:
             await orchestrator.execute(event, persona=persona)
 
     async def _get_encryptor(self, db) -> ConfigEncryptor:
-        from backend.models import SystemConfig
-
-        entry = await db.get(SystemConfig, "system.encryption_key")
-        if entry is None or not entry.value:
-            key = ConfigEncryptor.generate_key().decode("utf-8")
-            if entry is None:
-                entry = SystemConfig(
-                    key="system.encryption_key",
-                    value=key,
-                    encrypted=0,
-                    category="system",
-                    updated_at="",
-                )
-                db.add(entry)
-            else:
-                entry.value = key
+        encryptor, created = await ensure_encryptor(db)
+        if created:
             await db.commit()
-            return ConfigEncryptor(key.encode("utf-8"))
-        return ConfigEncryptor(entry.value.encode("utf-8"))
+        return encryptor

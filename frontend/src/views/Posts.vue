@@ -89,7 +89,7 @@
       <div class="panel panel-pad posts-ledger-meta">
         <div>
           <div class="hero-kicker">Registry Count</div>
-          <strong>共 {{ total }} 篇，当前显示 {{ posts.length }} 篇。</strong>
+          <strong>共 {{ total }} 篇，第 {{ page }} / {{ totalPages }} 页，当前显示 {{ posts.length }} 篇。</strong>
         </div>
         <div class="muted">主操作优先处理“待审核 / 可发布 / 失败待排查”的稿件，其余状态可延后整理。</div>
       </div>
@@ -208,6 +208,14 @@
           </div>
         </article>
       </div>
+
+      <div class="panel panel-pad split">
+        <div class="muted">第 {{ page }} / {{ totalPages }} 页，共 {{ total }} 篇</div>
+        <div class="button-row">
+          <button class="btn ghost btn-small" :disabled="page <= 1 || isLoading" @click="changePage(page - 1)">上一页</button>
+          <button class="btn ghost btn-small" :disabled="page >= totalPages || isLoading" @click="changePage(page + 1)">下一页</button>
+        </div>
+      </div>
     </template>
   </section>
 </template>
@@ -231,6 +239,8 @@ const total = ref(0)
 const status = ref('')
 const keyword = ref('')
 const sort = ref('updated_desc')
+const page = ref(1)
+const pageSize = 20
 const personas = ref([])
 const isLoading = ref(true)
 const loadError = ref('')
@@ -242,6 +252,7 @@ const isHibernating = ref(false)
 const isWakingUp = ref(false)
 
 const actionBusy = computed(() => !!activeActionKey.value || isTriggering.value || isHibernating.value || isWakingUp.value)
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
 
 function personaName(personaId) {
   if (!personaId) return '未指定'
@@ -268,6 +279,7 @@ function resetFilters() {
   status.value = ''
   keyword.value = ''
   sort.value = 'updated_desc'
+  page.value = 1
   load()
 }
 
@@ -288,7 +300,8 @@ async function load() {
           status: status.value || undefined,
           q: keyword.value || undefined,
           sort: sort.value,
-          page_size: 100,
+          page: page.value,
+          page_size: pageSize,
         },
       })),
       personas.value.length ? Promise.resolve(personas.value) : unwrap(api.get('/personas')),
@@ -301,6 +314,12 @@ async function load() {
   } finally {
     isLoading.value = false
   }
+}
+
+function changePage(nextPage) {
+  if (nextPage < 1 || nextPage > totalPages.value) return
+  page.value = nextPage
+  load()
 }
 
 async function runAction(post, action) {

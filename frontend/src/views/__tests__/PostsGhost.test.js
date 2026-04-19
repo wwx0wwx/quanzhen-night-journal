@@ -85,13 +85,13 @@ describe('Posts and Ghost views', () => {
   })
 
   it('triggers publish, hibernate and wake actions from posts page header', async () => {
-    api.get
-      .mockResolvedValueOnce({ items: [], total: 0 })
-      .mockResolvedValueOnce([])
+    api.get.mockImplementation((url) => {
+      if (url === '/posts') return Promise.resolve({ items: [], total: 0 })
+      if (url === '/personas') return Promise.resolve([])
+      return Promise.resolve([])
+    })
     api.post
       .mockResolvedValueOnce({ id: 19 })
-      .mockResolvedValueOnce({ items: [], total: 0 })
-      .mockResolvedValueOnce([])
       .mockResolvedValueOnce({ hibernating: true })
       .mockResolvedValueOnce({ ok: true })
 
@@ -126,6 +126,23 @@ describe('Posts and Ghost views', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('还没有导出记录')
+    expect(wrapper.text()).toContain('还没有数据库快照')
     expect(wrapper.text()).toContain('还没有预览结果')
+  })
+
+  it('rejects oversized ghost files before upload', async () => {
+    api.get.mockResolvedValue([])
+
+    const wrapper = mount(Ghost)
+    await flushPromises()
+
+    const input = wrapper.find('input[type="file"]')
+    const largeFile = new File(['x'.repeat(1024)], 'too-large.ghost', { type: 'application/octet-stream' })
+    Object.defineProperty(largeFile, 'size', { value: 25 * 1024 * 1024 })
+    Object.defineProperty(input.element, 'files', { value: [largeFile] })
+
+    await input.trigger('change')
+
+    expect(wrapper.text()).toContain('文件过大')
   })
 })

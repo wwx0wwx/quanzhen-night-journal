@@ -1,57 +1,72 @@
 <template>
   <section class="stack">
-    <div class="hero persona-edit-hero">
-      <div>
-        <div class="hero-kicker">Persona Drafting Room</div>
-        <h1>{{ isNew ? '新建人格设定' : `编辑人格设定 #${route.params.id}` }}</h1>
-        <p>先定她是谁、如何看待王爷与江湖、说话时如何藏锋，再补禁忌与感知词典。默认不需要直接写 JSON。</p>
-      </div>
-      <div class="persona-edit-hero-side">
-        <div class="persona-edit-summary-card">
-          <div class="persona-edit-summary-grid">
-            <div>
-              <span>禁忌条目</span>
-              <strong>{{ tabooCount }}</strong>
+    <AppLoading
+      v-if="isLoading"
+      title="正在加载人格设定"
+      description="正在读取人格详情、禁忌与感知词典。"
+    />
+
+    <AppError
+      v-else-if="loadError"
+      title="人格设定加载失败"
+      :message="loadError"
+      action-label="重试"
+      @retry="load"
+    />
+
+    <template v-else>
+      <div class="hero persona-edit-hero">
+        <div>
+          <div class="hero-kicker">Persona Drafting Room</div>
+          <h1>{{ isNew ? '新建人格设定' : `编辑人格设定 #${route.params.id}` }}</h1>
+          <p>先定她是谁、如何看待王爷与江湖、说话时如何藏锋，再补禁忌与感知词典。默认不需要直接写 JSON。</p>
+        </div>
+        <div class="persona-edit-hero-side">
+          <div class="persona-edit-summary-card">
+            <div class="persona-edit-summary-grid">
+              <div>
+                <span>禁忌条目</span>
+                <strong>{{ tabooCount }}</strong>
+              </div>
+              <div>
+                <span>感知词典</span>
+                <strong>{{ lexiconCount }}</strong>
+              </div>
+              <div>
+                <span>当前篇幅</span>
+                <strong>{{ structureLabel }}</strong>
+              </div>
             </div>
-            <div>
-              <span>感知词典</span>
-              <strong>{{ lexiconCount }}</strong>
-            </div>
-            <div>
-              <span>当前篇幅</span>
-              <strong>{{ structureLabel }}</strong>
-            </div>
+            <div class="muted">{{ form.description || '先用一句话定义这张人格卡的核心气质。' }}</div>
           </div>
-          <div class="muted">{{ form.description || '先用一句话定义这张人格卡的核心气质。' }}</div>
-        </div>
-        <div class="button-row">
-          <button class="btn primary" :disabled="isSaving" @click="save">
-            {{ isSaving ? '保存中...' : '保存' }}
-          </button>
-          <button
-            v-if="!isNew"
-            class="btn ghost"
-            :disabled="isActivating || isDeleting"
-            @click="activate"
-          >
-            {{ isActivating ? '切换中...' : '设为默认' }}
-          </button>
-          <button
-            v-if="!isNew"
-            class="btn ghost"
-            :disabled="isDeleting || isActivating"
-            @click="removePersona"
-          >
-            {{ isDeleting ? '删除中...' : '删除人格设定' }}
-          </button>
+          <div class="button-row">
+            <button class="btn primary" :disabled="isSaving" @click="save">
+              {{ isSaving ? '保存中...' : '保存' }}
+            </button>
+            <button
+              v-if="!isNew"
+              class="btn ghost"
+              :disabled="isActivating || isDeleting"
+              @click="activate"
+            >
+              {{ isActivating ? '切换中...' : '设为默认' }}
+            </button>
+            <button
+              v-if="!isNew"
+              class="btn ghost"
+              :disabled="isDeleting || isActivating"
+              @click="removePersona"
+            >
+              {{ isDeleting ? '删除中...' : '删除人格设定' }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div v-if="message" class="status-banner" :class="messageType">{{ message }}</div>
+      <div v-if="message" class="status-banner" :class="messageType">{{ message }}</div>
 
-    <div class="grid two persona-edit-grid">
-      <div class="panel panel-pad stack persona-story-panel">
+      <div class="grid two persona-edit-grid">
+        <div class="panel panel-pad stack persona-story-panel">
         <div class="persona-panel-head">
           <div>
             <div class="hero-kicker">Core Profile</div>
@@ -148,9 +163,9 @@
             </div>
           </div>
         </label>
-      </div>
+        </div>
 
-      <div class="panel panel-pad stack persona-meta-panel">
+        <div class="panel panel-pad stack persona-meta-panel">
         <div class="persona-panel-head">
           <div>
             <div class="hero-kicker">Behavior Envelope</div>
@@ -189,10 +204,10 @@
             <strong>{{ structureLabel }}</strong>
           </div>
         </div>
+        </div>
       </div>
-    </div>
 
-    <div class="panel panel-pad stack persona-lexicon-panel">
+      <div class="panel panel-pad stack persona-lexicon-panel">
       <div class="split persona-lexicon-head">
         <div>
           <div class="hero-kicker">Sensory Lexicon</div>
@@ -236,7 +251,8 @@
           </div>
         </div>
       </details>
-    </div>
+      </div>
+    </template>
   </section>
 </template>
 
@@ -245,6 +261,8 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { api, unwrap } from '../api'
+import AppError from '../components/AppError.vue'
+import AppLoading from '../components/AppLoading.vue'
 import { describeError } from '../utils/errors'
 
 const inspirationProfiles = [
@@ -312,6 +330,8 @@ const taboosText = ref('')
 const lexiconRows = ref([])
 const advancedLexiconText = ref('{}')
 const activeTemplateField = ref('')
+const isLoading = ref(true)
+const loadError = ref('')
 const isSaving = ref(false)
 const isActivating = ref(false)
 const isDeleting = ref(false)
@@ -420,14 +440,22 @@ function insertLexiconExamples() {
 }
 
 async function load() {
-  if (isNew.value) {
-    setLexiconRows({})
-    return
+  isLoading.value = true
+  loadError.value = ''
+  try {
+    if (isNew.value) {
+      setLexiconRows({})
+      return
+    }
+    const data = await unwrap(api.get(`/personas/${route.params.id}`))
+    Object.assign(form, data)
+    taboosText.value = (data.taboos || []).join('\n')
+    setLexiconRows(data.sensory_lexicon || {})
+  } catch (error) {
+    loadError.value = describeError(error, '加载人格设定失败。')
+  } finally {
+    isLoading.value = false
   }
-  const data = await unwrap(api.get(`/personas/${route.params.id}`))
-  Object.assign(form, data)
-  taboosText.value = (data.taboos || []).join('\n')
-  setLexiconRows(data.sensory_lexicon || {})
 }
 
 async function save() {

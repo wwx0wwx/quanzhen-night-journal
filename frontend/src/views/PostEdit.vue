@@ -155,6 +155,7 @@
 </template>
 
 <script setup>
+import DOMPurify from 'dompurify'
 import MarkdownIt from 'markdown-it'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -196,7 +197,7 @@ const message = ref('')
 const messageType = ref('info')
 
 const actionBusy = computed(() => isSaving.value || !!activeAction.value)
-const previewHtml = computed(() => markdown.render(form.content_markdown || '还没有正文内容。'))
+const previewHtml = computed(() => DOMPurify.sanitize(markdown.render(form.content_markdown || '还没有正文内容。')))
 const selectedRevision = computed(() => revisions.value.find((item) => item.id === selectedRevisionId.value) || null)
 
 function applyPost(data) {

@@ -20,29 +20,15 @@ from backend.engine.prompt_builder import PromptBuilder
 from backend.engine.qa_engine import QAEngine
 from backend.engine.sensory_engine import SensoryEngine
 from backend.engine.site_runtime import SiteRuntimeManager
-from backend.models import SystemConfig
 from backend.publisher.registry import PublisherRegistry
-from backend.security.encryption import ConfigEncryptor
+from backend.security.encryption import ConfigEncryptor, ensure_encryptor
 
 
 async def get_encryptor(db: AsyncSession = Depends(get_session)) -> ConfigEncryptor:
-    entry = await db.get(SystemConfig, "system.encryption_key")
-    if entry is None or not entry.value:
-        key = ConfigEncryptor.generate_key().decode("utf-8")
-        if entry is None:
-            entry = SystemConfig(
-                key="system.encryption_key",
-                value=key,
-                encrypted=0,
-                category="system",
-                updated_at="",
-            )
-            db.add(entry)
-        else:
-            entry.value = key
+    encryptor, created = await ensure_encryptor(db)
+    if created:
         await db.commit()
-        return ConfigEncryptor(key.encode("utf-8"))
-    return ConfigEncryptor(entry.value.encode("utf-8"))
+    return encryptor
 
 
 async def get_config_store(
