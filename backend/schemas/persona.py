@@ -20,6 +20,7 @@ class PersonaBase(BaseModel):
     stability_params: dict = Field(
         default_factory=lambda: {"temperature_base": 0.7, "temperature_range": [0.3, 1.2]}
     )
+    scene_pool: list[dict[str, str]] = Field(default_factory=list)
 
     @field_validator("name", "description", "identity_setting", "worldview_setting", "language_style")
     @classmethod
@@ -32,6 +33,14 @@ class PersonaBase(BaseModel):
         for key, item in value.items():
             ensure_text_integrity(key, "sensory_lexicon.key")
             ensure_text_integrity(item, "sensory_lexicon.value")
+        return value
+
+    @field_validator("scene_pool")
+    @classmethod
+    def validate_scene_pool_integrity(cls, value: list[dict[str, str]]) -> list[dict[str, str]]:
+        for scene in value:
+            for key, item in scene.items():
+                ensure_text_integrity(item, f"scene_pool.{key}")
         return value
 
 

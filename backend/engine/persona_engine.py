@@ -87,6 +87,7 @@ class PersonaEngine:
             structure_preference=data.structure_preference,
             expression_intensity=data.expression_intensity,
             stability_params=json_dumps(data.stability_params),
+            scene_pool=json_dumps(data.scene_pool),
             created_at=now,
             updated_at=now,
         )
@@ -111,6 +112,7 @@ class PersonaEngine:
         persona.structure_preference = data.structure_preference
         persona.expression_intensity = data.expression_intensity
         persona.stability_params = json_dumps(data.stability_params)
+        persona.scene_pool = json_dumps(data.scene_pool)
         persona.updated_at = utcnow_iso()
         if data.is_default:
             await self.set_default(persona_id)

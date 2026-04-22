@@ -20,6 +20,7 @@ def persona_to_dict(persona: Persona) -> dict:
         "structure_preference": persona.structure_preference,
         "expression_intensity": persona.expression_intensity,
         "stability_params": json_loads(persona.stability_params, {}),
+        "scene_pool": json_loads(persona.scene_pool, []),
         "created_at": persona.created_at,
         "updated_at": persona.updated_at,
     }

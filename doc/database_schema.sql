@@ -106,6 +106,7 @@ CREATE TABLE IF NOT EXISTS personas (
     structure_preference    TEXT    NOT NULL DEFAULT 'medium', -- short/medium/long
     expression_intensity    TEXT    NOT NULL DEFAULT 'moderate', -- calm/moderate/intense
     stability_params        TEXT    NOT NULL DEFAULT '{"temperature_base": 0.7, "temperature_range": [0.3, 1.2]}',
+    scene_pool              TEXT    NOT NULL DEFAULT '[]', -- JSON array: 场景骰子池
     created_at              TEXT    NOT NULL DEFAULT (datetime('now')),
     updated_at              TEXT    NOT NULL DEFAULT (datetime('now'))
 );

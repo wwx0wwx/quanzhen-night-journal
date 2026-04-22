@@ -43,6 +43,7 @@ class Persona(Base):
     structure_preference: Mapped[str] = mapped_column(Text, nullable=False, default="medium")
     expression_intensity: Mapped[str] = mapped_column(Text, nullable=False, default="moderate")
     stability_params: Mapped[str] = mapped_column(Text, nullable=False)
+    scene_pool: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
     created_at: Mapped[str] = mapped_column(Text, nullable=False)
     updated_at: Mapped[str] = mapped_column(Text, nullable=False)
 

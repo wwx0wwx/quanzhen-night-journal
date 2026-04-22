@@ -6,18 +6,21 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api.deps import get_config_store, get_persona_engine, get_site_runtime_manager
+from backend.api.deps import get_config_store, get_memory_engine, get_persona_engine, get_site_runtime_manager
 from backend.api.serializers import persona_to_dict
 from backend.database import get_session
 from backend.engine.config_store import ConfigStore
+from backend.engine.memory_engine import MemoryEngine
 from backend.engine.persona_engine import PersonaEngine
 from backend.engine.site_runtime import SiteRuntimeManager
 from backend.models import Persona, User
 from backend.schemas.auth import SetupCompleteRequest
+from backend.schemas.memory import MemoryCreate
 from backend.security.auth import hash_password, is_system_initialized
 from backend.utils.audit import log_audit
 from backend.utils.default_persona import build_default_quanzhen_persona
 from backend.utils.response import error, success
+from backend.utils.seed_memories import get_seed_memories
 
 
 router = APIRouter()
@@ -46,6 +49,7 @@ async def setup_complete(
     db: AsyncSession = Depends(get_session),
     config_store: ConfigStore = Depends(get_config_store),
     persona_engine: PersonaEngine = Depends(get_persona_engine),
+    memory_engine: MemoryEngine = Depends(get_memory_engine),
     site_runtime: SiteRuntimeManager = Depends(get_site_runtime_manager),
 ) -> object:
     admin = await db.scalar(select(User).where(User.username == "admin"))
@@ -78,6 +82,8 @@ async def setup_complete(
     default_persona = await db.scalar(select(Persona).where(Persona.is_default == 1))
     if default_persona is None:
         default_persona = await persona_engine.create_persona(build_default_quanzhen_persona())
+        for mem_data in get_seed_memories(default_persona.id):
+            await memory_engine.create_memory(MemoryCreate(**mem_data))
 
     runtime_status = await site_runtime.apply()
     await log_audit(
