@@ -19,6 +19,7 @@ from backend.engine.persona_engine import PersonaEngine
 from backend.engine.prompt_builder import PromptBuilder
 from backend.engine.qa_engine import QAEngine
 from backend.engine.sensory_engine import SensoryEngine
+from backend.models import AuditLog
 from backend.publisher.registry import PublisherRegistry
 from backend.utils.default_persona import (
     apply_default_quanzhen_to_persona,
@@ -122,3 +123,15 @@ async def memory_reflection_job() -> None:
         if persona:
             await memory_engine.run_reflection(persona.id)
             await db.commit()
+
+
+async def audit_cleanup_job(*, retention_days: int = 90) -> None:
+    from datetime import datetime, timedelta, timezone
+
+    from sqlalchemy import delete
+
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=retention_days)).isoformat()
+    session_factory = get_sessionmaker()
+    async with session_factory() as db:
+        await db.execute(delete(AuditLog).where(AuditLog.timestamp < cutoff))
+        await db.commit()

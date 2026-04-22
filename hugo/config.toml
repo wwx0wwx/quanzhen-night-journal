@@ -1,7 +1,9 @@
 baseURL = "/"
 languageCode = "zh-cn"
+defaultContentLanguage = "zh"
 title = "全真夜记"
 theme = "PaperMod"
+hasCJKLanguage = true
 
 [params]
 ShowReadingTime = true

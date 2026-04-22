@@ -78,6 +78,7 @@ class Settings(BaseSettings):
     )
     caddy_reload_enabled: bool = Field(default=False, alias="CADDY_RELOAD_ENABLED")
     allow_cloudflare_proxy_domain: bool = Field(default=False, alias="ALLOW_CLOUDFLARE_PROXY_DOMAIN")
+    cors_origins: str = Field(default="", alias="CORS_ORIGINS")
 
     @property
     def root_dir(self) -> Path:

@@ -16,6 +16,9 @@ SECRET_KEYS = {
     "webhook.auth_token",
     "notify.bearer_token",
 }
+HIDDEN_KEYS = {
+    "system.encryption_key",
+}
 DEPRECATED_CONFIG_KEYS = {
     "schedule.posts_per_day",
     "schedule.cron_expression",
@@ -113,6 +116,8 @@ class ConfigStore:
         entries = await (self.by_category(category) if category else self.all())
         data: dict[str, dict] = {}
         for entry in entries:
+            if entry.key in HIDDEN_KEYS:
+                continue
             value = entry.value
             if entry.key in SECRET_KEYS and value:
                 if entry.encrypted and self.encryptor:

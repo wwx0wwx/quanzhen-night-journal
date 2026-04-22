@@ -15,6 +15,7 @@ from backend.database import database_file_from_url, get_sessionmaker
 from backend.engine.config_store import ConfigStore
 from backend.models import SystemConfig
 from backend.scheduler.jobs import (
+    audit_cleanup_job,
     ensure_seed_persona,
     memory_decay_job,
     memory_reflection_job,
@@ -177,7 +178,7 @@ async def scheduled_generation_dispatch_job() -> None:
 
     posts_per_cycle = _clamp_cycle_count(values.get("schedule.posts_per_cycle", "1"), default=1, minimum=0, maximum=24)
     extra_run_times = _build_followup_run_times(values, max(0, posts_per_cycle - 1))
-    today_tag = datetime.now(_scheduler_timezone()).strftime("%Y%m%d")
+    today_tag = datetime.now(timezone.utc).strftime("%Y%m%d")
     _clear_pending_followups(scheduler, prefix=f"scheduled_generation_extra_{today_tag}_")
 
     for index, run_at in enumerate(extra_run_times, start=1):
@@ -219,6 +220,12 @@ async def reload_scheduler(scheduler: AsyncIOScheduler) -> AsyncIOScheduler:
         memory_reflection_job,
         trigger=CronTrigger.from_crontab(values["schedule.review_cron"]),
         id="memory_reflection",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        audit_cleanup_job,
+        trigger=CronTrigger(hour=5, minute=15),
+        id="audit_cleanup",
         replace_existing=True,
     )
     return scheduler

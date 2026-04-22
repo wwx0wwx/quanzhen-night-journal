@@ -241,7 +241,10 @@ class SiteRuntimeManager:
             "    }\n\n"
             "    @console_root path /\n"
             "    redir @console_root /admin/ 308\n\n"
-            "    respond 404\n"
+            "    handle {\n"
+            "        root * /srv/hugo\n"
+            "        file_server\n"
+            "    }\n"
             "}\n\n"
         )
         blog = (
@@ -273,8 +276,10 @@ class SiteRuntimeManager:
         return (
             f'baseURL = {self._toml_string(base_url)}\n'
             'languageCode = "zh-cn"\n'
+            'defaultContentLanguage = "zh"\n'
             f"title = {self._toml_string(site_title)}\n"
-            f"theme = {self._toml_string(theme)}\n\n"
+            f"theme = {self._toml_string(theme)}\n"
+            "hasCJKLanguage = true\n\n"
             "[params]\n"
             "ShowReadingTime = true\n"
             "ShowShareButtons = false\n"
@@ -323,6 +328,7 @@ class SiteRuntimeManager:
             "---\n"
             'title: "关于"\n'
             f'description: "{description}"\n'
+            'date: "2026-04-14T00:00:00+00:00"\n'
             "---\n\n"
             f"{site_title} 是一个持续写作的夜间博客。\n\n"
             "这里会发布自动生成后的稿件，也会保留人工修订与审核后的版本。\n\n"

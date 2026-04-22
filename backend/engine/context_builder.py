@@ -12,7 +12,7 @@ from backend.utils.serde import json_dumps, json_loads
 
 
 class ContextBuilder:
-    RECENT_POST_LIMIT = 2
+    RECENT_POST_LIMIT = 4
     RECENT_ARTICLE_MEMORY_EXCLUDE_COUNT = 2
     RECENT_ARTICLE_MEMORY_EXCLUDE_HOURS = 72
 

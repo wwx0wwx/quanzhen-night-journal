@@ -371,6 +371,8 @@ onMounted(load)
   color: var(--accent-soft);
   font-size: 0.82rem;
   letter-spacing: 0.12em;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 @media (max-width: 900px) {

@@ -101,13 +101,18 @@ class PromptBuilder:
         return "\n".join(lines)
 
     def _build_recent_posts_block(self, recent_posts: list[RecentPostContext]) -> str:
-        lines = ["最近已发布文章回避清单："]
+        lines = ["最近已发布文章回避清单（严格禁止复写下列场景与动作）："]
         for item in recent_posts:
             summary = (item.summary or item.title).strip()
             lines.append(
-                f"- [{item.published_at or 'recent'}] {item.title}：避免复写其场景与推进，参考摘要：{summary[:80]}"
+                f"- [{item.published_at or 'recent'}] 《{item.title}》：{summary[:100]}"
             )
-        lines.append("新稿必须推进到新的夜晚、新的动作或新的关系变化，不能只换说法重写上一稿。")
+        lines.append(
+            "严格要求：\n"
+            "1. 新稿必须推进到全新的夜晚、全新的事件或全新的关系转折，绝不能只换说法重写上一稿。\n"
+            "2. 如果上面的文章已经写过某个具体场景或动作（如递药、拂雪、按剑柄、站在廊下等），新稿中必须回避这些动作，换用从未出现过的新动作和新物件。\n"
+            "3. 新稿的开场时间、地点、姿态必须与上述所有文章不同。"
+        )
         return "\n".join(lines)
 
     def _build_format_block(self, persona: Persona) -> str:

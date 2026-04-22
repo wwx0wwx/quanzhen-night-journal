@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import os
 import time
 from collections import defaultdict, deque
@@ -9,6 +10,7 @@ from dataclasses import dataclass
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from backend.engine.site_runtime import CLOUDFLARE_NETWORKS
 from backend.utils.response import error
 
 
@@ -78,12 +80,28 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     def _client_key(self, request: Request) -> str:
         test_scope = os.getenv("PYTEST_CURRENT_TEST", "").split(" ")[0]
-        for header in ("cf-connecting-ip", "x-real-ip", "x-forwarded-for"):
+        peer_ip = (request.client.host if request.client else "") or ""
+        is_trusted_proxy = self._is_cloudflare_ip(peer_ip)
+        if is_trusted_proxy:
+            cf_ip = request.headers.get("cf-connecting-ip", "").strip()
+            if cf_ip:
+                key = cf_ip.split(",")[0].strip()
+                return f"{test_scope}:{key}" if test_scope else key
+        for header in ("x-real-ip", "x-forwarded-for"):
             raw = request.headers.get(header, "").strip()
             if raw:
                 key = raw.split(",")[0].strip()
                 return f"{test_scope}:{key}" if test_scope else key
-        if request.client and request.client.host:
-            key = request.client.host
-            return f"{test_scope}:{key}" if test_scope else key
+        if peer_ip:
+            return f"{test_scope}:{peer_ip}" if test_scope else peer_ip
         return f"{test_scope}:unknown" if test_scope else "unknown"
+
+    @staticmethod
+    def _is_cloudflare_ip(ip_str: str) -> bool:
+        if not ip_str:
+            return False
+        try:
+            addr = ipaddress.ip_address(ip_str)
+            return any(addr in net for net in CLOUDFLARE_NETWORKS)
+        except ValueError:
+            return False

@@ -148,7 +148,7 @@ async def lifespan(_app: FastAPI):
     if folder_monitor_manager is not None:
         folder_monitor_manager.stop()
     if scheduler is not None:
-        scheduler.shutdown(wait=False)
+        scheduler.shutdown(wait=True)
     await close_database()
 
 
@@ -159,14 +159,22 @@ app = FastAPI(
 )
 app.include_router(api_router, prefix="/api")
 app.add_middleware(RateLimitMiddleware)
+
+_settings = get_settings()
+_cors_origins = [
+    "http://localhost:5210",
+    "http://127.0.0.1:5210",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+for origin in (_settings.cors_origins or "").split(","):
+    origin = origin.strip()
+    if origin and origin not in _cors_origins:
+        _cors_origins.append(origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5210",
-        "http://127.0.0.1:5210",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

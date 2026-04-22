@@ -535,7 +535,7 @@ class GenerationOrchestrator:
         post = Post(
             title=title,
             slug=slug,
-            front_matter=json_dumps({"categories": ["night-journal"]}),
+            front_matter=json_dumps({"categories": ["night-journal"], "tags": [persona.name, "夜札"], "author": persona.name}),
             content_markdown=content,
             summary=summary,
             status=status,

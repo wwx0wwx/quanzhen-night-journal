@@ -232,6 +232,13 @@ onMounted(load)
 .processed-event {
   white-space: pre-wrap;
   word-break: break-word;
+  max-height: 4.5em;
+  overflow: hidden;
+}
+
+.audit-item .code-block,
+.audit-item pre {
+  max-height: 300px;
 }
 
 .audit-hero {

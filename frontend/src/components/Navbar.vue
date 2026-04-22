@@ -51,41 +51,43 @@
       </div>
     </div>
 
-    <div v-if="drawerOpen" class="nav-drawer panel">
-      <RouterLink :to="overview.to" class="nav-drawer-top-link" :class="{ active: isOverviewActive }" @click="drawerOpen = false">
-        {{ overview.label }}
-      </RouterLink>
-
-      <div v-for="section in sections" :key="section.id" class="nav-drawer-group">
-        <RouterLink
-          :to="section.to"
-          class="nav-drawer-top-link"
-          :class="{ active: isSectionActive(section) }"
-          @click="drawerOpen = false"
-        >
-          {{ section.label }}
+    <Transition name="drawer">
+      <div v-if="drawerOpen" class="nav-drawer panel">
+        <RouterLink :to="overview.to" class="nav-drawer-top-link" :class="{ active: isOverviewActive }" @click="drawerOpen = false">
+          {{ overview.label }}
         </RouterLink>
-        <div class="nav-drawer-links">
+
+        <div v-for="section in sections" :key="section.id" class="nav-drawer-group">
           <RouterLink
-            v-for="item in section.items"
-            :key="item.to"
-            :to="item.to"
-            :class="{ active: isActive(item.to) }"
+            :to="section.to"
+            class="nav-drawer-top-link"
+            :class="{ active: isSectionActive(section) }"
             @click="drawerOpen = false"
           >
-            {{ item.label }}
+            {{ section.label }}
           </RouterLink>
-          <button
-            v-if="section.id === 'advanced'"
-            class="btn ghost btn-small nav-drawer-logout"
-            type="button"
-            @click="handleLogout"
-          >
-            退出登录
-          </button>
+          <div class="nav-drawer-links">
+            <RouterLink
+              v-for="item in section.items"
+              :key="item.to"
+              :to="item.to"
+              :class="{ active: isActive(item.to) }"
+              @click="drawerOpen = false"
+            >
+              {{ item.label }}
+            </RouterLink>
+            <button
+              v-if="section.id === 'advanced'"
+              class="btn ghost btn-small nav-drawer-logout"
+              type="button"
+              @click="handleLogout"
+            >
+              退出登录
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Transition>
   </header>
 </template>
 
@@ -245,6 +247,10 @@ onBeforeUnmount(() => {
   color: var(--ink);
   text-transform: uppercase;
   text-shadow: 0 0 16px rgba(216, 229, 240, 0.08);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 260px;
 }
 
 .brand-status {
@@ -346,6 +352,17 @@ onBeforeUnmount(() => {
   display: none;
 }
 
+.drawer-enter-active,
+.drawer-leave-active {
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.drawer-enter-from,
+.drawer-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
 @media (max-width: 1080px) {
   .nav-inner {
     grid-template-columns: 1fr auto;
@@ -397,6 +414,10 @@ onBeforeUnmount(() => {
   .nav-inner,
   .nav-drawer {
     width: calc(100vw - 24px);
+  }
+
+  .brand {
+    max-width: 200px;
   }
 }
 </style>

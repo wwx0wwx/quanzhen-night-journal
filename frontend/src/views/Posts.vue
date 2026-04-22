@@ -445,6 +445,20 @@ onMounted(load)
   align-items: stretch;
 }
 
+.post-title-link {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.post-summary {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 @media (max-width: 900px) {
   .posts-hero-actions,
   .posts-ledger-meta {
