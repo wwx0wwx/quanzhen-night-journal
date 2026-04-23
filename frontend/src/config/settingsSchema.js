@@ -251,14 +251,14 @@ export const settingsSections = [
       {
         key: 'schedule.review_cron',
         label: '复查时间（Cron）',
-        type: 'text',
+        type: 'cron',
         placeholder: '0 3 * * 0',
         help: '控制系统定期复查与整理内容的时间。一般无需修改。',
       },
       {
         key: 'schedule.decay_cron',
         label: '维护时间（Cron）',
-        type: 'text',
+        type: 'cron',
         placeholder: '0 4 * * *',
         help: '控制记忆衰减等后台维护任务的时间。一般保持默认即可。',
       },

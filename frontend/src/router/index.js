@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import { useAuthStore } from '../stores/auth'
+import About from '../views/About.vue'
 import Audit from '../views/Audit.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Ghost from '../views/Ghost.vue'
@@ -34,6 +35,7 @@ const routes = [
   { path: '/admin/settings', component: Settings },
   { path: '/admin/ghost', component: Ghost },
   { path: '/admin/audit', component: Audit },
+  { path: '/admin/about', component: About },
 ]
 
 const router = createRouter({

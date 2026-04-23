@@ -35,13 +35,30 @@
           :placeholder="field.placeholder || ''"
           :readonly="field.readonly"
           :type="showSecret ? 'text' : 'password'"
-          :value="stringValue"
+          :value="secretDisplayValue"
           @input="updateText"
         />
-        <button class="btn ghost btn-small" type="button" :disabled="isDisabled" @click="toggleSecret">
-          {{ showSecret ? '隐藏' : '显示' }}
+        <button
+          class="btn ghost btn-small"
+          type="button"
+          :disabled="isDisabled || isRevealing"
+          @click="toggleSecret"
+        >
+          {{ isRevealing ? '加载中...' : showSecret ? '隐藏' : '显示' }}
         </button>
       </div>
+    </template>
+
+    <template v-else-if="field.type === 'cron'">
+      <input
+        :disabled="isDisabled"
+        :placeholder="field.placeholder || ''"
+        :readonly="field.readonly"
+        type="text"
+        :value="stringValue"
+        @input="updateText"
+      />
+      <small v-if="cronDescription" class="field-help cron-hint">{{ cronDescription }}</small>
     </template>
 
     <template v-else>
@@ -68,6 +85,9 @@
 <script setup>
 import { computed, ref } from 'vue'
 
+import { api, unwrap } from '../../api'
+import { cronToHuman } from '../../utils/cronHuman'
+
 const props = defineProps({
   field: {
     type: Object,
@@ -85,6 +105,8 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 const showSecret = ref(false)
+const isRevealing = ref(false)
+const revealedValue = ref(null)
 
 const isDisabled = computed(() => props.disabled || props.field.readonly)
 const inputType = computed(() => {
@@ -94,13 +116,32 @@ const inputType = computed(() => {
   return 'text'
 })
 const stringValue = computed(() => (props.modelValue ?? '').toString())
-const showMaskHint = computed(() => props.field.type === 'secret' && stringValue.value === '******')
+const showMaskHint = computed(() => props.field.type === 'secret' && stringValue.value === '******' && !showSecret.value)
 const helpLines = computed(() => {
   if (!props.field.help) return []
   return Array.isArray(props.field.help) ? props.field.help : [props.field.help]
 })
 
+const secretDisplayValue = computed(() => {
+  if (showSecret.value && revealedValue.value !== null) {
+    return revealedValue.value
+  }
+  return stringValue.value
+})
+
+const cronDescription = computed(() => {
+  if (props.field.type !== 'cron') return ''
+  const val = stringValue.value.trim()
+  if (!val) return ''
+  const desc = cronToHuman(val)
+  return desc !== val ? desc : ''
+})
+
 function updateText(event) {
+  if (showSecret.value && revealedValue.value !== null) {
+    revealedValue.value = null
+    showSecret.value = false
+  }
   emit('update:modelValue', event.target.value)
 }
 
@@ -108,13 +149,38 @@ function updateBoolean(event) {
   emit('update:modelValue', event.target.checked)
 }
 
-function toggleSecret() {
-  showSecret.value = !showSecret.value
+async function toggleSecret() {
+  if (showSecret.value) {
+    showSecret.value = false
+    revealedValue.value = null
+    return
+  }
+
+  if (stringValue.value !== '******') {
+    showSecret.value = true
+    return
+  }
+
+  isRevealing.value = true
+  try {
+    const data = await unwrap(api.post('/config/reveal', { key: props.field.key }))
+    revealedValue.value = data.value
+    showSecret.value = true
+  } catch {
+    showSecret.value = true
+  } finally {
+    isRevealing.value = false
+  }
 }
 </script>
 
 <style scoped>
 .setting-field-label {
   letter-spacing: 0.08em;
+}
+
+.cron-hint {
+  color: var(--accent-soft, #8ba4bc);
+  margin-top: 4px;
 }
 </style>

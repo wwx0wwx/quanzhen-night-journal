@@ -129,6 +129,12 @@ const sections = [
       { label: '系统日志', to: '/admin/audit' },
     ],
   },
+  {
+    id: 'about',
+    label: '关于',
+    to: '/admin/about',
+    items: [{ label: '关于', to: '/admin/about' }],
+  },
 ]
 
 const auth = useAuthStore()

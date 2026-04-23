@@ -2,17 +2,17 @@ from __future__ import annotations
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.adapters.embedding_adapter import EmbeddingAdapter
 from backend.adapters.llm_adapter import LLMAdapter
 from backend.api.deps import get_config_store, get_site_runtime_manager
 from backend.database import get_session
-from backend.engine.config_store import ConfigStore
+from backend.engine.config_store import SECRET_KEYS, ConfigStore
 from backend.engine.site_runtime import SiteRuntimeManager
 from backend.scheduler.scheduler import reload_scheduler
-from backend.schemas.config import ConfigUpdateRequest, TestProviderRequest
+from backend.schemas.config import ConfigUpdateRequest, RevealSecretRequest, TestProviderRequest
 from backend.security.auth import get_current_user
 from backend.utils.audit import log_audit
 from backend.utils.response import success
@@ -83,6 +83,18 @@ async def domain_status(
             "base_url": await config_store.get("hugo.base_url", "/") or "/",
         }
     )
+
+
+@router.post("/reveal")
+async def reveal_secret(
+    payload: RevealSecretRequest,
+    config_store: ConfigStore = Depends(get_config_store),
+    _user=Depends(get_current_user),
+) -> object:
+    if payload.key not in SECRET_KEYS:
+        raise HTTPException(status_code=400, detail="only secret keys can be revealed")
+    value = await config_store.get(payload.key, default="", decrypt=True)
+    return success({"key": payload.key, "value": value or ""})
 
 
 @router.post("/test-llm")

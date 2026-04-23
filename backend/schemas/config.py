@@ -39,6 +39,10 @@ class ConfigUpdateRequest(BaseModel):
     items: list[ConfigEntry]
 
 
+class RevealSecretRequest(BaseModel):
+    key: str
+
+
 class TestProviderRequest(BaseModel):
     base_url: str
     api_key: str
