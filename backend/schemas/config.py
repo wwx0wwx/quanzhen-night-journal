@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+
+
+ALLOWED_CONFIG_PREFIXES = frozenset({
+    "site.", "llm.", "embedding.", "schedule.", "budget.", "panel.", "hugo.", "system.",
+})
 
 
 class ConfigEntry(BaseModel):
@@ -8,6 +13,13 @@ class ConfigEntry(BaseModel):
     value: str | None = None
     encrypted: bool = False
     category: str = "general"
+
+    @field_validator("key")
+    @classmethod
+    def validate_key_prefix(cls, v: str) -> str:
+        if not any(v.startswith(prefix) for prefix in ALLOWED_CONFIG_PREFIXES):
+            raise ValueError(f"config key '{v}' does not match any allowed prefix")
+        return v
 
 
 class ConfigUpdateRequest(BaseModel):

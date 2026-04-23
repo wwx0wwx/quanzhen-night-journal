@@ -316,8 +316,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 
 import { api, unwrap } from '../api'
 import AppError from '../components/AppError.vue'
@@ -396,6 +396,7 @@ const activeTemplateField = ref('')
 const isLoading = ref(true)
 const loadError = ref('')
 const isSaving = ref(false)
+const formDirty = ref(false)
 const isActivating = ref(false)
 const isDeleting = ref(false)
 const message = ref('')
@@ -629,6 +630,7 @@ async function save() {
     await unwrap(api.put(`/personas/${route.params.id}`, form))
     messageType.value = 'success'
     message.value = '人格设定已保存。'
+    formDirty.value = false
   } catch (error) {
     messageType.value = 'error'
     message.value = describeError(error, '保存人格设定失败。')
@@ -671,6 +673,14 @@ async function removePersona() {
 }
 
 onMounted(load)
+
+watch(form, () => { formDirty.value = true }, { deep: true })
+
+onBeforeRouteLeave(() => {
+  if (formDirty.value) {
+    return window.confirm('有未保存的修改，确定要离开吗？')
+  }
+})
 </script>
 
 <style scoped>

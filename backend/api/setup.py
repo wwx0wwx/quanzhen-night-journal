@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import date
 
 from fastapi import APIRouter, Depends, Request
@@ -58,44 +59,49 @@ async def setup_complete(
     if await is_system_initialized(db):
         return error(3003, "系统已完成初始化，禁止再次执行初始化", status_code=403)
 
-    admin.password_hash = hash_password(payload.new_password)
-    admin.is_initialized = 1
+    try:
+        admin.password_hash = hash_password(payload.new_password)
+        admin.is_initialized = 1
 
-    await config_store.set("site.title", payload.site_title, category="site")
-    await config_store.set("site.subtitle", payload.site_subtitle, category="site")
-    await config_store.set("site.domain", payload.site_domain, category="site")
-    await config_store.set("llm.base_url", payload.llm_base_url, category="llm")
-    await config_store.set("llm.api_key", payload.llm_api_key, category="llm", encrypted=True)
-    await config_store.set("llm.model_id", payload.llm_model_id, category="llm")
-    await config_store.set("embedding.base_url", payload.embedding_base_url, category="embedding")
-    await config_store.set("embedding.api_key", payload.embedding_api_key, category="embedding", encrypted=True)
-    await config_store.set("embedding.model_id", payload.embedding_model_id, category="embedding")
-    await config_store.set("schedule.days_per_cycle", "1", category="schedule")
-    await config_store.set("schedule.posts_per_cycle", "1", category="schedule")
-    await config_store.set("schedule.publish_time", "21:02", category="schedule")
-    await config_store.set("schedule.cycle_anchor_date", date.today().isoformat(), category="schedule")
-    await config_store.set("budget.daily_limit_usd", "99999", category="budget")
-    await config_store.set("budget.monthly_limit_usd", "99999", category="budget")
-    await config_store.set("panel.status_text", "{user} 正在守夜", category="panel")
-    await config_store.set("system.initialized", "1", category="system")
+        await config_store.set("site.title", payload.site_title, category="site")
+        await config_store.set("site.subtitle", payload.site_subtitle, category="site")
+        await config_store.set("site.domain", payload.site_domain, category="site")
+        await config_store.set("llm.base_url", payload.llm_base_url, category="llm")
+        await config_store.set("llm.api_key", payload.llm_api_key, category="llm", encrypted=True)
+        await config_store.set("llm.model_id", payload.llm_model_id, category="llm")
+        await config_store.set("embedding.base_url", payload.embedding_base_url, category="embedding")
+        await config_store.set("embedding.api_key", payload.embedding_api_key, category="embedding", encrypted=True)
+        await config_store.set("embedding.model_id", payload.embedding_model_id, category="embedding")
+        await config_store.set("schedule.days_per_cycle", "1", category="schedule")
+        await config_store.set("schedule.posts_per_cycle", "1", category="schedule")
+        await config_store.set("schedule.publish_time", "21:02", category="schedule")
+        await config_store.set("schedule.cycle_anchor_date", date.today().isoformat(), category="schedule")
+        await config_store.set("budget.daily_limit_usd", "99999", category="budget")
+        await config_store.set("budget.monthly_limit_usd", "99999", category="budget")
+        await config_store.set("panel.status_text", "{user} 正在守夜", category="panel")
+        await config_store.set("system.initialized", "1", category="system")
 
-    default_persona = await db.scalar(select(Persona).where(Persona.is_default == 1))
-    if default_persona is None:
-        default_persona = await persona_engine.create_persona(build_default_quanzhen_persona())
-        for mem_data in get_seed_memories(default_persona.id):
-            await memory_engine.create_memory(MemoryCreate(**mem_data))
+        default_persona = await db.scalar(select(Persona).where(Persona.is_default == 1))
+        if default_persona is None:
+            default_persona = await persona_engine.create_persona(build_default_quanzhen_persona())
+            for mem_data in get_seed_memories(default_persona.id):
+                await memory_engine.create_memory(MemoryCreate(**mem_data))
 
-    runtime_status = await site_runtime.apply()
-    await log_audit(
-        db,
-        "user",
-        "setup.complete",
-        "system",
-        "1",
-        {"site_title": payload.site_title},
-        ip=request.client.host if request.client else None,
-    )
-    await db.commit()
+        runtime_status = await site_runtime.apply()
+        await log_audit(
+            db,
+            "user",
+            "setup.complete",
+            "system",
+            "1",
+            {"site_title": payload.site_title},
+            ip=request.client.host if request.client else None,
+        )
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        logging.getLogger(__name__).exception("setup_complete failed")
+        return error(5000, "初始化过程出错，已回滚", status_code=500)
     return success(
         {
             "system_initialized": True,

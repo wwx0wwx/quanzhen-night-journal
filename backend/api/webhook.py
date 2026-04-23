@@ -17,8 +17,13 @@ async def trigger_webhook(
     event_engine: EventEngine = Depends(get_event_engine),
     orchestrator: GenerationOrchestrator = Depends(get_orchestrator),
 ) -> object:
-    payload = await request.json()
     raw_body = await request.body()
+    try:
+        payload = await request.json()
+    except Exception:
+        return error(2002, "请求体不是合法 JSON", status_code=400)
+    if not isinstance(payload, dict):
+        return error(2002, "Webhook payload 必须是 JSON 对象", status_code=400)
     event = await event_engine.handle_webhook(
         payload,
         auth_header=request.headers.get("Authorization"),

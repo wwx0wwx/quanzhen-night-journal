@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import math
 from datetime import datetime, timedelta
 
@@ -16,6 +17,8 @@ from backend.utils.time import UTC, utcnow, utcnow_iso
 
 
 LEVEL_WEIGHT = {"L0": 4.0, "L1": 3.0, "L2": 2.0, "L3": 1.0}
+
+logger = logging.getLogger(__name__)
 SOURCE_WEIGHT = {
     "hand_written": 3.0,
     "reflection": 2.5,
@@ -78,6 +81,7 @@ class MemoryEngine:
                 )
             )[0]
         except EmbeddingUnavailableError:
+            logger.warning("embedding unavailable for memory %s, skipping vector store", memory_id)
             return
         existing = await self.db.get(MemoryVector, memory_id)
         if existing is None:

@@ -13,6 +13,7 @@ import Posts from '../views/Posts.vue'
 import Settings from '../views/Settings.vue'
 import Setup from '../views/Setup.vue'
 import TaskDetail from '../views/TaskDetail.vue'
+import Tasks from '../views/Tasks.vue'
 import { getPostLoginRoute } from '../utils/adminNavigation'
 
 const routes = [
@@ -28,6 +29,7 @@ const routes = [
   { path: '/admin/memories', component: Memories },
   { path: '/admin/observatory', redirect: '/admin/audit' },
   { path: '/admin/sensory', redirect: '/admin/audit' },
+  { path: '/admin/tasks', component: Tasks },
   { path: '/admin/tasks/:id', component: TaskDetail },
   { path: '/admin/settings', component: Settings },
   { path: '/admin/ghost', component: Ghost },

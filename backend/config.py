@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "全真夜记 Core"
-    app_version: str = "2.0.0"
+    app_version: str = "1.0.7"
     environment: str = Field(default="development", alias="ENVIRONMENT")
     jwt_secret: str = Field(
         default=DEFAULT_JWT_SECRET,

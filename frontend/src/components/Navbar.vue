@@ -107,6 +107,7 @@ const sections = [
     to: '/admin/posts',
     items: [
       { label: '文章', to: '/admin/posts' },
+      { label: '任务', to: '/admin/tasks' },
     ],
   },
   {

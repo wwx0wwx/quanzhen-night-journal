@@ -49,7 +49,7 @@ async def login(
         httponly=True,
         samesite="lax",
         max_age=24 * 3600,
-        secure=request.headers.get("x-forwarded-proto") == "https",
+        secure=get_settings().is_production,
     )
     await log_audit(db, "user", "auth.login", "user", str(user.id), ip=request.client.host if request.client else None)
     await db.commit()

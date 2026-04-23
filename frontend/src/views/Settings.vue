@@ -122,6 +122,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
 
 import { api, unwrap } from '../api'
 import AppEmpty from '../components/AppEmpty.vue'
@@ -375,6 +376,12 @@ async function testEmbedding() {
 onMounted(async () => {
   resetTransientMessages()
   await load()
+})
+
+onBeforeRouteLeave(() => {
+  if (isDirty.value) {
+    return window.confirm('有未保存的修改，确定要离开吗？')
+  }
 })
 </script>
 

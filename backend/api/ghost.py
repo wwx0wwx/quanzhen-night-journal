@@ -153,6 +153,8 @@ async def download_ghost_export(
     target = manager.ghost_dir / safe_name
     if not target.exists() or not target.is_file():
         raise HTTPException(status_code=404, detail="ghost_export_not_found")
+    if not target.resolve().is_relative_to(manager.ghost_dir.resolve()):
+        raise HTTPException(status_code=403, detail="path_traversal_denied")
     return FileResponse(path=target, filename=safe_name, media_type="application/octet-stream")
 
 
@@ -168,4 +170,6 @@ async def download_database_backup(
     target = manager.backup_dir / safe_name
     if not target.exists() or not target.is_file():
         raise HTTPException(status_code=404, detail="database_backup_not_found")
+    if not target.resolve().is_relative_to(manager.backup_dir.resolve()):
+        raise HTTPException(status_code=403, detail="path_traversal_denied")
     return FileResponse(path=target, filename=safe_name, media_type="application/octet-stream")

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quanzhen-night-journal"
-version = "2.0.0"
+version = "1.0.7"
 description = "全真夜记 - 可控、可解释、可迁移的数字生命博客系统"
 requires-python = ">=3.11"
 license = "MIT"

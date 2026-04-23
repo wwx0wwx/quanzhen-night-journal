@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Request
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +12,11 @@ from backend.utils.audit import log_audit
 from backend.utils.serde import json_dumps, json_loads
 from backend.utils.response import success
 from backend.utils.time import utcnow_iso
+
+
+class FolderMonitorCreate(BaseModel):
+    path: str = Field(..., min_length=1)
+    file_types: list[str] = Field(default_factory=lambda: ["txt", "md"])
 
 
 router = APIRouter()
@@ -38,15 +44,15 @@ async def list_monitors(
 
 @router.post("")
 async def add_monitor(
-    payload: dict,
+    payload: FolderMonitorCreate,
     request: Request,
     db: AsyncSession = Depends(get_session),
     _user=Depends(get_current_user),
 ) -> object:
     monitor = FolderMonitor(
-        path=payload["path"],
+        path=payload.path,
         is_active=1,
-        file_types=json_dumps(payload.get("file_types", ["txt", "md"])),
+        file_types=json_dumps(payload.file_types),
         created_at=utcnow_iso(),
     )
     db.add(monitor)

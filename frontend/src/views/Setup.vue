@@ -142,6 +142,15 @@ const form = reactive({
 async function submit() {
   if (isSubmitting.value) return
 
+  if (form.new_password.length < 8) {
+    message.value = '密码至少 8 位。'
+    return
+  }
+  if (form.site_domain && /^https?:\/\//.test(form.site_domain)) {
+    message.value = '域名只填写域名本身，不要带 http:// 或 https://。'
+    return
+  }
+
   isSubmitting.value = true
   try {
     await unwrap(api.post('/setup/complete', form))

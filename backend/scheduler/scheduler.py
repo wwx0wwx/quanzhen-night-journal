@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import random
 from datetime import date, datetime, time as time_value, timedelta, timezone
 
@@ -34,6 +35,7 @@ DEFAULT_SCHEDULES = {
     "schedule.sample_interval_minutes": "5",
 }
 _scheduler_ref: AsyncIOScheduler | None = None
+_logger = logging.getLogger(__name__)
 
 
 async def _load_schedule_settings() -> dict[str, str]:
@@ -83,6 +85,8 @@ def _clamp_cycle_count(value: str, *, default: int, minimum: int, maximum: int) 
 
 def _scheduler_timezone():
     scheduler = _scheduler_ref
+    if scheduler is None:
+        _logger.warning("scheduler not initialized yet, falling back to UTC")
     return scheduler.timezone if scheduler is not None else timezone.utc
 
 

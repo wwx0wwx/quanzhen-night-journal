@@ -157,8 +157,8 @@
 <script setup>
 import DOMPurify from 'dompurify'
 import MarkdownIt from 'markdown-it'
-import { computed, onMounted, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 
 import { api, unwrap } from '../api'
 import AppEmpty from '../components/AppEmpty.vue'
@@ -192,6 +192,7 @@ const isLoading = ref(true)
 const isRevisionsLoading = ref(false)
 const loadError = ref('')
 const isSaving = ref(false)
+const formDirty = ref(false)
 const activeAction = ref('')
 const message = ref('')
 const messageType = ref('info')
@@ -272,6 +273,7 @@ async function save() {
     applyPost(data)
     messageType.value = 'success'
     message.value = '文章已保存。'
+    formDirty.value = false
     await loadRevisions()
   } catch (error) {
     messageType.value = 'error'
@@ -328,6 +330,14 @@ async function revertRevision(revision) {
 }
 
 onMounted(load)
+
+watch(form, () => { formDirty.value = true }, { deep: true })
+
+onBeforeRouteLeave(() => {
+  if (formDirty.value) {
+    return window.confirm('有未保存的修改，确定要离开吗？')
+  }
+})
 </script>
 
 <style scoped>
