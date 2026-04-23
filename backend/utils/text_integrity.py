@@ -4,7 +4,6 @@ import html
 import re
 from dataclasses import dataclass
 
-
 _HTML_TAG_RE = re.compile(r"</?[A-Za-z][^>]*>")
 _SPACE_RE = re.compile(r"\s+")
 
@@ -30,7 +29,9 @@ def inspect_text_integrity(value: str | None) -> list[TextIntegrityIssue]:
     placeholder_ratio = placeholder_count / max(1, len(visible))
 
     if placeholder_count >= 2 and placeholder_ratio >= 0.35 and readable_count <= placeholder_count:
-        issues.append(TextIntegrityIssue("placeholder_question_marks_detected", "contains too many placeholder question marks"))
+        issues.append(
+            TextIntegrityIssue("placeholder_question_marks_detected", "contains too many placeholder question marks")
+        )
     return issues
 
 
@@ -49,4 +50,3 @@ def sanitize_plain_text(value: str | None, *, max_length: int = 0) -> str:
     if max_length > 0:
         text = text[:max_length].strip()
     return text
-

@@ -4,10 +4,9 @@ import asyncio
 import sqlite3
 
 from backend.adapters.embedding_adapter import EmbeddingAdapter
-from backend.config import get_settings
-from backend.database import init_database
 from backend.adapters.llm_adapter import LLMAdapter
-from backend.database import get_sessionmaker
+from backend.config import get_settings
+from backend.database import get_sessionmaker, init_database
 from backend.engine.config_store import ConfigStore
 from backend.engine.memory_engine import MemoryEngine
 from backend.models import Post
@@ -51,9 +50,7 @@ def test_article_memory_uses_structured_summary_and_recent_exclusion(authed_clie
                     slug="1-全真夜记",
                     front_matter="{}",
                     content_markdown=(
-                        "# 檐外消息撞得门环响\n\n"
-                        "我靠在廊柱，站在王爷书房半步外。\n\n"
-                        "雪又开始落了，落在我剑鞘上。"
+                        "# 檐外消息撞得门环响\n\n我靠在廊柱，站在王爷书房半步外。\n\n雪又开始落了，落在我剑鞘上。"
                     ),
                     summary="我靠在廊柱，站在王爷书房半步外。",
                     status="published",
@@ -89,9 +86,7 @@ def test_article_memory_uses_structured_summary_and_recent_exclusion(authed_clie
 
             assert article_memory.content.startswith("标题：檐外消息撞得门环响")
             assert article_memory.content != (
-                "# 檐外消息撞得门环响\n\n"
-                "我靠在廊柱，站在王爷书房半步外。\n\n"
-                "雪又开始落了，落在我剑鞘上。"
+                "# 檐外消息撞得门环响\n\n我靠在廊柱，站在王爷书房半步外。\n\n雪又开始落了，落在我剑鞘上。"
             )
             assert "用途：用于保持长期叙事连续性" in article_memory.content
             assert "我靠在廊柱，站在王爷书房半步外。" not in article_memory.content.splitlines()[-1]
@@ -169,9 +164,7 @@ def test_init_database_normalizes_legacy_article_memories(authed_client):
     asyncio.run(init_database())
 
     conn = sqlite3.connect(settings.database_path)
-    content, summary, tags = conn.execute(
-        "SELECT content, summary, tags FROM memories WHERE id = 199"
-    ).fetchone()
+    content, summary, tags = conn.execute("SELECT content, summary, tags FROM memories WHERE id = 199").fetchone()
     conn.close()
 
     assert content.startswith("标题：檐外消息撞得门环响")

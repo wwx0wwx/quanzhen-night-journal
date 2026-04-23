@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import bcrypt
@@ -12,8 +12,7 @@ from backend.config import Settings, get_settings
 from backend.database import get_session
 from backend.models import SystemConfig, User
 
-
-UTC = timezone.utc
+UTC = UTC
 
 
 def hash_password(password: str) -> str:

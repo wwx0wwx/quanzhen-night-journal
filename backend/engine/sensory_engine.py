@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.engine.config_store import ConfigStore
 from backend.models import Post, SensorySnapshot
-from backend.utils.serde import json_dumps, json_loads
+from backend.utils.serde import json_dumps
 from backend.utils.time import utcnow, utcnow_iso
 
 
@@ -18,9 +18,19 @@ class SensoryEngine:
         ("high_cpu", lambda s, t: s.cpu_percent is not None and s.cpu_percent > t["cpu"]),
         ("memory_pressure", lambda s, t: s.memory_percent is not None and s.memory_percent > t["mem"]),
         ("memory_critical", lambda s, t: s.memory_percent is not None and s.memory_percent > 95),
-        ("io_spike", lambda s, t: s.io_write_bytes_per_sec is not None and s.io_write_bytes_per_sec > t["io_write_bytes_per_sec"]),
+        (
+            "io_spike",
+            lambda s, t: (
+                s.io_write_bytes_per_sec is not None and s.io_write_bytes_per_sec > t["io_write_bytes_per_sec"]
+            ),
+        ),
         ("disk_warning", lambda s, t: s.disk_usage_percent is not None and s.disk_usage_percent > 90),
-        ("network_heavy", lambda s, t: s.network_rx_bytes_per_sec is not None and s.network_rx_bytes_per_sec > t["network_rx_bytes_per_sec"]),
+        (
+            "network_heavy",
+            lambda s, t: (
+                s.network_rx_bytes_per_sec is not None and s.network_rx_bytes_per_sec > t["network_rx_bytes_per_sec"]
+            ),
+        ),
         ("api_slow", lambda s, t: s.api_latency_ms is not None and s.api_latency_ms > 3000),
     ]
 
@@ -86,7 +96,9 @@ class SensoryEngine:
         thresholds = {
             "cpu": int(await self.config_store.get("sensory.cpu_high_threshold", "80") or 80),
             "mem": int(await self.config_store.get("sensory.mem_high_threshold", "85") or 85),
-            "io_write_bytes_per_sec": int(await self.config_store.get("sensory.io_high_threshold", "70") or 70) * 1024 * 1024,
+            "io_write_bytes_per_sec": int(await self.config_store.get("sensory.io_high_threshold", "70") or 70)
+            * 1024
+            * 1024,
             "network_rx_bytes_per_sec": 50 * 1024 * 1024,
         }
         tags = [name for name, rule in self.LABEL_RULES if rule(snapshot, thresholds)]

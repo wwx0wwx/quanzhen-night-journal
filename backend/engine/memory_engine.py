@@ -15,7 +15,6 @@ from backend.schemas.memory import MemoryCreate, MemoryHit
 from backend.utils.serde import json_dumps, json_loads
 from backend.utils.time import UTC, utcnow, utcnow_iso
 
-
 LEVEL_WEIGHT = {"L0": 4.0, "L1": 3.0, "L2": 2.0, "L3": 1.0}
 
 logger = logging.getLogger(__name__)
@@ -66,9 +65,13 @@ class MemoryEngine:
         return memory
 
     async def embed_and_store(self, memory_id: int, text: str) -> None:
-        base_url = await self.config_store.get("embedding.base_url", "") or await self.config_store.get("llm.base_url", "")
+        base_url = await self.config_store.get("embedding.base_url", "") or await self.config_store.get(
+            "llm.base_url", ""
+        )
         api_key = await self.config_store.get("embedding.api_key", "") or await self.config_store.get("llm.api_key", "")
-        model_id = await self.config_store.get("embedding.model_id", "") or await self.config_store.get("llm.model_id", "")
+        model_id = await self.config_store.get("embedding.model_id", "") or await self.config_store.get(
+            "llm.model_id", ""
+        )
         dimensions = int(await self.config_store.get("embedding.dimensions", "1536") or 1536)
         try:
             vector = (
@@ -110,9 +113,15 @@ class MemoryEngine:
             return []
 
         try:
-            base_url = await self.config_store.get("embedding.base_url", "") or await self.config_store.get("llm.base_url", "")
-            api_key = await self.config_store.get("embedding.api_key", "") or await self.config_store.get("llm.api_key", "")
-            model_id = await self.config_store.get("embedding.model_id", "") or await self.config_store.get("llm.model_id", "")
+            base_url = await self.config_store.get("embedding.base_url", "") or await self.config_store.get(
+                "llm.base_url", ""
+            )
+            api_key = await self.config_store.get("embedding.api_key", "") or await self.config_store.get(
+                "llm.api_key", ""
+            )
+            model_id = await self.config_store.get("embedding.model_id", "") or await self.config_store.get(
+                "llm.model_id", ""
+            )
             query_vector = (
                 await self.embedding_adapter.embed(
                     base_url=base_url or "",
@@ -208,7 +217,9 @@ class MemoryEngine:
 
     async def run_reflection(self, persona_id: int) -> Memory | None:
         rows = await self.db.scalars(
-            select(Memory).where(Memory.persona_id == persona_id, Memory.level == "L2").order_by(desc(Memory.created_at))
+            select(Memory)
+            .where(Memory.persona_id == persona_id, Memory.level == "L2")
+            .order_by(desc(Memory.created_at))
         )
         recent = [item for item in rows if self._parse_time(item.created_at) >= utcnow() - timedelta(days=30)]
         if not recent:
@@ -313,8 +324,14 @@ class MemoryEngine:
         return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(UTC)
 
     def _build_article_memory_content(self, post: Post) -> str:
-        lines = [line.strip() for line in post.content_markdown.splitlines() if line.strip() and not line.startswith("#")]
-        opening = lines[0][: self.ARTICLE_MEMORY_SNIPPET_LIMIT] if lines else (post.summary or post.title)[: self.ARTICLE_MEMORY_SNIPPET_LIMIT]
+        lines = [
+            line.strip() for line in post.content_markdown.splitlines() if line.strip() and not line.startswith("#")
+        ]
+        opening = (
+            lines[0][: self.ARTICLE_MEMORY_SNIPPET_LIMIT]
+            if lines
+            else (post.summary or post.title)[: self.ARTICLE_MEMORY_SNIPPET_LIMIT]
+        )
         closing = lines[-1][: self.ARTICLE_MEMORY_SNIPPET_LIMIT] if lines else opening
         return "\n".join(
             [

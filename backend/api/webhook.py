@@ -7,7 +7,6 @@ from backend.engine.event_engine import EventEngine
 from backend.engine.generation_orchestrator import GenerationOrchestrator
 from backend.utils.response import error, success
 
-
 router = APIRouter()
 
 

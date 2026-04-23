@@ -22,7 +22,6 @@ from backend.api import (
     webhook,
 )
 
-
 router = APIRouter()
 router.include_router(auth.router, prefix="/auth", tags=["auth"])
 router.include_router(config.router, prefix="/config", tags=["config"])

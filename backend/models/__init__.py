@@ -1,7 +1,7 @@
 from backend.models.base import Base
 from backend.models.entities import (
-    AuditLog,
     AuditEventDefinition,
+    AuditLog,
     CostRecord,
     Event,
     FolderMonitor,
@@ -11,8 +11,8 @@ from backend.models.entities import (
     Persona,
     Post,
     PostRevision,
-    PublicPageView,
     PostVector,
+    PublicPageView,
     SensorySnapshot,
     SystemConfig,
     User,

@@ -11,7 +11,6 @@ from backend.models import CostRecord
 from backend.security.auth import get_current_user
 from backend.utils.response import success
 
-
 router = APIRouter()
 
 

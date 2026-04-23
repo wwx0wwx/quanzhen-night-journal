@@ -5,6 +5,12 @@ services:
       dockerfile: backend/Dockerfile
     container_name: qz-core
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/auth/status')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     environment:
       ENVIRONMENT: ${ENVIRONMENT:-production}
       DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:////app/data/quanzhen.db}
@@ -53,6 +59,12 @@ services:
       dockerfile: caddy/Dockerfile
     container_name: qz-caddy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5210/api/auth/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     entrypoint: ["/bin/sh", "/entrypoint.sh"]
     ports:
       - "5210:5210"

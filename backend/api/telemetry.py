@@ -9,7 +9,6 @@ from backend.schemas.telemetry import PublicPageViewRequest
 from backend.utils.response import success
 from backend.utils.time import utcnow_iso
 
-
 router = APIRouter()
 
 

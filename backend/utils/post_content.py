@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 
-
 _HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s*")
 _LEADING_NOISE_RE = re.compile(r"^[\s\u3000>*`~=_\-+:：;；,，.!！?？、·]+")
 _TRAILING_NOISE_RE = re.compile(r"[\s\u3000>*`~=_\-+:：;；,，.!！?？、·]+$")

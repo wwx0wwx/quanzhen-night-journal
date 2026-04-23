@@ -14,7 +14,6 @@ from backend.config import Settings, get_settings
 from backend.engine.config_store import ConfigStore
 from backend.utils.time import utcnow_iso
 
-
 CLOUDFLARE_NETWORKS = (
     ipaddress.ip_network("103.21.244.0/22"),
     ipaddress.ip_network("103.22.200.0/22"),
@@ -83,7 +82,9 @@ class SiteRuntimeManager:
 
         await self.config_store.set("site.domain", inspection.normalized_domain, category="site")
         await self.config_store.set("site.domain_enabled", "1" if inspection.enabled else "0", category="site")
-        await self.config_store.set("site.domain_status", "enabled" if inspection.enabled else "disabled", category="site")
+        await self.config_store.set(
+            "site.domain_status", "enabled" if inspection.enabled else "disabled", category="site"
+        )
         await self.config_store.set("site.domain_reason", inspection.reason, category="site")
         await self.config_store.set("site.domain_checked_at", utcnow_iso(), category="site")
         await self.config_store.set("hugo.base_url", base_url, category="hugo")
@@ -148,7 +149,10 @@ class SiteRuntimeManager:
             return DomainInspection(
                 domain,
                 False,
-                f"DNS 解析未直连当前服务器。当前解析: {', '.join(resolved_ips)}；服务器期望: {', '.join(sorted(server_ips))}",
+                (
+                    f"DNS 解析未直连当前服务器。"
+                    f"当前解析: {', '.join(resolved_ips)}；服务器期望: {', '.join(sorted(server_ips))}"
+                ),
                 resolved_ips,
             )
         return DomainInspection(domain, True, "域名解析已对准当前服务器，可启用 HTTPS。", resolved_ips)
@@ -217,8 +221,7 @@ class SiteRuntimeManager:
             return False
         try:
             return all(
-                any(ipaddress.ip_address(value) in network for network in CLOUDFLARE_NETWORKS)
-                for value in values
+                any(ipaddress.ip_address(value) in network for network in CLOUDFLARE_NETWORKS) for value in values
             )
         except ValueError:
             return False
@@ -231,7 +234,7 @@ class SiteRuntimeManager:
             "    redir /admin /admin/ 308\n\n"
             "    handle_path /admin/* {\n"
             "        root * /srv/webui\n"
-            "        header Cache-Control \"no-store\"\n"
+            '        header Cache-Control "no-store"\n'
             "        try_files {path} /index.html\n"
             "        file_server\n"
             "    }\n\n"
@@ -255,11 +258,7 @@ class SiteRuntimeManager:
             "    file_server\n"
             "}\n\n"
         )
-        site_5210 = (
-            ":5210 {\n"
-            "    import qz_console\n"
-            "}\n"
-        )
+        site_5210 = ":5210 {\n    import qz_console\n}\n"
         if not domain:
             return admin_block + console + blog + site_5210
         return admin_block + console + blog + site_5210 + f"\n{domain} {{\n    import qz_blog\n}}\n"
@@ -274,7 +273,7 @@ class SiteRuntimeManager:
     ) -> str:
         description = site_subtitle.strip() or "记录深夜写作、自动生成与人工修订后的夜记。"
         return (
-            f'baseURL = {self._toml_string(base_url)}\n'
+            f"baseURL = {self._toml_string(base_url)}\n"
             'languageCode = "zh-cn"\n'
             'defaultContentLanguage = "zh"\n'
             f"title = {self._toml_string(site_title)}\n"
@@ -294,7 +293,7 @@ class SiteRuntimeManager:
             f"text = {self._toml_string(site_title)}\n\n"
             "[params.homeInfoParams]\n"
             'Title = "这个博客是什么"\n'
-            f'Content = {self._toml_string(description)}\n\n'
+            f"Content = {self._toml_string(description)}\n\n"
             "[markup]\n"
             "[markup.goldmark]\n"
             "[markup.goldmark.renderer]\n"

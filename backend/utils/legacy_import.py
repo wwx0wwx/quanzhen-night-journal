@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import Settings
 from backend.models import Memory, Persona, Post, SystemConfig
 from backend.utils.serde import json_dumps
-from backend.utils.slug import slugify
 from backend.utils.time import utcnow_iso
 
 
@@ -34,7 +31,10 @@ async def import_legacy_assets(db: AsyncSession, settings: Settings) -> dict:
     persona_id = default_persona.id if default_persona else None
 
     imported_posts = 0
-    for folder, status in ((settings.seed_content_path / "posts", "published"), (settings.seed_draft_path, "pending_review")):
+    for folder, status in (
+        (settings.seed_content_path / "posts", "published"),
+        (settings.seed_draft_path, "pending_review"),
+    ):
         if not folder.exists():
             continue
         for file in sorted(folder.glob("*.md")):

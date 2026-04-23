@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models import AuditEventDefinition
 from backend.utils.time import utcnow_iso
 
-
 KNOWN_AUDIT_EVENTS = [
     {"action": "auth.login", "display_name": "管理员登录", "target_label": "管理员账号"},
     {"action": "auth.logout", "display_name": "退出登录", "target_label": "管理员账号"},

@@ -8,7 +8,6 @@ import httpx
 from backend.engine.config_store import ConfigStore
 from backend.utils.time import utcnow_iso
 
-
 logger = logging.getLogger(__name__)
 
 

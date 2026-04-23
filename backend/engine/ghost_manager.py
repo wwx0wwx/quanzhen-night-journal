@@ -145,7 +145,11 @@ class GhostManager:
                 continue
             existing = await self.db.get(MemoryVector, target_memory_id)
             if existing is None:
-                self.db.add(MemoryVector(memory_id=target_memory_id, embedding=json.dumps(item.get("embedding", []), ensure_ascii=False)))
+                self.db.add(
+                    MemoryVector(
+                        memory_id=target_memory_id, embedding=json.dumps(item.get("embedding", []), ensure_ascii=False)
+                    )
+                )
             else:
                 existing.embedding = json.dumps(item.get("embedding", []), ensure_ascii=False)
         for item in post_vectors:
@@ -155,7 +159,11 @@ class GhostManager:
                 continue
             existing = await self.db.get(PostVector, target_post_id)
             if existing is None:
-                self.db.add(PostVector(post_id=target_post_id, embedding=json.dumps(item.get("embedding", []), ensure_ascii=False)))
+                self.db.add(
+                    PostVector(
+                        post_id=target_post_id, embedding=json.dumps(item.get("embedding", []), ensure_ascii=False)
+                    )
+                )
             else:
                 existing.embedding = json.dumps(item.get("embedding", []), ensure_ascii=False)
         for key, entry in config.items():

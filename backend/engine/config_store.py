@@ -9,7 +9,6 @@ from backend.models import SystemConfig
 from backend.security.encryption import ConfigEncryptor
 from backend.utils.serde import json_loads
 
-
 SECRET_KEYS = {
     "llm.api_key",
     "embedding.api_key",

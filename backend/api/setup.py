@@ -7,7 +7,12 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api.deps import get_config_store, get_memory_engine, get_persona_engine, get_site_runtime_manager
+from backend.api.deps import (
+    get_config_store,
+    get_memory_engine,
+    get_persona_engine,
+    get_site_runtime_manager,
+)
 from backend.api.serializers import persona_to_dict
 from backend.database import get_session
 from backend.engine.config_store import ConfigStore
@@ -22,7 +27,6 @@ from backend.utils.audit import log_audit
 from backend.utils.default_persona import build_default_quanzhen_persona
 from backend.utils.response import error, success
 from backend.utils.seed_memories import get_seed_memories
-
 
 router = APIRouter()
 

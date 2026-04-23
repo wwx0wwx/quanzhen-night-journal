@@ -10,7 +10,6 @@ from backend.models import CostRecord
 from backend.schemas.cost import BudgetStatus
 from backend.utils.time import UTC, utcnow, utcnow_iso
 
-
 PRICING = {
     "default": (0.50, 1.50),
     "gpt-4o-mini": (0.15, 0.60),
@@ -54,12 +53,15 @@ class CostMonitor:
         limit = float(await self.config_store.get("budget.daily_limit_usd", "99999") or 99999.0)
         manual_hibernation = (await self.config_store.get("budget.manual_hibernation", "0")) == "1"
         day_start, day_end = self._period_window("daily")
-        spent = await self.db.scalar(
-            select(func.coalesce(func.sum(CostRecord.cost_estimate), 0.0)).where(
-                CostRecord.created_at >= day_start,
-                CostRecord.created_at < day_end,
+        spent = (
+            await self.db.scalar(
+                select(func.coalesce(func.sum(CostRecord.cost_estimate), 0.0)).where(
+                    CostRecord.created_at >= day_start,
+                    CostRecord.created_at < day_end,
+                )
             )
-        ) or 0.0
+            or 0.0
+        )
         is_hibernating = manual_hibernation or spent >= limit
         await self.config_store.set("budget.is_hibernating", "1" if is_hibernating else "0", category="budget")
         remaining = max(0.0, limit - float(spent))
@@ -82,18 +84,24 @@ class CostMonitor:
     async def get_summary(self, period: str) -> dict:
         period_key = period if period in {"daily", "weekly", "monthly"} else "daily"
         start_at, end_at = self._period_window(period_key)
-        total_cost = await self.db.scalar(
-            select(func.coalesce(func.sum(CostRecord.cost_estimate), 0.0)).where(
-                CostRecord.created_at >= start_at,
-                CostRecord.created_at < end_at,
+        total_cost = (
+            await self.db.scalar(
+                select(func.coalesce(func.sum(CostRecord.cost_estimate), 0.0)).where(
+                    CostRecord.created_at >= start_at,
+                    CostRecord.created_at < end_at,
+                )
             )
-        ) or 0.0
-        total_tokens = await self.db.scalar(
-            select(func.coalesce(func.sum(CostRecord.token_total), 0)).where(
-                CostRecord.created_at >= start_at,
-                CostRecord.created_at < end_at,
+            or 0.0
+        )
+        total_tokens = (
+            await self.db.scalar(
+                select(func.coalesce(func.sum(CostRecord.token_total), 0)).where(
+                    CostRecord.created_at >= start_at,
+                    CostRecord.created_at < end_at,
+                )
             )
-        ) or 0
+            or 0
+        )
         return {"period": period_key, "cost": round(float(total_cost), 6), "tokens": int(total_tokens)}
 
     def _period_window(self, period: str) -> tuple[str, str]:

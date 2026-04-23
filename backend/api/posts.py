@@ -14,14 +14,13 @@ from backend.models import GenerationTask, Post, PostRevision
 from backend.publisher.registry import PublisherRegistry
 from backend.schemas.post import PostCreate, PostUpdate
 from backend.security.auth import get_current_user
-from backend.utils.text_integrity import sanitize_plain_text
 from backend.utils.audit import log_audit
 from backend.utils.post_content import derive_summary, extract_title, normalize_title
+from backend.utils.response import error, paginated, success
 from backend.utils.serde import json_dumps
 from backend.utils.slug import is_placeholder_slug, slugify
-from backend.utils.response import error, paginated, success
+from backend.utils.text_integrity import sanitize_plain_text
 from backend.utils.time import utcnow_iso
-
 
 router = APIRouter()
 
@@ -123,7 +122,11 @@ async def list_posts(
         "created_desc": desc(Post.created_at),
         "created_asc": asc(Post.created_at),
     }
-    stmt = stmt.order_by(order_map.get(sort, desc(Post.updated_at)), Post.id.desc()).offset((page - 1) * page_size).limit(page_size)
+    stmt = (
+        stmt.order_by(order_map.get(sort, desc(Post.updated_at)), Post.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
     rows = list(await db.scalars(stmt))
     total = await db.scalar(count_stmt) or 0
     task_map = await _build_task_map(db, [item.task_id for item in rows if item.task_id])
@@ -139,7 +142,9 @@ async def create_post(
     now = utcnow_iso()
     title = _resolve_title(payload.title, payload.content_markdown)
     slug = await _resolve_slug(db, title=title, requested_slug=payload.slug)
-    summary = sanitize_plain_text(payload.summary.strip() or derive_summary(payload.content_markdown, title=title), max_length=180)
+    summary = sanitize_plain_text(
+        payload.summary.strip() or derive_summary(payload.content_markdown, title=title), max_length=180
+    )
     post = Post(
         title=title,
         slug=slug,
@@ -308,7 +313,9 @@ async def get_revisions(
     db: AsyncSession = Depends(get_session),
     _user=Depends(get_current_user),
 ) -> object:
-    rows = await db.scalars(select(PostRevision).where(PostRevision.post_id == post_id).order_by(PostRevision.revision.desc()))
+    rows = await db.scalars(
+        select(PostRevision).where(PostRevision.post_id == post_id).order_by(PostRevision.revision.desc())
+    )
     return success(
         [
             {

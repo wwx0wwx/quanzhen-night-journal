@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import asyncio
 from collections import namedtuple
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from backend.database import get_sessionmaker
 from backend.engine.config_store import ConfigStore
 from backend.engine.sensory_engine import SensoryEngine
 from backend.models import SensorySnapshot
-
 
 DiskUsage = namedtuple("DiskUsage", ["total", "used", "free", "percent"])
 NetCounters = namedtuple("NetCounters", ["bytes_sent", "bytes_recv"])
@@ -57,7 +56,7 @@ def test_sensory_snapshot_tracks_delta_and_rate_without_sticky_io_spike(monkeypa
 def test_sensory_history_filters_by_hours(monkeypatch, authed_client):
     monkeypatch.setattr(
         "backend.engine.sensory_engine.utcnow",
-        lambda: datetime(2026, 4, 19, 12, 0, tzinfo=timezone.utc),
+        lambda: datetime(2026, 4, 19, 12, 0, tzinfo=UTC),
     )
 
     async def exercise() -> None:

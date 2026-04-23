@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import UTC
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.adapters.embedding_adapter import EmbeddingAdapter
@@ -54,7 +56,17 @@ async def _runtime():
             publisher_registry=PublisherRegistry(),
             digital_stamp_generator=DigitalStampGenerator(),
         )
-        yield db, config_store, persona_engine, memory_engine, qa_engine, cost_monitor, SensoryEngine(db, config_store), EventEngine(db, config_store), orchestrator
+        yield (
+            db,
+            config_store,
+            persona_engine,
+            memory_engine,
+            qa_engine,
+            cost_monitor,
+            SensoryEngine(db, config_store),
+            EventEngine(db, config_store),
+            orchestrator,
+        )
 
 
 async def _ensure_seed_persona_in_session(db: AsyncSession, *, commit: bool) -> None:
@@ -83,7 +95,17 @@ async def ensure_seed_persona(db: AsyncSession | None = None) -> None:
 
 
 async def scheduled_generation_job(*, slot_index: int = 0, scheduled_for: str | None = None) -> None:
-    async for _db, config_store, persona_engine, _memory_engine, _qa, _cost, _sensory, event_engine, orchestrator in _runtime():
+    async for (
+        _db,
+        config_store,
+        persona_engine,
+        _memory_engine,
+        _qa,
+        _cost,
+        _sensory,
+        event_engine,
+        orchestrator,
+    ) in _runtime():
         initialized = await config_store.get("system.initialized", "0")
         if initialized != "1":
             return
@@ -126,11 +148,11 @@ async def memory_reflection_job() -> None:
 
 
 async def audit_cleanup_job(*, retention_days: int = 90) -> None:
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     from sqlalchemy import delete
 
-    cutoff = (datetime.now(timezone.utc) - timedelta(days=retention_days)).isoformat()
+    cutoff = (datetime.now(UTC) - timedelta(days=retention_days)).isoformat()
     session_factory = get_sessionmaker()
     async with session_factory() as db:
         await db.execute(delete(AuditLog).where(AuditLog.timestamp < cutoff))

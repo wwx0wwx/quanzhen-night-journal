@@ -2,15 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import json
-from pathlib import Path
 
 import aiofiles
 
 from backend.config import Settings, get_settings
 from backend.models import Post
-from backend.publisher.base import PublishResult, PublisherAdapter
+from backend.publisher.base import PublisherAdapter, PublishResult
 from backend.utils.post_content import is_generic_title, normalize_title
-
 
 PUBLISH_LOCK = asyncio.Lock()
 
@@ -83,10 +81,7 @@ class HugoPublisher(PublisherAdapter):
             first_line = lines[0].strip()
             if first_line.startswith("#"):
                 heading = normalize_title(first_line)
-                if heading and (
-                    heading == normalize_title(post.title)
-                    or is_generic_title(heading)
-                ):
+                if heading and (heading == normalize_title(post.title) or is_generic_title(heading)):
                     return "\n".join(lines[1:]).lstrip()
         return post.content_markdown
 

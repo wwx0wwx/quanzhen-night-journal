@@ -26,7 +26,10 @@ def test_extract_title_prefers_markdown_heading_and_cleans_noise():
 def test_extract_title_falls_back_to_first_sentence_and_summary_skips_heading():
     content = "\n\n***\n雨点落在窗沿。夜还没有结束。"
     assert extract_title(content) == "雨点落在窗沿"
-    assert derive_summary("# 全真夜记：雨点与屏息\n\n窗户在回声里轻轻震动。", title="全真夜记：雨点与屏息") == "窗户在回声里轻轻震动。"
+    assert (
+        derive_summary("# 全真夜记：雨点与屏息\n\n窗户在回声里轻轻震动。", title="全真夜记：雨点与屏息")
+        == "窗户在回声里轻轻震动。"
+    )
 
 
 def test_extract_title_skips_generic_site_heading_and_summary_skips_opening_line():
@@ -68,11 +71,7 @@ def test_generation_uses_clean_title_and_unicode_slug(monkeypatch, authed_client
 
 def test_generation_skips_generic_site_title_heading(monkeypatch, authed_client):
     async def generic_heading_chat(self, **_kwargs):  # noqa: ANN001
-        content = (
-            "# 全真夜记\n\n"
-            "檐外消息撞得门环响，像急雨，也像刀尖子蹭着阶石响。\n\n"
-            "我靠在廊柱，站在王爷书房半步外。"
-        )
+        content = "# 全真夜记\n\n檐外消息撞得门环响，像急雨，也像刀尖子蹭着阶石响。\n\n我靠在廊柱，站在王爷书房半步外。"
         usage = {"prompt_tokens": 12, "completion_tokens": 30}
         return content, usage, 5
 

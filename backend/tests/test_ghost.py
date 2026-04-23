@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import asyncio
-from urllib.parse import unquote
 from pathlib import Path
+from urllib.parse import unquote
 
 from sqlalchemy import func, select, text
 

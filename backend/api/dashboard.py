@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 from collections import Counter
+from datetime import date
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api.deps import get_config_store, get_cost_monitor, get_memory_engine, get_persona_engine
+from backend.api.deps import (
+    get_config_store,
+    get_cost_monitor,
+    get_memory_engine,
+    get_persona_engine,
+)
 from backend.api.serializers import post_to_dict, task_to_dict
 from backend.database import get_session
 from backend.engine.config_store import ConfigStore
@@ -16,7 +22,7 @@ from backend.engine.persona_engine import PersonaEngine
 from backend.models import GenerationTask, Post, PublicPageView
 from backend.security.auth import get_current_user
 from backend.utils.response import success
-from datetime import date
+
 router = APIRouter()
 
 
@@ -96,9 +102,10 @@ async def dashboard(
     system_initialized = (await config_store.get("system.initialized", "0")) == "1"
     domain_enabled = (await config_store.get("site.domain_enabled", "0")) == "1"
     today_prefix = date.today().isoformat()
-    today_page_views = await db.scalar(
-        select(func.count(PublicPageView.id)).where(PublicPageView.created_at.like(f"{today_prefix}%"))
-    ) or 0
+    today_page_views = (
+        await db.scalar(select(func.count(PublicPageView.id)).where(PublicPageView.created_at.like(f"{today_prefix}%")))
+        or 0
+    )
     domain_status = {
         "domain": await config_store.get("site.domain", "") or "",
         "enabled": domain_enabled,

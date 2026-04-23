@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.config import get_settings
 from backend.database import get_session
 from backend.models import User
+from backend.schemas.auth import ChangePasswordRequest, LoginRequest
 from backend.security.auth import (
     create_access_token,
     get_current_user,
@@ -15,10 +16,8 @@ from backend.security.auth import (
     is_system_initialized,
     verify_password,
 )
-from backend.schemas.auth import ChangePasswordRequest, LoginRequest
 from backend.utils.audit import log_audit
 from backend.utils.response import error, success
-
 
 router = APIRouter()
 
@@ -65,7 +64,9 @@ async def logout(
     response = success({"logged_out": True})
     response.delete_cookie(get_settings().cookie_name)
     if user:
-        await log_audit(db, "user", "auth.logout", "user", str(user.id), ip=request.client.host if request.client else None)
+        await log_audit(
+            db, "user", "auth.logout", "user", str(user.id), ip=request.client.host if request.client else None
+        )
         await db.commit()
     return response
 
@@ -81,7 +82,9 @@ async def change_password(
         return error(1001, "旧密码错误", status_code=400)
     user.password_hash = hash_password(payload.new_password)
     user.is_initialized = 1
-    await log_audit(db, "user", "auth.change_password", "user", str(user.id), ip=request.client.host if request.client else None)
+    await log_audit(
+        db, "user", "auth.change_password", "user", str(user.id), ip=request.client.host if request.client else None
+    )
     await db.commit()
     return success({"changed": True})
 

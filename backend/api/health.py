@@ -15,7 +15,6 @@ from backend.engine.config_store import ConfigStore
 from backend.publisher.hugo_publisher import HugoPublisher
 from backend.utils.response import success
 
-
 router = APIRouter()
 
 
@@ -164,7 +163,9 @@ async def _collect_checks(
             "job_count": len(scheduler.get_jobs()) if scheduler else 0,
         },
         "folder_monitor": {
-            "status": "ok" if folder_monitor_manager and getattr(folder_monitor_manager, "_started", False) else "warning",
+            "status": "ok"
+            if folder_monitor_manager and getattr(folder_monitor_manager, "_started", False)
+            else "warning",
             "running": bool(folder_monitor_manager and getattr(folder_monitor_manager, "_started", False)),
         },
         "publisher": {

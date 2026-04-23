@@ -17,9 +17,7 @@ class PersonaBase(BaseModel):
     sensory_lexicon: dict[str, str] = Field(default_factory=dict)
     structure_preference: str = "medium"
     expression_intensity: str = "moderate"
-    stability_params: dict = Field(
-        default_factory=lambda: {"temperature_base": 0.7, "temperature_range": [0.3, 1.2]}
-    )
+    stability_params: dict = Field(default_factory=lambda: {"temperature_base": 0.7, "temperature_range": [0.3, 1.2]})
     scene_pool: list[dict[str, str]] = Field(default_factory=list)
 
     @field_validator("name", "description", "identity_setting", "worldview_setting", "language_style")

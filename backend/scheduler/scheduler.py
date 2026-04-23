@@ -3,7 +3,8 @@ from __future__ import annotations
 import hashlib
 import logging
 import random
-from datetime import date, datetime, time as time_value, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
+from datetime import time as time_value
 
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -24,7 +25,6 @@ from backend.scheduler.jobs import (
     sensory_sample_job,
 )
 
-
 DEFAULT_SCHEDULES = {
     "schedule.days_per_cycle": "1",
     "schedule.posts_per_cycle": "1",
@@ -41,9 +41,7 @@ _logger = logging.getLogger(__name__)
 async def _load_schedule_settings() -> dict[str, str]:
     session_factory = get_sessionmaker()
     async with session_factory() as db:
-        rows = await db.scalars(
-            select(SystemConfig).where(SystemConfig.key.in_(tuple(DEFAULT_SCHEDULES.keys())))
-        )
+        rows = await db.scalars(select(SystemConfig).where(SystemConfig.key.in_(tuple(DEFAULT_SCHEDULES.keys()))))
         values = {row.key: row.value for row in rows}
     return {key: str(values.get(key) or default) for key, default in DEFAULT_SCHEDULES.items()}
 
@@ -87,7 +85,7 @@ def _scheduler_timezone():
     scheduler = _scheduler_ref
     if scheduler is None:
         _logger.warning("scheduler not initialized yet, falling back to UTC")
-    return scheduler.timezone if scheduler is not None else timezone.utc
+    return scheduler.timezone if scheduler is not None else UTC
 
 
 async def _should_publish_today(values: dict[str, str]) -> bool:
@@ -182,7 +180,7 @@ async def scheduled_generation_dispatch_job() -> None:
 
     posts_per_cycle = _clamp_cycle_count(values.get("schedule.posts_per_cycle", "1"), default=1, minimum=0, maximum=24)
     extra_run_times = _build_followup_run_times(values, max(0, posts_per_cycle - 1))
-    today_tag = datetime.now(timezone.utc).strftime("%Y%m%d")
+    today_tag = datetime.now(UTC).strftime("%Y%m%d")
     _clear_pending_followups(scheduler, prefix=f"scheduled_generation_extra_{today_tag}_")
 
     for index, run_at in enumerate(extra_run_times, start=1):
@@ -191,7 +189,7 @@ async def scheduled_generation_dispatch_job() -> None:
             trigger=DateTrigger(run_date=run_at),
             kwargs={
                 "slot_index": index,
-                "scheduled_for": run_at.astimezone(timezone.utc).isoformat(),
+                "scheduled_for": run_at.astimezone(UTC).isoformat(),
             },
             id=f"scheduled_generation_extra_{today_tag}_{index}",
             replace_existing=True,
@@ -242,7 +240,9 @@ async def setup_scheduler() -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler(
         timezone="UTC",
         jobstores={
-            "default": SQLAlchemyJobStore(url=f"sqlite:///{db_file.as_posix()}" if db_file else "sqlite:///data/jobs.db")
+            "default": SQLAlchemyJobStore(
+                url=f"sqlite:///{db_file.as_posix()}" if db_file else "sqlite:///data/jobs.db"
+            )
         },
     )
     _scheduler_ref = scheduler

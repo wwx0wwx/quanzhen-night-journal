@@ -9,9 +9,8 @@ from backend.database import get_session
 from backend.engine.persona_engine import PersonaEngine
 from backend.engine.sensory_engine import SensoryEngine
 from backend.security.auth import get_current_user
-from backend.utils.serde import json_dumps, json_loads
 from backend.utils.response import success
-
+from backend.utils.serde import json_loads
 
 router = APIRouter()
 

@@ -30,7 +30,7 @@ from backend.security.encryption import ConfigEncryptor, ensure_encryptor
 
 
 class _FolderHandler(FileSystemEventHandler):
-    def __init__(self, manager: "FolderMonitorManager", monitor_path: str, file_types: list[str]):
+    def __init__(self, manager: FolderMonitorManager, monitor_path: str, file_types: list[str]):
         self.manager = manager
         self.monitor_path = monitor_path
         self.file_types = {item.lower().lstrip(".") for item in file_types}
@@ -53,9 +53,7 @@ class _FolderHandler(FileSystemEventHandler):
         now = time.monotonic()
         if len(self._last_seen) > 1024:
             self._last_seen = {
-                path: seen_at
-                for path, seen_at in self._last_seen.items()
-                if now - seen_at < self.debounce_window
+                path: seen_at for path, seen_at in self._last_seen.items() if now - seen_at < self.debounce_window
             }
         last_seen = self._last_seen.get(normalized_path)
         if last_seen is not None and now - last_seen < self.debounce_window:

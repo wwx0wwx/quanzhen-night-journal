@@ -26,7 +26,6 @@ from backend.utils.legacy_import import import_legacy_assets
 from backend.utils.response import error
 from backend.utils.time import utcnow_iso
 
-
 logger = logging.getLogger(__name__)
 scheduler = None
 folder_monitor_manager = None

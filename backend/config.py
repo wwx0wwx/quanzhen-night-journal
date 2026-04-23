@@ -7,7 +7,6 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DEFAULT_JWT_SECRET = "quanzhen-dev-secret-please-change-before-production-2026"
 

@@ -4,11 +4,11 @@ Called once during system setup or persona reset to populate diverse
 L0 (core settings) and L1 (scene materials) memories so that
 generation context is never limited to self-referencing article echoes.
 """
+
 from __future__ import annotations
 
 SEED_MEMORIES: list[dict] = [
     # ── L0 核心设定 ──────────────────────────────────────────────
-
     {
         "level": "L0",
         "is_core": True,
@@ -101,9 +101,7 @@ SEED_MEMORIES: list[dict] = [
             "她是清醒着沉下去的人。"
         ),
     },
-
     # ── L1 场景素材 ──────────────────────────────────────────────
-
     {
         "level": "L1",
         "tags": ["场景", "山中", "习武"],
@@ -332,16 +330,18 @@ def get_seed_memories(persona_id: int) -> list[dict]:
     """Return seed memories bound to *persona_id*, ready for batch insert."""
     result = []
     for item in SEED_MEMORIES:
-        result.append({
-            "persona_id": persona_id,
-            "level": item["level"],
-            "content": item["content"],
-            "summary": item.get("summary", item["content"][:120]),
-            "tags": item.get("tags", ["seed"]),
-            "source": "hand_written",
-            "weight": 2.0 if item["level"] == "L0" else 1.5,
-            "review_status": "reviewed",
-            "decay_strategy": "never" if item["level"] == "L0" else "standard",
-            "is_core": item.get("is_core", False),
-        })
+        result.append(
+            {
+                "persona_id": persona_id,
+                "level": item["level"],
+                "content": item["content"],
+                "summary": item.get("summary", item["content"][:120]),
+                "tags": item.get("tags", ["seed"]),
+                "source": "hand_written",
+                "weight": 2.0 if item["level"] == "L0" else 1.5,
+                "review_status": "reviewed",
+                "decay_strategy": "never" if item["level"] == "L0" else "standard",
+                "is_core": item.get("is_core", False),
+            }
+        )
     return result

@@ -20,14 +20,13 @@ from backend.engine.qa_engine import QAEngine
 from backend.engine.task_gate import TASK_GATE
 from backend.models import Event, GenerationTask, Persona, Post
 from backend.publisher.registry import PublisherRegistry
+from backend.utils.audit import log_audit
 from backend.utils.post_content import derive_summary, extract_title
 from backend.utils.publish_decision import build_publish_decision
-from backend.utils.audit import log_audit
-from backend.utils.text_integrity import sanitize_plain_text
 from backend.utils.serde import json_dumps, json_loads
 from backend.utils.slug import slugify
+from backend.utils.text_integrity import sanitize_plain_text
 from backend.utils.time import utcnow_iso
-
 
 logger = logging.getLogger(__name__)
 
@@ -317,7 +316,9 @@ class GenerationOrchestrator:
             raise InvalidTransition(f"task {task.id} is not waiting_human_signoff")
         qa_result = json_loads(task.qa_result, {})
         if not qa_result.get("integrity_ok", True):
-            self._append_trace(task, "approval_blocked", reason=qa_result.get("integrity_reason", "invalid_model_output"))
+            self._append_trace(
+                task, "approval_blocked", reason=qa_result.get("integrity_reason", "invalid_model_output")
+            )
             return await self._transition(
                 task,
                 "failed",
@@ -505,7 +506,10 @@ class GenerationOrchestrator:
             messages=[
                 {
                     "role": "system",
-                    "content": f"You are writing as persona {persona.name}. Stay restrained, concrete, and in character.",
+                    "content": (
+                        f"You are writing as persona {persona.name}."
+                        " Stay restrained, concrete, and in character."
+                    ),
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -535,7 +539,9 @@ class GenerationOrchestrator:
         post = Post(
             title=title,
             slug=slug,
-            front_matter=json_dumps({"categories": ["night-journal"], "tags": [persona.name, "夜札"], "author": persona.name}),
+            front_matter=json_dumps(
+                {"categories": ["night-journal"], "tags": [persona.name, "夜札"], "author": persona.name}
+            ),
             content_markdown=content,
             summary=summary,
             status=status,

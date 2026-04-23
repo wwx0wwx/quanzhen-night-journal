@@ -11,7 +11,12 @@ from backend.config import get_settings
 from backend.database import get_sessionmaker
 from backend.models import Post, SystemConfig
 from backend.publisher.hugo_publisher import HugoPublisher
-from backend.utils.post_content import derive_summary, extract_title, is_generic_title, normalize_title
+from backend.utils.post_content import (
+    derive_summary,
+    extract_title,
+    is_generic_title,
+    normalize_title,
+)
 from backend.utils.slug import is_placeholder_slug, slugify
 from backend.utils.time import utcnow_iso
 
@@ -89,10 +94,7 @@ async def repair_posts(*, apply_changes: bool) -> RepairResult:
     settings = get_settings()
 
     async with session_factory() as db:
-        site_title = (
-            await db.scalar(select(SystemConfig.value).where(SystemConfig.key == "site.title"))
-            or "全真夜记"
-        )
+        site_title = await db.scalar(select(SystemConfig.value).where(SystemConfig.key == "site.title")) or "全真夜记"
         posts = list(await db.scalars(select(Post).order_by(Post.id.asc())))
         result.scanned = len(posts)
         reserved_slugs: set[str] = set()

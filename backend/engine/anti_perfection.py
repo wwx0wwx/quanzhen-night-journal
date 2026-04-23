@@ -20,15 +20,12 @@ class AntiPerfectionEngine:
         if enabled != "1":
             return False
         tags = set(json_loads(snapshot.tags, []))
-        immediate = (
-            ("memory_critical" in tags and "io_spike" in tags)
-            or ("memory_critical" in tags and "high_cpu" in tags)
+        immediate = ("memory_critical" in tags and "io_spike" in tags) or (
+            "memory_critical" in tags and "high_cpu" in tags
         )
         if immediate:
             return True
-        recent = await self.db.scalars(
-            select(SensorySnapshot).order_by(desc(SensorySnapshot.sampled_at)).limit(3)
-        )
+        recent = await self.db.scalars(select(SensorySnapshot).order_by(desc(SensorySnapshot.sampled_at)).limit(3))
         recent_tags = [set(json_loads(item.tags, [])) for item in recent]
         return len(recent_tags) == 3 and all("high_cpu" in entry for entry in recent_tags)
 

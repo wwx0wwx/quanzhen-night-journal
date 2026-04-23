@@ -8,7 +8,7 @@ from backend.engine.memory_engine import MemoryEngine
 from backend.engine.persona_engine import PersonaEngine
 from backend.engine.prompt_builder import GenerationContext, RecentPostContext
 from backend.models import Event, GenerationTask, Persona, Post, SensorySnapshot
-from backend.utils.serde import json_dumps, json_loads
+from backend.utils.serde import json_loads
 
 
 class ContextBuilder:

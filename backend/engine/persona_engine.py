@@ -9,7 +9,6 @@ from backend.utils.serde import json_dumps, json_loads
 from backend.utils.text_integrity import inspect_text_integrity
 from backend.utils.time import utcnow_iso
 
-
 DEFAULT_LEXICON = {
     "high_cpu": "体内灵力激荡不休，像有无数细小电流在经脉间相撞。",
     "memory_pressure": "识海翻涌，旧事与新念一起拥来。",
@@ -61,7 +60,9 @@ class PersonaEngine:
 
         if repaired:
             await self.db.execute(update(Persona).where(Persona.id.in_(repaired)).values(is_default=0))
-            fallback = healthy_default or await self.db.scalar(select(Persona).where(Persona.id.notin_(repaired)).order_by(Persona.id.asc()))
+            fallback = healthy_default or await self.db.scalar(
+                select(Persona).where(Persona.id.notin_(repaired)).order_by(Persona.id.asc())
+            )
             if fallback is None:
                 fallback = await self.db.scalar(select(Persona).order_by(Persona.id.asc()))
             if fallback is not None:
@@ -142,26 +143,35 @@ class PersonaEngine:
         return persona
 
     async def get_active_persona(self) -> Persona | None:
-        persona = await self.db.scalar(
-            select(Persona).where(Persona.is_default == 1).order_by(Persona.id.asc())
-        )
+        persona = await self.db.scalar(select(Persona).where(Persona.is_default == 1).order_by(Persona.id.asc()))
         if persona is None:
             persona = await self.db.scalar(select(Persona).order_by(Persona.id.asc()))
         return persona
 
     async def calculate_stability_score(self, persona_id: int) -> float:
-        total_tasks = await self.db.scalar(
-            select(func.count()).select_from(GenerationTask).where(GenerationTask.persona_id == persona_id)
-        ) or 0
-        published = await self.db.scalar(
-            select(func.count()).select_from(Post).where(Post.persona_id == persona_id, Post.status == "published")
-        ) or 0
-        anti_count = await self.db.scalar(
-            select(func.count()).select_from(GenerationTask).where(
-                GenerationTask.persona_id == persona_id,
-                GenerationTask.anti_perfection == 1,
+        total_tasks = (
+            await self.db.scalar(
+                select(func.count()).select_from(GenerationTask).where(GenerationTask.persona_id == persona_id)
             )
-        ) or 0
+            or 0
+        )
+        published = (
+            await self.db.scalar(
+                select(func.count()).select_from(Post).where(Post.persona_id == persona_id, Post.status == "published")
+            )
+            or 0
+        )
+        anti_count = (
+            await self.db.scalar(
+                select(func.count())
+                .select_from(GenerationTask)
+                .where(
+                    GenerationTask.persona_id == persona_id,
+                    GenerationTask.anti_perfection == 1,
+                )
+            )
+            or 0
+        )
         if total_tasks == 0:
             return 80.0
         publish_ratio = published / max(total_tasks, 1)

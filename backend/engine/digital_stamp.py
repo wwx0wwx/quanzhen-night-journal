@@ -7,7 +7,7 @@ class DigitalStampGenerator:
     PATTERNS = [" /\\ ", " || ", " <> ", " ~~ ", " [] "]
 
     def generate(self, content: str, persona_name: str) -> str:
-        digest = hashlib.sha256(f"{persona_name}:{content}".encode("utf-8")).hexdigest()
+        digest = hashlib.sha256(f"{persona_name}:{content}".encode()).hexdigest()
         rows = []
         for index in range(0, 12, 3):
             part = digest[index : index + 3]

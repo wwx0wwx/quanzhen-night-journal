@@ -7,9 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.database import get_session
 from backend.models import AuditEventDefinition, AuditLog, Event, GenerationTask
 from backend.security.auth import get_current_user
-from backend.utils.serde import json_loads
 from backend.utils.response import paginated
-
+from backend.utils.serde import json_loads
 
 router = APIRouter()
 
@@ -72,26 +71,16 @@ async def _load_processed_events(
             .outerjoin(Event, Event.id == GenerationTask.event_id)
             .where(GenerationTask.id.in_(task_ids))
         )
-        task_event_map = {
-            task_id: (normalized_semantic or "")
-            for task_id, normalized_semantic in task_rows.all()
-        }
+        task_event_map = {task_id: (normalized_semantic or "") for task_id, normalized_semantic in task_rows.all()}
 
     event_map: dict[int, str] = {}
     if event_ids:
-        event_rows = await db.execute(
-            select(Event.id, Event.normalized_semantic).where(Event.id.in_(event_ids))
-        )
-        event_map = {
-            event_id: (normalized_semantic or "")
-            for event_id, normalized_semantic in event_rows.all()
-        }
+        event_rows = await db.execute(select(Event.id, Event.normalized_semantic).where(Event.id.in_(event_ids)))
+        event_map = {event_id: (normalized_semantic or "") for event_id, normalized_semantic in event_rows.all()}
 
     definition_map: dict[str, AuditEventDefinition] = {}
     if actions:
-        definition_rows = await db.scalars(
-            select(AuditEventDefinition).where(AuditEventDefinition.action.in_(actions))
-        )
+        definition_rows = await db.scalars(select(AuditEventDefinition).where(AuditEventDefinition.action.in_(actions)))
         definition_map = {row.action: row for row in definition_rows}
 
     return task_event_map, event_map, definition_map
@@ -148,7 +137,7 @@ def _resolve_event_mapping(
     if row.action == "setup.complete":
         site_title = str(detail.get("site_title") or "").strip()
         if site_title:
-            return f'站点标题设为“{site_title}”'
+            return f"站点标题设为“{site_title}”"
         return "已完成首次配置"
 
     if row.action == "system.apply_site_runtime":
@@ -262,9 +251,13 @@ async def list_audit_logs(
     _user=Depends(get_current_user),
 ) -> object:
     stmt = select(AuditLog).outerjoin(AuditEventDefinition, AuditEventDefinition.action == AuditLog.action)
-    count_stmt = select(func.count()).select_from(AuditLog).outerjoin(
-        AuditEventDefinition,
-        AuditEventDefinition.action == AuditLog.action,
+    count_stmt = (
+        select(func.count())
+        .select_from(AuditLog)
+        .outerjoin(
+            AuditEventDefinition,
+            AuditEventDefinition.action == AuditLog.action,
+        )
     )
     if severity:
         stmt = stmt.where(AuditLog.severity == severity)
@@ -292,7 +285,9 @@ async def list_audit_logs(
             "timestamp": row.timestamp,
             "actor": row.actor,
             "action": row.action,
-            "display_action": (definition_map.get(row.action).display_name if definition_map.get(row.action) else row.action),
+            "display_action": (
+                definition_map.get(row.action).display_name if definition_map.get(row.action) else row.action
+            ),
             "target_type": row.target_type,
             "target_id": row.target_id,
             "display_target": _resolve_display_target(row, definition_map.get(row.action)),

@@ -2,10 +2,23 @@ from __future__ import annotations
 
 from pydantic import BaseModel, field_validator
 
-
-ALLOWED_CONFIG_PREFIXES = frozenset({
-    "site.", "llm.", "embedding.", "schedule.", "budget.", "panel.", "hugo.", "system.",
-})
+ALLOWED_CONFIG_PREFIXES = frozenset(
+    {
+        "anti_perfection.",
+        "budget.",
+        "embedding.",
+        "hugo.",
+        "llm.",
+        "notify.",
+        "panel.",
+        "qa.",
+        "schedule.",
+        "sensory.",
+        "site.",
+        "system.",
+        "webhook.",
+    }
+)
 
 
 class ConfigEntry(BaseModel):

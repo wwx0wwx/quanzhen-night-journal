@@ -29,7 +29,11 @@ def test_generation_trigger_publishes(authed_client):
 
 def test_high_risk_task_waits_for_human_signoff(monkeypatch, authed_client):
     async def risky_chat(self, **_kwargs):  # noqa: ANN001
-        return ("tonight drifts through the machine room and refuses to leave.", {"prompt_tokens": 12, "completion_tokens": 20}, 5)
+        return (
+            "tonight drifts through the machine room and refuses to leave.",
+            {"prompt_tokens": 12, "completion_tokens": 20},
+            5,
+        )
 
     monkeypatch.setattr(LLMAdapter, "chat", risky_chat)
 
@@ -38,7 +42,7 @@ def test_high_risk_task_waits_for_human_signoff(monkeypatch, authed_client):
         json={
             "items": [
                 {"key": "qa.min_length", "value": "1", "category": "qa"},
-                {"key": "qa.forbidden_words", "value": "[\"tonight\"]", "category": "qa"},
+                {"key": "qa.forbidden_words", "value": '["tonight"]', "category": "qa"},
             ]
         },
     )

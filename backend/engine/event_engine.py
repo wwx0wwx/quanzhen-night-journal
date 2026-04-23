@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.engine.config_store import ConfigStore
 from backend.models import Event
 from backend.security.webhook_auth import verify_bearer, verify_hmac
-from backend.utils.serde import json_dumps, json_loads
+from backend.utils.serde import json_dumps
 from backend.utils.time import utcnow, utcnow_iso
 
 

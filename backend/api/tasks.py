@@ -15,7 +15,6 @@ from backend.schemas.task import TaskApproveRequest, TaskTriggerRequest
 from backend.security.auth import get_current_user
 from backend.utils.response import error, paginated, success
 
-
 router = APIRouter()
 
 

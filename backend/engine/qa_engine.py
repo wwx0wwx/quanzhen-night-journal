@@ -10,7 +10,6 @@ from backend.engine.config_store import ConfigStore
 from backend.models import Post, PostVector
 from backend.utils.serde import json_dumps, json_loads
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -100,15 +99,24 @@ class QAEngine:
     async def _check_duplicate(self, content: str, persona_id: int) -> dict:
         threshold = float(await self.config_store.get("qa.duplicate_threshold", "0.85") or 0.85)
         posts = await self.db.scalars(
-            select(Post).where(Post.persona_id == persona_id, Post.status == "published").order_by(Post.id.desc()).limit(20)
+            select(Post)
+            .where(Post.persona_id == persona_id, Post.status == "published")
+            .order_by(Post.id.desc())
+            .limit(20)
         )
         published = list(posts)
         if not published:
             return self._duplicate_result(True, None, None, "embedding", "", False)
         try:
-            base_url = await self.config_store.get("embedding.base_url", "") or await self.config_store.get("llm.base_url", "")
-            api_key = await self.config_store.get("embedding.api_key", "") or await self.config_store.get("llm.api_key", "")
-            model_id = await self.config_store.get("embedding.model_id", "") or await self.config_store.get("llm.model_id", "")
+            base_url = await self.config_store.get("embedding.base_url", "") or await self.config_store.get(
+                "llm.base_url", ""
+            )
+            api_key = await self.config_store.get("embedding.api_key", "") or await self.config_store.get(
+                "llm.api_key", ""
+            )
+            model_id = await self.config_store.get("embedding.model_id", "") or await self.config_store.get(
+                "llm.model_id", ""
+            )
             content_vector = (
                 await self.embedding_adapter.embed(
                     base_url=base_url or "",

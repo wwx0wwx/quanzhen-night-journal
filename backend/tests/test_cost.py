@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from backend.database import get_sessionmaker
 from backend.models import CostRecord
@@ -10,7 +10,7 @@ from backend.models import CostRecord
 def test_cost_summary_respects_daily_weekly_and_monthly_windows(monkeypatch, authed_client):
     monkeypatch.setattr(
         "backend.engine.cost_monitor.utcnow",
-        lambda: datetime(2026, 4, 19, 12, 0, tzinfo=timezone.utc),
+        lambda: datetime(2026, 4, 19, 12, 0, tzinfo=UTC),
     )
 
     async def seed() -> None:

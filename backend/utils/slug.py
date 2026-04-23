@@ -4,7 +4,6 @@ import hashlib
 import re
 import unicodedata
 
-
 _DASH_RE = re.compile(r"-{2,}")
 _PLACEHOLDER_SLUG_RE = re.compile(r"^(?:\d+-)?untitled(?:-\d+)?$", re.IGNORECASE)
 

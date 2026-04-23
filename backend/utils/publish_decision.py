@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 AUTO_PUBLISH_BLOCKING_RISK_LEVELS = {"high"}
 POST_PUBLISHED_STATUSES = {"approved", "publishing", "published", "archived"}
 
