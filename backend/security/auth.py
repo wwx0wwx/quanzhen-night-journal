@@ -30,6 +30,24 @@ def create_access_token(user_id: int, settings: Settings | None = None) -> str:
     return jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
 
 
+def should_use_secure_cookie(request: Request, settings: Settings | None = None) -> bool:
+    settings = settings or get_settings()
+    forwarded_proto = request.headers.get("x-forwarded-proto", "").split(",")[0].strip().lower()
+    if forwarded_proto:
+        return forwarded_proto == "https"
+
+    forwarded = request.headers.get("forwarded", "").lower()
+    if "proto=https" in forwarded:
+        return True
+    if "proto=http" in forwarded:
+        return False
+
+    if request.url.scheme:
+        return request.url.scheme.lower() == "https"
+
+    return settings.site_base_url.strip().lower().startswith("https://")
+
+
 def decode_access_token(token: str, settings: Settings | None = None) -> dict[str, Any]:
     settings = settings or get_settings()
     return jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])

@@ -20,6 +20,7 @@ vi.mock('../../api', () => ({
 vi.mock('vue-router', () => ({
   useRoute: () => ({ params: { id: '12' } }),
   useRouter: () => ({ replace }),
+  onBeforeRouteLeave: vi.fn(),
 }))
 
 const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0))

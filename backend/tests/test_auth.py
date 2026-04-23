@@ -85,6 +85,36 @@ def test_auth_status_uses_system_initialized_as_single_source(authed_client):
     assert login.json()["data"]["is_initialized"] is True
 
 
+def test_login_cookie_uses_request_scheme_for_secure_flag(client):
+    client.post(
+        "/api/setup/complete",
+        json={
+            "new_password": "quanzhen123",
+            "site_title": "全真夜记",
+            "site_subtitle": "",
+            "site_domain": "",
+            "llm_base_url": "",
+            "llm_api_key": "",
+            "llm_model_id": "",
+            "embedding_base_url": "",
+            "embedding_api_key": "",
+            "embedding_model_id": "",
+        },
+    )
+
+    http_login = client.post("/api/auth/login", json={"username": "admin", "password": "quanzhen123"})
+    assert http_login.status_code == 200
+    assert "Secure" not in http_login.headers["set-cookie"]
+
+    https_login = client.post(
+        "/api/auth/login",
+        json={"username": "admin", "password": "quanzhen123"},
+        headers={"x-forwarded-proto": "https"},
+    )
+    assert https_login.status_code == 200
+    assert "Secure" in https_login.headers["set-cookie"]
+
+
 def test_startup_self_heal_actions_are_audited(authed_client):
     audit = authed_client.get("/api/audit")
     assert audit.status_code == 200

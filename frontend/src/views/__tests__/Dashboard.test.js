@@ -98,7 +98,7 @@ describe('Dashboard view', () => {
     expect(wrapper.text()).toContain('大脑接入')
     expect(wrapper.text()).toContain('今日精力消耗')
     expect(wrapper.text()).toContain('站点访问状态')
-    expect(wrapper.text()).toContain('当日点击数')
+    expect(wrapper.text()).toContain('当日点击')
     expect(wrapper.text()).toContain('27')
     expect(wrapper.text()).not.toContain('立即发文')
     expect(wrapper.text()).not.toContain('解除休眠')

@@ -14,6 +14,7 @@ from backend.security.auth import (
     get_optional_user,
     hash_password,
     is_system_initialized,
+    should_use_secure_cookie,
     verify_password,
 )
 from backend.utils.audit import log_audit
@@ -48,7 +49,7 @@ async def login(
         httponly=True,
         samesite="lax",
         max_age=24 * 3600,
-        secure=get_settings().is_production,
+        secure=should_use_secure_cookie(request),
     )
     await log_audit(db, "user", "auth.login", "user", str(user.id), ip=request.client.host if request.client else None)
     await db.commit()
@@ -62,7 +63,7 @@ async def logout(
     user: User | None = Depends(get_optional_user),
 ) -> object:
     response = success({"logged_out": True})
-    response.delete_cookie(get_settings().cookie_name)
+    response.delete_cookie(get_settings().cookie_name, secure=should_use_secure_cookie(request))
     if user:
         await log_audit(
             db, "user", "auth.logout", "user", str(user.id), ip=request.client.host if request.client else None
