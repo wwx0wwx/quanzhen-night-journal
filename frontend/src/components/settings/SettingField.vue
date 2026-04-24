@@ -49,15 +49,24 @@
       </div>
     </template>
 
-    <template v-else-if="field.type === 'cron'">
-      <input
-        :disabled="isDisabled"
-        :placeholder="field.placeholder || ''"
-        :readonly="field.readonly"
-        type="text"
-        :value="stringValue"
-        @input="updateText"
-      />
+    <template v-else-if="field.type === 'schedule'">
+      <div v-if="scheduleMode === 'visual'" class="schedule-wrap">
+        <select :disabled="isDisabled" :value="scheduleFreq" @change="onScheduleFreqChange">
+          <option v-for="opt in FREQ_LABELS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        </select>
+        <input type="time" :disabled="isDisabled" :value="scheduleTime" @input="onScheduleTimeChange" />
+        <button class="btn ghost btn-small" type="button" @click="scheduleMode = 'text'">编辑表达式</button>
+      </div>
+      <div v-else class="schedule-wrap">
+        <input
+          :disabled="isDisabled"
+          :placeholder="field.placeholder || ''"
+          type="text"
+          :value="stringValue"
+          @input="updateText"
+        />
+        <button class="btn ghost btn-small" type="button" @click="tryVisualMode">切换选择器</button>
+      </div>
       <small v-if="cronDescription" class="field-help cron-hint">{{ cronDescription }}</small>
     </template>
 
@@ -83,10 +92,10 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { api, unwrap } from '../../api'
-import { cronToHuman } from '../../utils/cronHuman'
+import { buildCron, cronToHuman, FREQ_LABELS, parseCron } from '../../utils/cronHuman'
 
 const props = defineProps({
   field: {
@@ -130,12 +139,51 @@ const secretDisplayValue = computed(() => {
 })
 
 const cronDescription = computed(() => {
-  if (props.field.type !== 'cron') return ''
+  if (props.field.type !== 'schedule') return ''
   const val = stringValue.value.trim()
   if (!val) return ''
   const desc = cronToHuman(val)
   return desc !== val ? desc : ''
 })
+
+const scheduleFreq = ref('daily')
+const scheduleTime = ref('03:00')
+const scheduleMode = ref('visual')
+
+function initSchedule() {
+  const parsed = parseCron(stringValue.value)
+  if (parsed) {
+    scheduleFreq.value = parsed.frequency
+    scheduleTime.value = parsed.time
+    scheduleMode.value = 'visual'
+  } else if (stringValue.value.trim()) {
+    scheduleMode.value = 'text'
+  }
+}
+
+if (props.field.type === 'schedule') {
+  initSchedule()
+  watch(stringValue, initSchedule)
+}
+
+function onScheduleFreqChange(e) {
+  scheduleFreq.value = e.target.value
+  emit('update:modelValue', buildCron(scheduleFreq.value, scheduleTime.value))
+}
+
+function onScheduleTimeChange(e) {
+  scheduleTime.value = e.target.value
+  emit('update:modelValue', buildCron(scheduleFreq.value, scheduleTime.value))
+}
+
+function tryVisualMode() {
+  const parsed = parseCron(stringValue.value)
+  if (parsed) {
+    scheduleFreq.value = parsed.frequency
+    scheduleTime.value = parsed.time
+    scheduleMode.value = 'visual'
+  }
+}
 
 function updateText(event) {
   if (showSecret.value && revealedValue.value !== null) {
@@ -182,5 +230,26 @@ async function toggleSecret() {
 .cron-hint {
   color: var(--accent-soft, #8ba4bc);
   margin-top: 4px;
+}
+
+.schedule-wrap {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.schedule-wrap select {
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule-wrap input[type='time'] {
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.schedule-wrap input[type='text'] {
+  flex: 1;
+  min-width: 0;
 }
 </style>
