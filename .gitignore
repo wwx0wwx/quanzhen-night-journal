@@ -12,7 +12,7 @@ __pycache__/
 frontend/node_modules/
 frontend/dist/
 test-results/
-quanzhen_night_journal.egg-info/
+*.egg-info/
 .DS_Store
 
 # Runtime/generated state kept local unless explicitly exported

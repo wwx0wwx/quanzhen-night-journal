@@ -14,7 +14,7 @@
 ## 当前结构
 
 - `backend/`：FastAPI Core、任务状态机、记忆/人格/感知/成本/审计/迁移
-- `frontend/`：Vue 3 + Vite 管理后台
+- `frontend/`：Vue 3 + Vite 管理后台（含关于页、可视化调度选择器）
 - `content/`：Hugo 站点内容
 - `hugo/`：Hugo 配置
 - `hugo-builder/`：Hugo Sidecar 入口脚本

@@ -2,6 +2,38 @@
 
 本文件记录全真夜记各版本的主要变更。
 
+## [1.0.8] - 2026-04-24
+
+### Added
+- 关于页面（/admin/about）：项目介绍、快速上手、功能模块说明和常见问题
+- API Key 显示按钮：密钥字段支持点击"显示"从后端解密展示真实值
+- 可视化调度选择器：高级设置中的复查时间和维护时间改为频率下拉 + 时间选择器，无需手写 cron
+- POST /api/config/reveal 接口：安全解密并返回指定密钥字段的明文值
+- 审计日志 API 支持分页与筛选
+
+### Fixed
+- SQLite PRAGMA（foreign_keys、busy_timeout、WAL）改为 engine event listener，确保连接池每条连接都正确设置
+- Ghost 导入添加字段白名单和 zip 炸弹防护（256 MB 压缩 / 2.5 GB 解压上限）
+- 登出时 delete_cookie 补齐 httponly 和 samesite 参数
+- 记忆衰减添加权重下限，防止权重衰减到 0
+- 人格查询优先过滤 is_active，避免选中已停用人格
+- 滑动窗口限流器添加定时清理，防止内存泄漏
+- X-Forwarded-For/X-Real-IP 仅在对端为 Cloudflare IP 时信任
+- Hugo 配置 TOML 字符串转义换行符，防止注入
+- QA 禁用词检测改为大小写不敏感
+- 感知引擎时间差判断修正为非负检查
+- 重试生成不再累积原始 prompt
+- PostEdit/PersonaEdit 表单脏标记延迟到数据加载后注册，修复 3 个前端测试
+- StabilityGauge hint 改为 computed 保证响应性
+- Setup 页密码提示从"至少 12 位"修正为"至少 8 位"
+- 前端路由添加 404 兜底重定向
+- Docker Compose caddy depends_on 改为 service_healthy 条件
+
+### Changed
+- 版本号统一升至 1.0.8（pyproject.toml、package.json、backend/__init__.py）
+- .gitignore egg-info 条目改为通配符 `*.egg-info/`
+- cron 字段类型从文本框改为 schedule 可视化选择器
+
 ## [1.0.7] - 2026-04-23
 
 ### Added
