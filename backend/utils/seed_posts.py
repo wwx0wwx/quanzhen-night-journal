@@ -1,10 +1,11 @@
-"""Import seed blog posts from content/posts/ into the database.
+"""Import seed blog posts from the active preset into the database.
 
-Called during setup to give new users two starter posts (prologue + first diary).
+Called during setup to give new users starter posts.
 """
 
 from __future__ import annotations
 
+import json
 import logging
 import shutil
 
@@ -13,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import get_settings
 from backend.models import Post
+from backend.utils.default_persona import get_preset_posts_dir
 from backend.utils.serde import json_dumps
 from backend.utils.time import utcnow_iso
 
@@ -29,8 +31,6 @@ def _parse_frontmatter(raw: str) -> tuple[dict, str]:
                     key, value = line.split(":", 1)
                     val = value.strip().strip('"')
                     if val.startswith("[") and val.endswith("]"):
-                        import json
-
                         try:
                             val = json.loads(val)
                         except json.JSONDecodeError:
@@ -41,13 +41,13 @@ def _parse_frontmatter(raw: str) -> tuple[dict, str]:
 
 
 async def create_seed_posts(db: AsyncSession, persona_id: int | None) -> int:
-    settings = get_settings()
-    seed_dir = settings.seed_content_path / "posts"
-    if not seed_dir.exists():
+    posts_dir = get_preset_posts_dir()
+    if posts_dir is None:
         return 0
 
+    settings = get_settings()
     imported = 0
-    for md_file in sorted(seed_dir.glob("*.md")):
+    for md_file in sorted(posts_dir.glob("*.md")):
         slug = md_file.stem
         exists = await db.scalar(select(Post.id).where(Post.slug == slug))
         if exists:
@@ -55,10 +55,6 @@ async def create_seed_posts(db: AsyncSession, persona_id: int | None) -> int:
 
         raw = md_file.read_text(encoding="utf-8")
         front, body = _parse_frontmatter(raw)
-
-        tags = front.get("tags", [])
-        if isinstance(tags, str):
-            tags = [t.strip() for t in tags.split(",")]
 
         post = Post(
             title=front.get("title", slug),

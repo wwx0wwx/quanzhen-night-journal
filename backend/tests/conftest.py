@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -16,12 +17,14 @@ def client(tmp_path, monkeypatch):
     draft_dir = tmp_path / "draft_review"
     automation_dir = tmp_path / "automation"
     public_dir = tmp_path / "public"
+    presets_dir = tmp_path / "presets"
     data_dir.mkdir()
     content_dir.mkdir()
     (content_dir / "posts").mkdir()
     draft_dir.mkdir()
     automation_dir.mkdir()
     public_dir.mkdir()
+    presets_dir.mkdir()
     (data_dir / "build_status.json").write_text(json.dumps({"status": "ok"}), encoding="utf-8")
 
     monkeypatch.setenv("DATABASE_URL", f"sqlite+aiosqlite:///{(data_dir / 'test.db').as_posix()}")
@@ -32,6 +35,16 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setenv("SEED_CONTENT_DIR", str(content_dir))
     monkeypatch.setenv("SEED_DRAFT_DIR", str(draft_dir))
     monkeypatch.setenv("AUTOMATION_DIR", str(automation_dir))
+    monkeypatch.setenv("PRESETS_DIR", str(presets_dir))
+    monkeypatch.setenv("DEFAULT_PRESET", "quanzhen")
+
+    real_preset = Path(__file__).resolve().parent.parent.parent / "presets" / "quanzhen"
+    test_preset = presets_dir / "quanzhen"
+    test_preset.mkdir()
+    for name in ("persona.json", "memories.json"):
+        src = real_preset / name
+        if src.exists():
+            (test_preset / name).write_bytes(src.read_bytes())
     monkeypatch.setenv("JWT_SECRET", "test-secret-with-safe-length-1234567890")
     monkeypatch.setenv("ALLOW_FAKE_LLM", "true")
 

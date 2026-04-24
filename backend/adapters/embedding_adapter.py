@@ -46,7 +46,7 @@ class EmbeddingAdapter:
                 base_url=base_url,
                 api_key=api_key,
                 model_id=model_id,
-                texts=["全真夜记 embedding probe"],
+                texts=["embedding probe"],
             )
         except EmbeddingUnavailableError as exc:
             return {"status": "error", "reason": str(exc)}

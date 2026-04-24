@@ -78,6 +78,11 @@ class Settings(BaseSettings):
     caddy_reload_enabled: bool = Field(default=False, alias="CADDY_RELOAD_ENABLED")
     allow_cloudflare_proxy_domain: bool = Field(default=False, alias="ALLOW_CLOUDFLARE_PROXY_DOMAIN")
     cors_origins: str = Field(default="", alias="CORS_ORIGINS")
+    default_preset: str = Field(default="quanzhen", alias="DEFAULT_PRESET")
+    presets_dir: str = Field(
+        default=str(ROOT_DIR / "presets"),
+        alias="PRESETS_DIR",
+    )
 
     @property
     def root_dir(self) -> Path:
@@ -133,6 +138,10 @@ class Settings(BaseSettings):
     @property
     def ghost_path(self) -> Path:
         return Path(self.ghost_dir)
+
+    @property
+    def presets_path(self) -> Path:
+        return Path(self.presets_dir)
 
     @property
     def runtime_caddyfile_path(self) -> Path:

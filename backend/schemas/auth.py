@@ -15,7 +15,7 @@ class ChangePasswordRequest(BaseModel):
 
 class SetupCompleteRequest(BaseModel):
     new_password: str = Field(min_length=8)
-    site_title: str = "全真夜记"
+    site_title: str = ""
     site_subtitle: str = ""
     site_domain: str = ""
     llm_base_url: str = ""

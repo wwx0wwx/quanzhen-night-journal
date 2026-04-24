@@ -153,7 +153,7 @@ const showSubmenu = computed(() => {
   if (!currentSection.value) return false
   return currentSection.value.items.length > 1 || currentSection.value.id === 'advanced'
 })
-const brandTitle = computed(() => branding.panelTitle.trim() || branding.siteTitle.trim() || '全真夜记')
+const brandTitle = computed(() => branding.panelTitle.trim() || branding.siteTitle.trim() || 'Night Journal')
 const brandStatus = computed(() => renderStatusText(branding.panelStatusText))
 
 function isActive(path) {

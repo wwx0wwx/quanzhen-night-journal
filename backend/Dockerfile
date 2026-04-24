@@ -7,6 +7,7 @@ ENV PYTHONUNBUFFERED=1
 
 COPY pyproject.toml /app/pyproject.toml
 COPY backend /app/backend
+COPY presets /app/presets
 COPY doc /app/doc
 
 RUN pip install --no-cache-dir .

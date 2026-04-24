@@ -1,6 +1,16 @@
 # 全真夜记
 
-全真夜记是一个围绕“人格、记忆、感知、事件、生成、发布”组织起来的数字生命博客系统。
+> **Night Journal** — an AI persona blogging engine.
+>
+> Define a persona (identity, worldview, language style, scene pool, memory seeds),
+> plug in any OpenAI-compatible LLM, and let the system automatically generate,
+> QA-check, and publish blog posts via Hugo. Ships with one preset (“全真”),
+> but any worldview — cyberpunk, slice-of-life, workplace — can be loaded as a
+> JSON preset pack under `presets/`.
+>
+> **Stack:** FastAPI · SQLite · Vue 3 · Hugo · Caddy · Docker Compose
+
+全真夜记是一个围绕”人格、记忆、感知、事件、生成、发布”组织起来的 AI 人格博客引擎。
 
 ## 文档入口
 
@@ -15,7 +25,8 @@
 
 - `backend/`：FastAPI Core、任务状态机、记忆/人格/感知/成本/审计/迁移
 - `frontend/`：Vue 3 + Vite 管理后台（含关于页、可视化调度选择器）
-- `content/`：Hugo 站点内容
+- `presets/`：人格预设包（JSON 定义 + 种子记忆 + 种子博文）
+- `content/`：Hugo 站点内容（运行时生成）
 - `hugo/`：Hugo 配置
 - `hugo-builder/`：Hugo Sidecar 入口脚本
 - `caddy/`：Caddy 站点与后台网关

@@ -126,6 +126,7 @@ class GenerationOrchestrator:
 
                 await self._transition(task, "preparing_context")
                 context, snapshot = await self.context_builder.build(task, persona)
+                context.site_title = (await self.config_store.get("site.title", "") or "").strip()
                 task.context_snapshot = json_dumps(snapshot)
                 task.memory_hits = json_dumps([item.model_dump() for item in context.memory_hits])
                 task.sensory_snapshot_id = context.sensory_snapshot.id if context.sensory_snapshot else None
@@ -526,8 +527,10 @@ class GenerationOrchestrator:
         status: str,
     ) -> Post:
         now = utcnow_iso()
-        site_title = (await self.config_store.get("site.title", "全真夜记") or "全真夜记").strip() or "全真夜记"
-        invalid_titles = {site_title, "全真夜记", "夜记", "无题", "未命名夜记"}
+        site_title = (await self.config_store.get("site.title", "") or "").strip()
+        invalid_titles = {"夜记", "无题", "未命名夜记"}
+        if site_title:
+            invalid_titles.add(site_title)
         title = extract_title(
             content,
             fallback=f"夜记 {task.id}",

@@ -8,7 +8,7 @@ export const settingsSections = [
         key: 'site.title',
         label: '站点标题',
         type: 'text',
-        placeholder: '全真夜记',
+        placeholder: '例如：Night Journal、深夜漫笔',
         help: '显示在博客首页、浏览器标题和后台页头。',
       },
       {

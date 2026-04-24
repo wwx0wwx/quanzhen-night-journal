@@ -59,7 +59,7 @@ class SiteRuntimeManager:
         self.caddy_adapter = caddy_adapter or CaddyAdapter()
 
     async def apply(self) -> dict[str, object]:
-        site_title = (await self.config_store.get("site.title", "全真夜记")) or "全真夜记"
+        site_title = (await self.config_store.get("site.title", "Night Journal")) or "Night Journal"
         site_subtitle = (await self.config_store.get("site.subtitle", "")) or ""
         theme = (await self.config_store.get("hugo.theme", "PaperMod")) or "PaperMod"
         domain = (await self.config_store.get("site.domain", "")) or ""

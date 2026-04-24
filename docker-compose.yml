@@ -18,9 +18,10 @@ services:
       HUGO_PUBLIC_DIR: /app/hugo/public
       BUILD_SIGNAL_FILE: /app/data/.build_signal
       BUILD_STATUS_FILE: /app/data/build_status.json
-      SEED_CONTENT_DIR: /seed/content
+      SEED_CONTENT_DIR: /seed/presets
       SEED_DRAFT_DIR: /seed/draft_review
       AUTOMATION_DIR: /seed/automation
+      PRESETS_DIR: /seed/presets
       SITE_BASE_URL: ${SITE_BASE_URL:-http://localhost:5210}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set for production deployments}
       ALLOW_FAKE_LLM: ${ALLOW_FAKE_LLM:-false}
@@ -34,7 +35,7 @@ services:
       - app_data:/app/data
       - hugo_content:/app/hugo/content
       - hugo_public:/app/hugo/public
-      - ./content:/seed/content:ro
+      - ./presets:/seed/presets:ro
       - ./draft_review:/seed/draft_review:ro
       - ./automation:/seed/automation:ro
 

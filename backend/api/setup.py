@@ -24,9 +24,8 @@ from backend.schemas.auth import SetupCompleteRequest
 from backend.schemas.memory import MemoryCreate
 from backend.security.auth import hash_password, is_system_initialized
 from backend.utils.audit import log_audit
-from backend.utils.default_persona import build_default_quanzhen_persona
+from backend.utils.default_persona import build_default_persona, get_preset_memories
 from backend.utils.response import error, success
-from backend.utils.seed_memories import get_seed_memories
 from backend.utils.seed_posts import create_seed_posts
 
 router = APIRouter()
@@ -88,8 +87,8 @@ async def setup_complete(
 
         default_persona = await db.scalar(select(Persona).where(Persona.is_default == 1))
         if default_persona is None:
-            default_persona = await persona_engine.create_persona(build_default_quanzhen_persona())
-            for mem_data in get_seed_memories(default_persona.id):
+            default_persona = await persona_engine.create_persona(build_default_persona())
+            for mem_data in get_preset_memories(default_persona.id):
                 await memory_engine.create_memory(MemoryCreate(**mem_data))
 
         await create_seed_posts(db, default_persona.id if default_persona else None)

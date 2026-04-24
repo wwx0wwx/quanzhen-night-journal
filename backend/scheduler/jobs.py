@@ -24,9 +24,9 @@ from backend.engine.sensory_engine import SensoryEngine
 from backend.models import AuditLog
 from backend.publisher.registry import PublisherRegistry
 from backend.utils.default_persona import (
-    apply_default_quanzhen_to_persona,
-    build_default_quanzhen_persona,
-    is_legacy_default_quanzhen,
+    apply_default_persona_update,
+    build_default_persona,
+    is_legacy_default_persona,
 )
 from backend.utils.time import utcnow_iso
 
@@ -75,10 +75,10 @@ async def _ensure_seed_persona_in_session(db: AsyncSession, *, commit: bool) -> 
     changed = False
 
     if persona is None:
-        await persona_engine.create_persona(build_default_quanzhen_persona())
+        await persona_engine.create_persona(build_default_persona())
         changed = True
-    elif is_legacy_default_quanzhen(persona):
-        apply_default_quanzhen_to_persona(persona)
+    elif is_legacy_default_persona(persona):
+        apply_default_persona_update(persona)
         changed = True
 
     if changed and commit:

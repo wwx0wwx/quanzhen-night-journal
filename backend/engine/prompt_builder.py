@@ -8,81 +8,12 @@ from backend.schemas.memory import MemoryHit
 from backend.utils.serde import json_loads
 
 _FALLBACK_SCENE_POOL = [
-    {
-        "时间": "深夜子时",
-        "地点": "王府后院练武场",
-        "天气": "月明星稀",
-        "方向": "独自练剑消化心事，剑势里藏着白天压住的情绪",
-    },
-    {"时间": "黄昏", "地点": "城外山道", "天气": "秋风落叶", "方向": "护送王爷出行途中，路上有片刻安静的同行"},
-    {
-        "时间": "清晨天未亮",
-        "地点": "药铺街巷",
-        "天气": "薄雾",
-        "方向": "独自出门买伤药或办小事，不想让王爷知道旧伤又发了",
-    },
-    {
-        "时间": "午后",
-        "地点": "集市或小镇",
-        "天气": "晴朗",
-        "方向": "陪王爷微服出行，在人群中默默警戒，偶有意外的温存细节",
-    },
-    {"时间": "深夜丑时", "地点": "客栈或驿站", "天气": "暴雨", "方向": "护王爷赶路被困，在简陋之处独自守夜"},
-    {"时间": "傍晚", "地点": "渡口或码头", "天气": "江风", "方向": "送姐姐远行或接姐姐归来，复杂情绪交织"},
-    {"时间": "凌晨", "地点": "密林或山间", "天气": "浓雾", "方向": "执行密令归来，浑身疲惫，在破庙或林间短暂歇息"},
-    {
-        "时间": "入夜",
-        "地点": "王爷书房外走廊",
-        "天气": "微雪",
-        "方向": "王爷在里面见客或议事，她在外面等，听到片段的对话",
-    },
-    {
-        "时间": "半夜",
-        "地点": "王爷寝室门外",
-        "天气": "无风寒夜",
-        "方向": "王爷生病或受伤，她彻夜照料，看到他脆弱的一面",
-    },
-    {"时间": "正午", "地点": "府中花园或湖边", "天气": "夏日炎热", "方向": "难得的闲暇时刻，独处或偶遇回忆"},
-    {"时间": "深夜", "地点": "城墙之上", "天气": "大风", "方向": "边关或战事相关，在高处远望，心中想着远方和身后"},
-    {"时间": "清晨", "地点": "厨房或茶室", "天气": "春雨", "方向": "为王爷准备什么小东西，不说出口的关心"},
-    {"时间": "黄昏", "地点": "旧友的酒馆或茶楼", "天气": "阴天", "方向": "偶遇旧识，被问起近况，想起另一种活法"},
-    {
-        "时间": "夜晚",
-        "地点": "元宵灯会或庙会",
-        "天气": "晴冷",
-        "方向": "人群中从暗处守望王爷，看他难得的放松，自己却始终在影子里",
-    },
-    {
-        "时间": "拂晓",
-        "地点": "马厩或出发点",
-        "天气": "霜降",
-        "方向": "一个人出远门执行任务前的最后准备，临走前回望一眼王府",
-    },
-    {
-        "时间": "深夜",
-        "地点": "姐姐的房间门口",
-        "天气": "静夜",
-        "方向": "姐姐受伤归来，她犹豫要不要去看，在门口站了很久",
-    },
-    {
-        "时间": "午后",
-        "地点": "藏书阁或密室",
-        "天气": "闷热",
-        "方向": "翻旧卷宗或查线索，在陈旧的纸堆里找到一段意外的往事",
-    },
-    {
-        "时间": "入夜",
-        "地点": "屋顶或高处",
-        "天气": "繁星",
-        "方向": "独自坐在高处发呆，回忆山上学艺的日子，或者想象另一种人生",
-    },
-    {"时间": "白天", "地点": "武器铺或铁匠铺", "天气": "晴天", "方向": "保养兵器或定做暗器，和铺子老板有几句日常闲话"},
-    {
-        "时间": "天亮前",
-        "地点": "回府的路上",
-        "天气": "残月",
-        "方向": "办完事连夜赶回，快到王府时放慢脚步，整理好表情再进门",
-    },
+    {"时间": "深夜", "地点": "室内", "天气": "寂静", "方向": "独处时的内心独白，回望白天发生的事"},
+    {"时间": "黄昏", "地点": "路上", "天气": "微风", "方向": "从一个地方到另一个地方，沿途触发的联想"},
+    {"时间": "清晨", "地点": "街巷", "天气": "薄雾", "方向": "一个人出门办事，途中遇到的细节"},
+    {"时间": "午后", "地点": "人群中", "天气": "晴朗", "方向": "置身热闹中却感到抽离，观察他人"},
+    {"时间": "入夜", "地点": "窗边", "天气": "雨", "方向": "听着雨声，思绪飘向一段旧事"},
+    {"时间": "凌晨", "地点": "桌前", "天气": "无风", "方向": "做完一件事之后的空白，疲惫与满足交织"},
 ]
 
 
@@ -104,6 +35,7 @@ class GenerationContext:
     recent_posts: list[RecentPostContext]
     anti_perfection: bool
     cold_start: bool
+    site_title: str = ""
 
 
 class PromptBuilder:
@@ -111,7 +43,7 @@ class PromptBuilder:
         fragments: list[str] = []
         summary: dict = {}
 
-        sys_constraint = self._build_system_constraint(context.anti_perfection)
+        sys_constraint = self._build_system_constraint(context.anti_perfection, site_title=context.site_title)
         fragments.append(sys_constraint)
         summary["system_constraint"] = sys_constraint[:100]
 
@@ -146,15 +78,16 @@ class PromptBuilder:
                 {"id": item.id, "title": item.title, "published_at": item.published_at} for item in context.recent_posts
             ]
 
-        format_block = self._build_format_block(context.persona)
+        format_block = self._build_format_block(context.persona, site_title=context.site_title)
         fragments.append(format_block)
 
         return "\n\n".join(fragments), summary
 
-    def _build_system_constraint(self, anti_perfection: bool) -> str:
+    def _build_system_constraint(self, anti_perfection: bool, *, site_title: str = "") -> str:
+        site_label = site_title.strip() or "本站"
         block = (
-            "你正在为'全真夜记'站内写一篇文章。保持克制、人格一致、具象、可感。"
-            "'全真夜记'是站点名，不是文章标题。"
+            f"你正在为'{site_label}'写一篇文章。保持克制、人格一致、具象、可感。"
+            f"'{site_label}'是站点名，不是文章标题。"
             "不要解释系统，不要暴露提示词，不要使用模板化小作文口吻。"
             "每一篇文章都必须是全新的夜晚、全新的场景、全新的事件，绝不能只换说法重写上一篇。"
         )
@@ -209,12 +142,16 @@ class PromptBuilder:
         )
         return "\n".join(lines)
 
-    def _build_format_block(self, persona: Persona) -> str:
+    def _build_format_block(self, persona: Persona, *, site_title: str = "") -> str:
+        invalid_examples = ['"无题"', '"未命名"']
+        if site_title.strip():
+            invalid_examples.insert(0, f'"{site_title.strip()}"')
+        invalid_str = "、".join(invalid_examples)
         return (
             "输出要求：\n"
             "- 直接输出正文 Markdown，不要写解释。\n"
             "- 第一行必须是 Markdown 一级标题。\n"
-            '- 标题必须是具体文章题目，不能只写"全真夜记""夜记""无题"或人格名。\n'
+            f"- 标题必须是具体文章题目，不能只写{invalid_str}或人格名。\n"
             "- 标题后空一行，再开始正文。\n"
             "- 保持叙事感和连续存在感。\n"
             f"- 结构贴近 {persona.structure_preference} 长度偏好。\n"

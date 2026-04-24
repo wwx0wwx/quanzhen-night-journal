@@ -128,7 +128,7 @@ const isSubmitting = ref(false)
 const message = ref('初始化完成后会自动生成默认人格。')
 const form = reactive({
   new_password: '',
-  site_title: '全真夜记',
+  site_title: '',
   site_subtitle: '',
   site_domain: '',
   llm_base_url: '',

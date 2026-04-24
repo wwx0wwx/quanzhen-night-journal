@@ -9,7 +9,6 @@ _SPACE_RE = re.compile(r"\s+")
 _SENTENCE_BREAK_RE = re.compile(r"[。！？!?]+")
 _TITLE_BREAK_RE = re.compile(r"[。！？!?，,；;：:]")
 _GENERIC_TITLES = {
-    "全真夜记",
     "夜记",
     "未命名夜记",
     "无题",

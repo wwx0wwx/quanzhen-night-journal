@@ -234,7 +234,7 @@ class MemoryEngine:
             api_key=api_key or "",
             model_id=model_id or "",
             messages=[
-                {"role": "system", "content": f"你在为人格 {persona.name if persona else '全真'} 总结阶段性记忆。"},
+                {"role": "system", "content": f"你在为人格 {persona.name if persona else 'default'} 总结阶段性记忆。"},
                 {"role": "user", "content": f"请把这些近 30 天记忆压缩成 120 字内阶段摘要：\n{prompt}"},
             ],
             temperature=0.3,
