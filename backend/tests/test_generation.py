@@ -274,10 +274,29 @@ def test_duplicate_check_filters_post_vectors_to_candidate_posts(monkeypatch, au
             )
             db.add(post)
             await db.flush()
+            orphan_post = Post(
+                title="孤夜",
+                slug="orphan-night",
+                front_matter="{}",
+                content_markdown="# 孤夜\n\n无关文章。",
+                summary="无关文章",
+                status="draft",
+                persona_id=1,
+                task_id=None,
+                published_at=None,
+                revision=1,
+                publish_target="hugo",
+                digital_stamp="",
+                review_info="{}",
+                created_at="2026-04-18T21:02:29+00:00",
+                updated_at="2026-04-18T21:02:29+00:00",
+            )
+            db.add(orphan_post)
+            await db.flush()
             db.add_all(
                 [
                     PostVector(post_id=post.id, embedding="[1.0, 0.0]"),
-                    PostVector(post_id=999999, embedding="[0.0, 1.0]"),
+                    PostVector(post_id=orphan_post.id, embedding="[0.0, 1.0]"),
                 ]
             )
             await db.commit()

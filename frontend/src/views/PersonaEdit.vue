@@ -316,7 +316,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 
 import { api, unwrap } from '../api'
@@ -672,9 +672,11 @@ async function removePersona() {
   }
 }
 
-onMounted(load)
-
-watch(form, () => { formDirty.value = true }, { deep: true })
+onMounted(async () => {
+  await load()
+  await nextTick()
+  watch(form, () => { formDirty.value = true }, { deep: true })
+})
 
 onBeforeRouteLeave(() => {
   if (formDirty.value) {

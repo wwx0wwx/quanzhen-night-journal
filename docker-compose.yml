@@ -76,8 +76,8 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - core
-      - hugo-builder
+      core:
+        condition: service_healthy
 
 volumes:
   app_data:

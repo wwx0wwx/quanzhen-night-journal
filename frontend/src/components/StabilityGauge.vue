@@ -11,12 +11,14 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+
 const props = defineProps({
   label: { type: String, default: '人格稳定度' },
   score: { type: Number, default: 80 },
 })
 
-const hint = props.score >= 85 ? '稳定而清明' : props.score >= 70 ? '轻微波动' : '需要关注'
+const hint = computed(() => (props.score >= 85 ? '稳定而清明' : props.score >= 70 ? '轻微波动' : '需要关注'))
 </script>
 
 <style scoped>

@@ -112,7 +112,7 @@ class SensoryEngine:
         if post is None or not post.published_at:
             return False
         published = datetime.fromisoformat(post.published_at.replace("Z", "+00:00"))
-        return abs((utcnow() - published).total_seconds()) <= blind_minutes * 60
+        return 0 <= (utcnow() - published).total_seconds() <= blind_minutes * 60
 
     async def _latest_snapshot(self) -> SensorySnapshot | None:
         rows = await self.db.scalars(select(SensorySnapshot).order_by(desc(SensorySnapshot.sampled_at)).limit(1))

@@ -24,11 +24,15 @@ class SlidingWindowLimiter:
     def __init__(self) -> None:
         self._events: dict[tuple[str, str], deque[float]] = defaultdict(deque)
         self._lock = asyncio.Lock()
+        self._last_cleanup = time.monotonic()
 
     async def check(self, key: str, bucket: str, rule: RateLimitRule) -> tuple[bool, int]:
         now = time.monotonic()
         threshold = now - rule.window_seconds
         async with self._lock:
+            if now - self._last_cleanup > 300:
+                self._cleanup(now)
+                self._last_cleanup = now
             window = self._events[(bucket, key)]
             while window and window[0] <= threshold:
                 window.popleft()
@@ -37,6 +41,11 @@ class SlidingWindowLimiter:
                 return False, retry_after
             window.append(now)
         return True, 0
+
+    def _cleanup(self, now: float) -> None:
+        stale = [k for k, v in self._events.items() if not v or v[-1] < now - 600]
+        for k in stale:
+            del self._events[k]
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -87,11 +96,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             if cf_ip:
                 key = cf_ip.split(",")[0].strip()
                 return f"{test_scope}:{key}" if test_scope else key
-        for header in ("x-real-ip", "x-forwarded-for"):
-            raw = request.headers.get(header, "").strip()
-            if raw:
-                key = raw.split(",")[0].strip()
-                return f"{test_scope}:{key}" if test_scope else key
+            for header in ("x-real-ip", "x-forwarded-for"):
+                raw = request.headers.get(header, "").strip()
+                if raw:
+                    key = raw.split(",")[0].strip()
+                    return f"{test_scope}:{key}" if test_scope else key
         if peer_ip:
             return f"{test_scope}:{peer_ip}" if test_scope else peer_ip
         return f"{test_scope}:unknown" if test_scope else "unknown"

@@ -18,6 +18,25 @@ from backend.utils.time import utcnow_iso
 
 class GhostManager:
     GHOST_VERSION = "2.0"
+    MAX_ZIP_SIZE = 256 * 1024 * 1024
+
+    PERSONA_FIELDS = {
+        "name", "description", "is_active", "is_default", "identity_setting",
+        "worldview_setting", "language_style", "taboos", "sensory_lexicon",
+        "structure_preference", "expression_intensity", "stability_params",
+        "created_at", "updated_at",
+    }
+    MEMORY_FIELDS = {
+        "persona_id", "level", "content", "summary", "tags", "source",
+        "weight", "time_range_start", "time_range_end", "review_status",
+        "decay_strategy", "is_core", "created_at", "last_accessed_at",
+    }
+    POST_FIELDS = {
+        "title", "slug", "front_matter", "content_markdown", "summary",
+        "status", "persona_id", "task_id", "published_at", "revision",
+        "publish_target", "digital_stamp", "review_info", "created_at",
+        "updated_at",
+    }
 
     def __init__(self, db: AsyncSession, config_store: ConfigStore, ghost_dir: Path, backup_dir: Path | None = None):
         self.db = db
@@ -82,11 +101,16 @@ class GhostManager:
         return {"filename": filename, "manifest": manifest, "conflicts": conflicts}
 
     async def import_ghost(self, filename: str, payload: bytes, confirm: bool = False) -> dict:
+        if len(payload) > self.MAX_ZIP_SIZE:
+            raise ValueError(f"zip file exceeds {self.MAX_ZIP_SIZE // (1024 * 1024)}MB limit")
         preview = await self.preview(filename, payload)
         if not confirm:
             return preview
 
         with zipfile.ZipFile(io.BytesIO(payload), "r") as archive:
+            total_uncompressed = sum(info.file_size for info in archive.infolist())
+            if total_uncompressed > self.MAX_ZIP_SIZE * 10:
+                raise ValueError("zip bomb detected: uncompressed size too large")
             personas = json.loads(archive.read("personas.json"))
             memories = json.loads(archive.read("memories.json"))
             posts = json.loads(archive.read("posts_meta.json"))
@@ -106,16 +130,15 @@ class GhostManager:
                 if source_id is not None:
                     persona_id_map[source_id] = existing_personas[item["name"]]
                 continue
-            data = dict(item)
-            data.pop("id", None)
+            data = {k: v for k, v in item.items() if k in self.PERSONA_FIELDS}
             persona = Persona(**data)
             self.db.add(persona)
             await self.db.flush()
             if source_id is not None:
                 persona_id_map[source_id] = persona.id
         for item in memories:
-            data = dict(item)
-            source_id = data.pop("id", None)
+            source_id = item.get("id")
+            data = {k: v for k, v in item.items() if k in self.MEMORY_FIELDS}
             source_persona_id = data.get("persona_id")
             if source_persona_id in persona_id_map:
                 data["persona_id"] = persona_id_map[source_persona_id]
@@ -128,8 +151,7 @@ class GhostManager:
             source_id = item.get("id")
             if item["slug"] in existing_slugs:
                 continue
-            data = dict(item)
-            data.pop("id", None)
+            data = {k: v for k, v in item.items() if k in self.POST_FIELDS}
             source_persona_id = data.get("persona_id")
             if source_persona_id in persona_id_map:
                 data["persona_id"] = persona_id_map[source_persona_id]

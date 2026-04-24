@@ -63,7 +63,12 @@ async def logout(
     user: User | None = Depends(get_optional_user),
 ) -> object:
     response = success({"logged_out": True})
-    response.delete_cookie(get_settings().cookie_name, secure=should_use_secure_cookie(request))
+    response.delete_cookie(
+        get_settings().cookie_name,
+        httponly=True,
+        samesite="lax",
+        secure=should_use_secure_cookie(request),
+    )
     if user:
         await log_audit(
             db, "user", "auth.logout", "user", str(user.id), ip=request.client.host if request.client else None

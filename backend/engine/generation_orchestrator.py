@@ -579,10 +579,10 @@ class GenerationOrchestrator:
             failed.append(f"integrity:{integrity_reason}")
         issues = ", ".join(failed) if failed else "generic_quality"
         return (
-            f"{prompt}\n\n"
             f"Previous draft:\n{content}\n\n"
             f"Issues to fix: {issues}.\n"
-            "Keep the same persona, but shift to a new scene, new concrete action, and new narrative progression."
+            "Rewrite the draft from scratch: keep the same persona, but shift to "
+            "a new scene, new concrete action, and new narrative progression."
         )
 
     def _append_trace(self, task: GenerationTask, stage: str, **detail: object) -> None:

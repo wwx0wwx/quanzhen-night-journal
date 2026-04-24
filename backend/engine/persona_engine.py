@@ -143,7 +143,13 @@ class PersonaEngine:
         return persona
 
     async def get_active_persona(self) -> Persona | None:
-        persona = await self.db.scalar(select(Persona).where(Persona.is_default == 1).order_by(Persona.id.asc()))
+        persona = await self.db.scalar(
+            select(Persona).where(Persona.is_default == 1, Persona.is_active == 1).order_by(Persona.id.asc())
+        )
+        if persona is None:
+            persona = await self.db.scalar(
+                select(Persona).where(Persona.is_active == 1).order_by(Persona.id.asc())
+            )
         if persona is None:
             persona = await self.db.scalar(select(Persona).order_by(Persona.id.asc()))
         return persona

@@ -89,7 +89,8 @@ class QAEngine:
 
     async def _check_forbidden(self, content: str) -> bool:
         words = json_loads(await self.config_store.get("qa.forbidden_words", "[]", decrypt=False), [])
-        return not any(word and word in content for word in words)
+        content_lower = content.lower()
+        return not any(word and word.lower() in content_lower for word in words)
 
     async def _check_template_phrases(self, content: str) -> bool:
         phrases = json_loads(await self.config_store.get("qa.template_phrases", "[]", decrypt=False), [])

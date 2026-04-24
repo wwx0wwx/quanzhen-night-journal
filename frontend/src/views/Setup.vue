@@ -28,7 +28,7 @@
               v-model="form.new_password"
               type="password"
               autocomplete="new-password"
-              placeholder="设置一个至少 12 位、自己能妥善保管的新密码"
+              placeholder="设置一个至少 8 位、自己能妥善保管的新密码"
             />
             <div class="field-help-list">
               <small class="field-help">初始化成功后会自动用 `admin` 账号登录。</small>

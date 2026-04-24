@@ -36,6 +36,7 @@ const routes = [
   { path: '/admin/ghost', component: Ghost },
   { path: '/admin/audit', component: Audit },
   { path: '/admin/about', component: About },
+  { path: '/:pathMatch(.*)*', redirect: '/admin/' },
 ]
 
 const router = createRouter({

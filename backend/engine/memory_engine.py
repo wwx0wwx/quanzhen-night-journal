@@ -204,13 +204,13 @@ class MemoryEngine:
                     affected += 1
                     continue
                 if age_days > 30:
-                    memory.weight *= 0.5
+                    memory.weight = max(memory.weight * 0.5, 0.01)
                     affected += 1
             elif memory.level == "L2" and age_days > 90:
-                memory.weight *= 0.7
+                memory.weight = max(memory.weight * 0.7, 0.05)
                 affected += 1
             elif memory.level == "L1" and age_days > 365:
-                memory.weight *= 0.9
+                memory.weight = max(memory.weight * 0.9, 0.1)
                 affected += 1
         await self.db.flush()
         return affected

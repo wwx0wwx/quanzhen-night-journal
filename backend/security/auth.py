@@ -12,8 +12,6 @@ from backend.config import Settings, get_settings
 from backend.database import get_session
 from backend.models import SystemConfig, User
 
-UTC = UTC
-
 
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
