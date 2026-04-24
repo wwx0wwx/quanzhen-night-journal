@@ -24,6 +24,7 @@ from backend.utils.audit import log_audit
 from backend.utils.audit_catalog import ensure_audit_event_definitions
 from backend.utils.legacy_import import import_legacy_assets
 from backend.utils.response import error
+from backend.utils.seed_posts import create_seed_posts
 from backend.utils.time import utcnow_iso
 
 logger = logging.getLogger(__name__)
@@ -90,6 +91,15 @@ async def startup_self_check() -> None:
                     legacy_result,
                     severity="warning",
                 )
+
+        default_persona = await db.scalar(select(Persona).where(Persona.is_default == 1))
+        seed_post_count = await create_seed_posts(db, default_persona.id if default_persona else None)
+        if seed_post_count:
+            await _record_startup_action(
+                db,
+                "system.import_seed_posts",
+                {"posts": seed_post_count},
+            )
         config_store = ConfigStore(db)
         deprecated_keys = await config_store.purge_deprecated_keys()
         if deprecated_keys:

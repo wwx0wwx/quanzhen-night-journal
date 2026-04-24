@@ -27,6 +27,7 @@ from backend.utils.audit import log_audit
 from backend.utils.default_persona import build_default_quanzhen_persona
 from backend.utils.response import error, success
 from backend.utils.seed_memories import get_seed_memories
+from backend.utils.seed_posts import create_seed_posts
 
 router = APIRouter()
 
@@ -90,6 +91,8 @@ async def setup_complete(
             default_persona = await persona_engine.create_persona(build_default_quanzhen_persona())
             for mem_data in get_seed_memories(default_persona.id):
                 await memory_engine.create_memory(MemoryCreate(**mem_data))
+
+        await create_seed_posts(db, default_persona.id if default_persona else None)
 
         runtime_status = await site_runtime.apply()
         await log_audit(
