@@ -63,10 +63,11 @@ class SiteRuntimeManager:
         site_subtitle = (await self.config_store.get("site.subtitle", "")) or ""
         theme = (await self.config_store.get("hugo.theme", "PaperMod")) or "PaperMod"
         domain = (await self.config_store.get("site.domain", "")) or ""
+        admin_port = (await self.config_store.get("panel.port", "5210")) or "5210"
         inspection = await self.inspect_domain(domain)
 
         base_url = f"https://{inspection.normalized_domain}/" if inspection.enabled else "/"
-        caddyfile = self._render_caddyfile(inspection.normalized_domain if inspection.enabled else "")
+        caddyfile = self._render_caddyfile(inspection.normalized_domain if inspection.enabled else "", admin_port=admin_port)
         hugo_config = self._render_hugo_config(
             site_title=site_title,
             site_subtitle=site_subtitle,
@@ -226,7 +227,7 @@ class SiteRuntimeManager:
         except ValueError:
             return False
 
-    def _render_caddyfile(self, domain: str) -> str:
+    def _render_caddyfile(self, domain: str, *, admin_port: str = "5210") -> str:
         email_line = f"    email {self.settings.acme_email}\n" if self.settings.acme_email else ""
         admin_block = "{\n    admin 0.0.0.0:2019\n" + email_line + "}\n\n"
         console = (
@@ -258,10 +259,10 @@ class SiteRuntimeManager:
             "    file_server\n"
             "}\n\n"
         )
-        site_5210 = ":5210 {\n    import qz_console\n}\n"
+        site_port = f":{admin_port} {{\n    import qz_console\n}}\n"
         if not domain:
-            return admin_block + console + blog + site_5210
-        return admin_block + console + blog + site_5210 + f"\n{domain} {{\n    import qz_blog\n}}\n"
+            return admin_block + console + blog + site_port
+        return admin_block + console + blog + site_port + f"\n{domain} {{\n    import qz_blog\n}}\n"
 
     def _render_hugo_config(
         self,

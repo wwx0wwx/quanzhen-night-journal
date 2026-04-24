@@ -105,7 +105,7 @@
         <strong>{{ version }}</strong>
       </div>
       <div class="about-links">
-        <a href="https://github.com" target="_blank" rel="noopener">项目主页</a>
+        <a href="https://github.com/wwx0wwx/quanzhen-night-journal" target="_blank" rel="noopener">项目主页</a>
       </div>
     </div>
   </section>

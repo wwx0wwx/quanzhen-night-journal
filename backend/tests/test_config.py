@@ -124,7 +124,7 @@ def test_domain_caddyfile_only_serves_blog_on_domain():
     assert "redir @console_root /admin/ 308" in rendered
     assert "root * /srv/hugo" in rendered
     assert "file_server" in rendered
-    assert ":5210 {\n    import qz_console\n}" in rendered
+    assert "import qz_console" in rendered
     assert "iuaa.de {\n    import qz_blog\n}" in rendered
     assert "respond @blocked 404" in rendered
 

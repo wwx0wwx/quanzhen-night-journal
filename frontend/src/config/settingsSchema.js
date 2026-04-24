@@ -51,6 +51,20 @@ export const settingsSections = [
           '如果想带上当前登录名，可在文案里使用 {user}，例如：{user} 正在值守。',
         ],
       },
+      {
+        key: 'panel.port',
+        label: '面板端口',
+        type: 'number',
+        placeholder: '5210',
+        defaultValue: '5210',
+        help: [
+          '控制 Caddy 监听的管理面板端口，修改后自动重载。',
+          'Docker 部署需同步修改 docker-compose.yml 端口映射并重启容器。',
+        ],
+        min: 1024,
+        max: 65535,
+        step: 1,
+      },
     ],
   },
   {
