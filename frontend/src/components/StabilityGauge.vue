@@ -1,6 +1,6 @@
 <template>
   <div class="metric gauge">
-    <div class="ring" :style="{ background: `conic-gradient(var(--accent) ${score * 3.6}deg, rgba(134,215,255,0.08) 0)` }">
+    <div class="ring" :style="{ background: `conic-gradient(var(--accent) ${score * 3.6}deg, var(--gauge-track) 0)` }">
       <div class="core">{{ score }}</div>
     </div>
     <div>
@@ -29,14 +29,15 @@ const hint = computed(() => (props.score >= 85 ? '稳定而清明' : props.score
 }
 
 .ring {
+  --gauge-track: rgba(134, 215, 255, 0.08);
   width: 96px;
   height: 96px;
   border-radius: 50%;
   display: grid;
   place-items: center;
   box-shadow:
-    inset 0 0 0 1px rgba(169, 223, 255, 0.16),
-    0 0 28px rgba(134, 215, 255, 0.08);
+    inset 0 0 0 1px var(--line-strong),
+    0 0 28px var(--accent-glow);
 }
 
 .core {
@@ -45,10 +46,8 @@ const hint = computed(() => (props.score >= 85 ? '稳定而清明' : props.score
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.16), transparent 45%),
-    rgba(7, 16, 27, 0.94);
-  border: 1px solid rgba(169, 223, 255, 0.16);
+  background: var(--panel-strong);
+  border: 1px solid var(--line-strong);
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--ink);
