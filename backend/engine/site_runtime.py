@@ -113,6 +113,7 @@ class SiteRuntimeManager:
             "about.md": self._render_about_page(site_title=site_title, description=description),
             "archives.md": self._render_archives_page(),
             "search.md": self._render_search_page(),
+            "offline.md": self._render_offline_page(),
         }
         changed = False
         for name, content in pages.items():
@@ -372,6 +373,16 @@ class SiteRuntimeManager:
             'summary: "搜索已经发布的文章、摘要和正文内容。"\n'
             'placeholder: "输入标题、摘要或正文关键词后回车"\n'
             "---\n"
+        )
+
+    def _render_offline_page(self) -> str:
+        return (
+            "---\n"
+            'title: "离线"\n'
+            'layout: "offline"\n'
+            'description: "当前没有网络连接。"\n'
+            "---\n\n"
+            "你现在处于离线状态。请检查网络连接后刷新页面。\n"
         )
 
     def _toml_string(self, value: str) -> str:

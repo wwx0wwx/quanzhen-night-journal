@@ -49,6 +49,7 @@ services:
       - hugo_public:/hugo/public
       - app_data:/hugo/data
       - ./hugo/config.toml:/hugo/config.toml:ro
+      - ./hugo/static:/hugo/static:ro
       - ./themes:/hugo/themes:ro
       - ./archetypes:/hugo/archetypes:ro
       - ./layouts:/hugo/layouts:ro
