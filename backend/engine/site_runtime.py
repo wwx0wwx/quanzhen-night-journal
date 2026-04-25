@@ -66,9 +66,10 @@ class SiteRuntimeManager:
         admin_port = (await self.config_store.get("panel.port", "5210")) or "5210"
         inspection = await self.inspect_domain(domain)
 
-        base_url = f"https://{inspection.normalized_domain}/" if inspection.enabled else "/"
-        domain_for_caddy = inspection.normalized_domain if inspection.enabled else ""
-        caddyfile = self._render_caddyfile(domain_for_caddy, admin_port=admin_port)
+        normalized = inspection.normalized_domain
+        has_domain = bool(normalized) and not self._looks_like_ip(normalized)
+        base_url = f"https://{normalized}/" if has_domain else "/"
+        caddyfile = self._render_caddyfile(normalized if has_domain else "", admin_port=admin_port)
         hugo_config = self._render_hugo_config(
             site_title=site_title,
             site_subtitle=site_subtitle,
