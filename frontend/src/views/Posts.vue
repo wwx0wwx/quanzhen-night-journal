@@ -11,19 +11,19 @@
           class="btn primary"
           type="button"
           :disabled="actionBusy"
-          title="运行一次 AI 创作流程"
+          data-tooltip="运行一次 AI 创作流程"
           @click="triggerTask"
         >
           {{ isTriggering ? '创作中…' : '立即创作' }}
         </button>
         <button class="btn ghost" type="button" :disabled="isLoading" @click="load">刷新列表</button>
-        <RouterLink class="btn primary" to="/admin/posts/new" title="手动新建一篇文章草稿">
+        <RouterLink class="btn primary" to="/admin/posts/new" data-tooltip="手动新建一篇文章草稿">
           新建文章
         </RouterLink>
-        <button class="btn ghost" type="button" :disabled="actionBusy" @click="hibernate">
+        <button class="btn ghost" type="button" :disabled="actionBusy" data-tooltip="暂停自动创作，不再触发定时任务" @click="hibernate">
           {{ isHibernating ? '处理中…' : '立即休眠' }}
         </button>
-        <button class="btn ghost" type="button" :disabled="actionBusy" @click="wakeUp">
+        <button class="btn ghost" type="button" :disabled="actionBusy" data-tooltip="恢复自动创作调度" @click="wakeUp">
           {{ isWakingUp ? '处理中…' : '解除休眠' }}
         </button>
       </div>
@@ -182,6 +182,7 @@
                 class="btn primary btn-small"
                 type="button"
                 :disabled="!!activeActionKey"
+                data-tooltip="将文章直接发布到博客站点"
                 @click="runAction(post, 'publish')"
               >
                 {{ actionLabel(post, 'publish', '发布') }}
@@ -191,6 +192,7 @@
                 class="btn ghost btn-small"
                 type="button"
                 :disabled="!!activeActionKey"
+                data-tooltip="标记内容已审核，但暂不发布"
                 @click="runAction(post, 'approve')"
               >
                 {{ actionLabel(post, 'approve', '审核通过') }}
@@ -200,6 +202,7 @@
                 class="btn ghost btn-small"
                 type="button"
                 :disabled="!!activeActionKey"
+                data-tooltip="将文章从博客站点移除并归档"
                 @click="runAction(post, 'archive')"
               >
                 {{ actionLabel(post, 'archive', '归档') }}

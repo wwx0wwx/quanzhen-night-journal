@@ -140,6 +140,7 @@
               v-if="hasFailedAttention"
               class="btn ghost btn-small"
               :disabled="dismissBusy"
+              data-tooltip="将所有失败任务标记为已知悉，清除风险提醒"
               @click="dismissAll"
             >
               {{ dismissBusy ? '处理中…' : '全部已知悉' }}
@@ -170,8 +171,8 @@
               </RouterLink>
               <div class="muted">{{ item.message }}</div>
               <div v-if="item.kind === 'task' && item.severity === 'error'" class="button-row">
-                <button class="btn ghost btn-small" :disabled="dismissBusy" @click="dismissTask(item.id)">忽略</button>
-                <button class="btn ghost btn-small" :disabled="dismissBusy" @click="retryTask(item.personaId)">重试</button>
+                <button class="btn ghost btn-small" :disabled="dismissBusy" data-tooltip="标记为已知悉，不再提示" @click="dismissTask(item.id)">忽略</button>
+                <button class="btn ghost btn-small" :disabled="dismissBusy" data-tooltip="用同一人格重新触发写作任务" @click="retryTask(item.personaId)">重试</button>
               </div>
             </div>
           </div>
@@ -203,7 +204,7 @@
                 {{ taskPrimaryMessage(task) }}
               </div>
               <div class="button-row">
-                <span class="tag" :class="getPublishDecisionClass(task)">{{ getPublishDecisionLabel(task) }}</span>
+                <span v-if="showTaskPublishDecision(task)" class="tag" :class="getPublishDecisionClass(task)">{{ getPublishDecisionLabel(task) }}</span>
                 <span v-if="task.error_code" class="tag tag-danger">{{ describeErrorCode(task.error_code) || task.error_code }}</span>
                 <span v-if="task.qa_risk_level && task.qa_risk_level !== 'unknown'" class="tag">{{ task.qa_risk_level }}</span>
                 <span v-if="task.queue_wait_ms" class="tag">{{ formatDurationMs(task.queue_wait_ms) }}</span>
@@ -406,11 +407,20 @@ function formatCheckedAt(value) {
 
 function taskPrimaryMessage(task) {
   if (task.error_message) return task.error_message
-  if (task.error_code) return task.error_code
-  if (task.publish_decision_path && !['manual_post', 'pending'].includes(task.publish_decision_path)) {
+  if (task.error_code) return describeErrorCode(task.error_code) || task.error_code
+  if (task.publish_decision_path && !['manual_post', 'pending', 'blocked'].includes(task.publish_decision_path)) {
     return getPublishDecisionDescription(task)
   }
   return taskSummary(task.status)
+}
+
+const TERMINAL_STATES = ['published', 'failed', 'circuit_open', 'aborted', 'draft_saved']
+
+function showTaskPublishDecision(task) {
+  const path = task.publish_decision_path
+  if (!path || path === 'pending') return false
+  if (path === 'blocked' && TERMINAL_STATES.includes(task.status)) return false
+  return true
 }
 
 async function dismissTask(taskId) {

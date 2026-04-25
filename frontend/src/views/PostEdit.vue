@@ -22,16 +22,16 @@
           <p>正文、元信息、版本和发布动作都在这张工作台上完成。保持语言冷静、结构清晰，再决定是否送它进入前台。</p>
         </div>
         <div class="button-row">
-          <button class="btn primary" :disabled="actionBusy" @click="save">
+          <button class="btn primary" :disabled="actionBusy" data-tooltip="仅保存当前内容为草稿，不改变发布状态" @click="save">
             {{ isSaving ? '保存中…' : '保存' }}
           </button>
-          <button v-if="!isNew" class="btn ghost" :disabled="actionBusy" @click="runWorkflowAction('publish')">
+          <button v-if="!isNew" class="btn ghost" :disabled="actionBusy" data-tooltip="将文章直接发布到博客站点" @click="runWorkflowAction('publish')">
             {{ activeAction === 'publish' ? '发布中…' : '发布' }}
           </button>
-          <button v-if="!isNew" class="btn ghost" :disabled="actionBusy" @click="runWorkflowAction('approve')">
+          <button v-if="!isNew" class="btn ghost" :disabled="actionBusy" data-tooltip="标记内容已审核，但暂不发布" @click="runWorkflowAction('approve')">
             {{ activeAction === 'approve' ? '处理中…' : '审核通过' }}
           </button>
-          <button v-if="!isNew" class="btn ghost" :disabled="actionBusy" @click="runWorkflowAction('archive')">
+          <button v-if="!isNew" class="btn ghost" :disabled="actionBusy" data-tooltip="将文章从博客站点移除并归档" @click="runWorkflowAction('archive')">
             {{ activeAction === 'archive' ? '处理中…' : '归档' }}
           </button>
         </div>

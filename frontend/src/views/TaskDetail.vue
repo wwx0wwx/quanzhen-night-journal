@@ -22,16 +22,16 @@
           <p>这里查看一次写作任务从触发到结束的全部轨迹。先判断是否稳，再决定是人工签发还是直接中止。</p>
         </div>
         <div class="button-row">
-          <button class="btn primary" :disabled="actionBusy" @click="approve">
-            {{ activeAction === 'approve' ? '处理中…' : '人工签发' }}
+          <button v-if="task.status === 'waiting_human_signoff'" class="btn primary" :disabled="actionBusy" data-tooltip="确认高风险内容安全后放行发布" @click="approve">
+            {{ activeAction === 'approve' ? '处理中…' : '人工签发并发布' }}
           </button>
-          <button class="btn ghost" :disabled="actionBusy" @click="abort">
+          <button v-if="canAbort" class="btn ghost" :disabled="actionBusy" data-tooltip="强制中止当前任务，需重新触发才能继续" @click="abort">
             {{ activeAction === 'abort' ? '处理中…' : '终止任务' }}
           </button>
-          <button v-if="isFailedOrCircuitOpen" class="btn ghost" :disabled="actionBusy" @click="dismiss">
+          <button v-if="isFailedOrCircuitOpen" class="btn ghost" :disabled="actionBusy" data-tooltip="标记为已知悉，总览页将不再提示此任务" @click="dismiss">
             {{ activeAction === 'dismiss' ? '处理中…' : '忽略此错误' }}
           </button>
-          <button v-if="isFailedOrCircuitOpen" class="btn ghost" :disabled="actionBusy" @click="retry">
+          <button v-if="isFailedOrCircuitOpen" class="btn ghost" :disabled="actionBusy" data-tooltip="用同一人格重新发起一次写作任务" @click="retry">
             {{ activeAction === 'retry' ? '处理中…' : '重新触发' }}
           </button>
         </div>
@@ -46,7 +46,7 @@
           <div class="section-title">任务摘要</div>
           <div class="button-row">
             <span class="tag" :class="getStatusClass('task', task.status)">{{ getStatusLabel('task', task.status) }}</span>
-            <span class="tag" :class="getPublishDecisionClass(task)">{{ getPublishDecisionLabel(task) }}</span>
+            <span v-if="showPublishDecision" class="tag" :class="getPublishDecisionClass(task)">{{ getPublishDecisionLabel(task) }}</span>
             <span v-if="task.error_code" class="tag tag-danger">{{ describeErrorCode(task.error_code) || task.error_code }}</span>
           </div>
           <dl class="meta-grid">
@@ -119,7 +119,15 @@ const message = ref('')
 const messageType = ref('info')
 
 const actionBusy = computed(() => !!activeAction.value)
+const TERMINAL_STATES = ['published', 'failed', 'circuit_open', 'aborted', 'draft_saved']
 const isFailedOrCircuitOpen = computed(() => ['failed', 'circuit_open'].includes(task.status) && !task.acknowledged_at)
+const canAbort = computed(() => !TERMINAL_STATES.includes(task.status))
+const showPublishDecision = computed(() => {
+  const path = task.publish_decision_path
+  if (!path || path === 'pending') return false
+  if (path === 'blocked' && TERMINAL_STATES.includes(task.status)) return false
+  return true
+})
 const traceText = computed(() => JSON.stringify(task.trace || {}, null, 2))
 const taskPrimaryMessage = computed(() => {
   if (task.error_message) return task.error_message

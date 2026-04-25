@@ -63,7 +63,7 @@
                 <span class="tag" :class="getStatusClass('task', task.status)">
                   {{ getStatusLabel('task', task.status) }}
                 </span>
-                <span class="tag" :class="getPublishDecisionClass(task)">
+                <span v-if="showPublishDecision(task)" class="tag" :class="getPublishDecisionClass(task)">
                   {{ getPublishDecisionLabel(task) }}
                 </span>
                 <span v-if="task.error_code" class="tag tag-danger">{{ describeErrorCode(task.error_code) || task.error_code }}</span>
@@ -144,6 +144,14 @@ const TASK_STATUS_OPTIONS = [
   'rewrite_pending', 'waiting_human_signoff', 'ready_to_publish',
   'publishing', 'published', 'failed', 'circuit_open', 'aborted', 'draft_saved',
 ]
+const TERMINAL_STATES = ['published', 'failed', 'circuit_open', 'aborted', 'draft_saved']
+
+function showPublishDecision(task) {
+  const path = task.publish_decision_path
+  if (!path || path === 'pending') return false
+  if (path === 'blocked' && TERMINAL_STATES.includes(task.status)) return false
+  return true
+}
 
 const tasks = ref([])
 const total = ref(0)
