@@ -221,8 +221,8 @@ onMounted(load)
   gap: 8px;
   padding: 14px 16px;
   border-radius: 14px;
-  border: 1px solid rgba(155, 176, 198, 0.12);
-  background: rgba(157, 183, 207, 0.03);
+  border: 1px solid var(--line);
+  background: var(--panel-soft);
 }
 
 .persona-detail span {

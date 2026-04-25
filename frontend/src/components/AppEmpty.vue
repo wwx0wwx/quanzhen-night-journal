@@ -59,8 +59,8 @@ defineEmits(['action'])
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at top, rgba(216, 229, 240, 0.1), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 42%);
+    radial-gradient(circle at top, var(--accent-glow), transparent 24%),
+    linear-gradient(180deg, var(--panel-soft), transparent 42%);
   opacity: 0.9;
 }
 
@@ -70,13 +70,11 @@ defineEmits(['action'])
   width: 86px;
   height: 86px;
   border-radius: 999px;
-  border: 1px solid rgba(155, 176, 198, 0.18);
+  border: 1px solid var(--line-strong);
   background:
-    radial-gradient(circle, rgba(218, 228, 238, 0.12), transparent 62%),
-    rgba(10, 14, 22, 0.72);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 20px 48px rgba(0, 0, 0, 0.28);
+    radial-gradient(circle, var(--accent-glow), transparent 62%),
+    var(--panel);
+  box-shadow: var(--shadow-soft);
 }
 
 .app-state-icon {

@@ -28,9 +28,7 @@ defineProps({
 .stamp-card {
   display: grid;
   gap: 18px;
-  background:
-    linear-gradient(180deg, rgba(232, 238, 245, 0.04), transparent 100%),
-    rgba(9, 13, 20, 0.82);
+  background: var(--panel-strong);
 }
 
 .stamp-head {
@@ -56,7 +54,7 @@ defineProps({
 .stamp-glyph span {
   display: block;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(216, 229, 240, 0.52), transparent);
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
 }
 
 .stamp-glyph span:nth-child(2) {
@@ -78,8 +76,8 @@ defineProps({
 .stamp-empty {
   padding: 18px;
   border-radius: 16px;
-  border: 1px dashed rgba(155, 176, 198, 0.18);
-  background: rgba(157, 183, 207, 0.03);
+  border: 1px dashed var(--line-strong);
+  background: var(--panel-soft);
   line-height: 1.7;
 }
 

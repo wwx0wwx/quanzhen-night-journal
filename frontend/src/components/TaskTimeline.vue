@@ -109,7 +109,7 @@ const steps = computed(() => {
   top: 38px;
   bottom: -14px;
   width: 1px;
-  background: linear-gradient(180deg, rgba(155, 176, 198, 0.34), transparent);
+  background: linear-gradient(180deg, var(--line-strong), transparent);
 }
 
 .timeline-step:last-child::before {
@@ -122,8 +122,8 @@ const steps = computed(() => {
   width: 36px;
   height: 36px;
   border-radius: 999px;
-  border: 1px solid rgba(155, 176, 198, 0.18);
-  background: rgba(10, 14, 22, 0.82);
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
@@ -147,17 +147,17 @@ const steps = computed(() => {
 
 .timeline-step.done .timeline-node {
   border-color: rgba(143, 255, 209, 0.28);
-  background: rgba(17, 32, 28, 0.86);
+  background: var(--panel-strong);
 }
 
 .timeline-step.current .timeline-node {
-  border-color: rgba(176, 198, 218, 0.3);
+  border-color: var(--line-strong);
   background:
-    radial-gradient(circle, rgba(216, 229, 240, 0.12), transparent 68%),
-    rgba(18, 25, 35, 0.94);
+    radial-gradient(circle, var(--accent-glow), transparent 68%),
+    var(--panel-strong);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 20px rgba(157, 183, 207, 0.1);
+    0 0 20px var(--accent-glow);
 }
 
 .timeline-step.pending .timeline-node {

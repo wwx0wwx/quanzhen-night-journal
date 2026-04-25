@@ -183,9 +183,7 @@ async function submit() {
 }
 
 .setup-provider-card {
-  background:
-    linear-gradient(180deg, rgba(232, 238, 245, 0.03), transparent 100%),
-    rgba(10, 14, 21, 0.74);
+  background: var(--panel);
 }
 
 @media (max-width: 900px) {

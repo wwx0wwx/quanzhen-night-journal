@@ -94,7 +94,7 @@ async function submit() {
   height: 180px;
   border-radius: 999px;
   background:
-    radial-gradient(circle, rgba(222, 232, 241, 0.18), rgba(148, 167, 187, 0.08) 44%, transparent 68%);
+    radial-gradient(circle, var(--accent-glow), var(--panel-soft) 44%, transparent 68%);
   filter: blur(3px);
   opacity: 0.9;
 }
@@ -129,10 +129,8 @@ async function submit() {
   position: relative;
   padding: 22px;
   border-radius: 16px;
-  border: 1px solid rgba(155, 176, 198, 0.12);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 100%),
-    rgba(10, 14, 21, 0.76);
+  border: 1px solid var(--line);
+  background: var(--panel);
 }
 
 @media (max-width: 900px) {

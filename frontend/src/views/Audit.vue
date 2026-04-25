@@ -211,9 +211,7 @@ onMounted(load)
 
 .audit-item {
   gap: 16px;
-  background:
-    linear-gradient(180deg, rgba(232, 238, 245, 0.03), transparent 100%),
-    rgba(11, 15, 22, 0.78);
+  background: var(--panel);
 }
 
 .audit-cell {

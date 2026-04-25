@@ -256,7 +256,7 @@ onBeforeUnmount(() => {
   letter-spacing: 0.22em;
   color: var(--ink);
   text-transform: uppercase;
-  text-shadow: 0 0 16px rgba(216, 229, 240, 0.08);
+  text-shadow: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -278,7 +278,7 @@ onBeforeUnmount(() => {
   height: 8px;
   border-radius: 999px;
   background: linear-gradient(135deg, rgba(200, 216, 232, 0.92), rgba(118, 141, 168, 0.92));
-  box-shadow: 0 0 14px rgba(157, 183, 207, 0.24);
+  box-shadow: 0 0 14px var(--accent-glow);
 }
 
 .nav-primary {
@@ -299,8 +299,8 @@ onBeforeUnmount(() => {
   padding: 9px 16px;
   border-radius: 999px;
   color: var(--secondary);
-  background: rgba(157, 183, 207, 0.025);
-  border: 1px solid rgba(155, 176, 198, 0.12);
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
   transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
 }
 
@@ -310,9 +310,9 @@ onBeforeUnmount(() => {
 .nav-drawer-links a:hover {
   transform: translateY(-1px);
   color: var(--ink);
-  border-color: rgba(176, 198, 218, 0.22);
-  background: rgba(157, 183, 207, 0.06);
-  box-shadow: 0 10px 24px rgba(1, 7, 16, 0.26);
+  border-color: var(--line-strong);
+  background: var(--accent-glow);
+  box-shadow: var(--shadow-soft);
 }
 
 .nav-primary-link.active,
@@ -320,13 +320,9 @@ onBeforeUnmount(() => {
 .nav-drawer-top-link.active,
 .nav-drawer-links a.active {
   color: var(--ink);
-  border-color: rgba(176, 198, 218, 0.26);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 100%),
-    linear-gradient(135deg, rgba(50, 59, 72, 0.88), rgba(22, 28, 36, 0.96));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 12px 22px rgba(0, 0, 0, 0.26);
+  border-color: var(--accent-strong);
+  background: var(--accent-glow);
+  box-shadow: var(--shadow-soft);
 }
 
 .nav-submenu {

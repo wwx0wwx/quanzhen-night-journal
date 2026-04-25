@@ -214,9 +214,7 @@ onMounted(load)
 }
 
 .task-card {
-  background:
-    linear-gradient(180deg, rgba(232, 238, 245, 0.035), transparent 100%),
-    linear-gradient(145deg, rgba(13, 17, 24, 0.94), rgba(8, 11, 17, 0.98));
+  background: var(--panel-strong);
 }
 
 .task-card-kicker,

@@ -701,10 +701,8 @@ onBeforeRouteLeave(() => {
   width: 100%;
   padding: 18px;
   border-radius: 18px;
-  border: 1px solid rgba(155, 176, 198, 0.14);
-  background:
-    linear-gradient(180deg, rgba(232, 238, 245, 0.04), transparent 100%),
-    rgba(10, 14, 21, 0.76);
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
 }
 
 .persona-edit-summary-grid {
@@ -762,8 +760,8 @@ onBeforeRouteLeave(() => {
 .persona-tone-item {
   padding: 14px 16px;
   border-radius: 14px;
-  border: 1px solid rgba(155, 176, 198, 0.12);
-  background: rgba(157, 183, 207, 0.03);
+  border: 1px solid var(--line);
+  background: var(--panel-soft);
 }
 
 .persona-lexicon-head {

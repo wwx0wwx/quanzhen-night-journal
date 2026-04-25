@@ -347,7 +347,7 @@ onMounted(load)
 .memory-card-glyph span {
   display: block;
   height: 1px;
-  background: linear-gradient(90deg, rgba(216, 229, 240, 0.5), transparent);
+  background: linear-gradient(90deg, var(--line-strong), transparent);
 }
 
 .memory-card-glyph span:last-child {
@@ -355,7 +355,7 @@ onMounted(load)
 }
 
 .memory-card-glyph-right span {
-  background: linear-gradient(90deg, transparent, rgba(216, 229, 240, 0.5));
+  background: linear-gradient(90deg, transparent, var(--line-strong));
   justify-self: end;
 }
 

@@ -183,8 +183,6 @@ onMounted(load)
 }
 
 .task-summary-card {
-  background:
-    linear-gradient(180deg, rgba(232, 238, 245, 0.03), transparent 100%),
-    rgba(10, 14, 21, 0.76);
+  background: var(--panel);
 }
 </style>

@@ -88,8 +88,8 @@ const groups = computed(() => ['L0', 'L1', 'L2', 'L3'].map((level) => ({
 .memory-tree-empty {
   padding: 18px;
   border-radius: 16px;
-  border: 1px dashed rgba(155, 176, 198, 0.2);
-  background: rgba(157, 183, 207, 0.03);
+  border: 1px dashed var(--line-strong);
+  background: var(--panel-soft);
 }
 
 .memory-tree-grid {
@@ -103,10 +103,8 @@ const groups = computed(() => ['L0', 'L1', 'L2', 'L3'].map((level) => ({
   gap: 14px;
   padding: 18px;
   border-radius: 18px;
-  border: 1px solid rgba(155, 176, 198, 0.12);
-  background:
-    linear-gradient(180deg, rgba(232, 238, 245, 0.03), transparent 100%),
-    rgba(10, 14, 21, 0.72);
+  border: 1px solid var(--line);
+  background: var(--panel);
 }
 
 .memory-level-head {
@@ -116,7 +114,7 @@ const groups = computed(() => ['L0', 'L1', 'L2', 'L3'].map((level) => ({
 
 .memory-level-rule {
   height: 1px;
-  background: linear-gradient(90deg, rgba(216, 229, 240, 0.36), transparent 78%);
+  background: linear-gradient(90deg, var(--line-strong), transparent 78%);
 }
 
 .memory-level-list {

@@ -439,10 +439,8 @@ onMounted(load)
   gap: 12px;
   padding: 24px;
   border-radius: 16px;
-  border: 1px solid rgba(155, 176, 198, 0.14);
-  background:
-    linear-gradient(180deg, rgba(220, 230, 240, 0.04), transparent 100%),
-    rgba(12, 16, 24, 0.62);
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
 }
 
 .dashboard-overview-main::before,
@@ -453,8 +451,8 @@ onMounted(load)
   pointer-events: none;
   border-radius: inherit;
   background:
-    radial-gradient(circle at top right, rgba(216, 229, 240, 0.08), transparent 22%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.02), transparent 40%);
+    radial-gradient(circle at top right, var(--accent-glow), transparent 22%),
+    linear-gradient(135deg, var(--panel-soft), transparent 40%);
 }
 
 .dashboard-overview-main h2,
