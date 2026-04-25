@@ -127,8 +127,9 @@ docker compose up -d --build
 | URL | Purpose |
 |-----|---------|
 | `http://localhost:5210/admin/` | Admin dashboard |
-| `http://localhost:5210/` | Blog (via console port) |
-| `http://your-domain.com/` | Blog (via domain, with auto-HTTPS) |
+| `http://your-domain.com/` | Blog (requires domain, with auto-HTTPS) |
+
+> **Domain required for public blog**: Without a configured domain, port 5210 only serves the admin panel and API. Posts can still be generated and previewed, but the blog is not publicly accessible until a domain is configured.
 
 ## Local development
 

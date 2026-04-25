@@ -143,6 +143,6 @@ describe('Dashboard view', () => {
     expect(wrapper.text()).toContain('还没有文章')
     expect(wrapper.text()).toContain('还没有任务记录')
     expect(wrapper.text()).toContain('可以开始今晚写作')
-    expect(wrapper.text()).toContain('当前为 IP 模式')
+    expect(wrapper.text()).toContain('博客未公开')
   })
 })

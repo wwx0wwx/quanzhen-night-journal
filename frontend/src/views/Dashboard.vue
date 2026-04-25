@@ -50,7 +50,7 @@
           </div>
           <div class="button-row">
             <span class="tag" :class="data.domain_status.enabled ? 'tag-success' : 'tag-warning'">
-              {{ data.domain_status.enabled ? '域名已启用' : '当前为 IP 模式' }}
+              {{ data.domain_status.enabled ? '域名已启用' : '博客未公开' }}
             </span>
             <span class="tag">{{ data.domain_status.status || 'unknown' }}</span>
           </div>
@@ -348,7 +348,7 @@ const configWarnings = computed(() => {
   if (!data.config_status.system_initialized) warnings.push('系统尚未完成初始化。')
   if (!data.config_status.llm_ready) warnings.push('大脑接入配置未完成，自动写作会失败。')
   if (!data.config_status.embedding_ready) warnings.push('记忆检索配置未完成，检索与去重会退化。')
-  if (!data.config_status.domain_enabled) warnings.push('当前仍处于 IP 模式或域名未启用。')
+  if (!data.config_status.domain_enabled) warnings.push('未配置域名，博客公开入口未启用，仅后台管理可用。')
   return warnings
 })
 

@@ -125,7 +125,7 @@ class SiteRuntimeManager:
     async def inspect_domain(self, raw_domain: str) -> DomainInspection:
         domain = self._normalize_domain(raw_domain)
         if not domain:
-            return DomainInspection("", False, "未配置域名，系统当前运行于 IP 模式。", [])
+            return DomainInspection("", False, "未配置域名，仅后台管理可用，博客公开入口未启用。", [])
         if self._looks_like_ip(domain):
             return DomainInspection(domain, False, "检测到填写的是 IP 地址而非域名，HTTPS 自动接入不会启用。", [])
 

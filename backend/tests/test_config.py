@@ -66,7 +66,7 @@ def test_domain_status_reports_ip_mode(authed_client):
     response = authed_client.get("/api/config/status/domain")
     assert response.status_code == 200
     assert response.json()["data"]["enabled"] is False
-    assert "IP 模式" in response.json()["data"]["reason"]
+    assert "博客公开入口未启用" in response.json()["data"]["reason"]
 
 
 def test_schedule_config_update_does_not_fail_with_scheduler_lock(authed_client):

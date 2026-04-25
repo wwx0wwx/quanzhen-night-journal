@@ -115,7 +115,7 @@ cp .env.example .env
 - `ENVIRONMENT=production`：生产部署默认按生产模式启动
 - `JWT_SECRET`：必须替换成随机长密钥；生产环境下如果仍是默认值，`core` 会拒绝启动
 - `DATABASE_URL`：默认 SQLite 即可，生产建议保留到 `/app/data/quanzhen.db`
-- `SITE_BASE_URL`：未接域名时填 `http://<服务器IP>:5210`
+- `SITE_BASE_URL`：未接域名时填 `http://<服务器IP>:5210`（此时仅后台可用，博客需配置域名后才公开）
 - `PUBLIC_SERVER_IP`：服务器公网 IP，用于域名诊断与 HTTPS 启用判断
 - `ACME_EMAIL`：可选，启用 HTTPS 时建议填写
 - `CADDY_RELOAD_ENABLED=true`：允许 Core 在域名配置变更后热重载 Caddy
@@ -134,9 +134,10 @@ docker compose up -d --build
 默认入口与端口：
 
 - 后台：`http://localhost:5210/admin/`
-- 站点：`http://localhost:5210/`
 - HTTP：`80`
 - HTTPS：`443`
+
+> **域名与博客公开访问**：未配置域名时，`:5210` 端口仅提供后台管理和 API；博客公开入口需要配置域名后才会启用。文章仍可正常生成、预览和写入 Hugo 内容目录，但不承诺通过 IP 直接访问博客首页。
 
 ## 生产部署提示
 

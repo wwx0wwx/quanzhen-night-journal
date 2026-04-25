@@ -61,6 +61,7 @@
             <input v-model="form.site_domain" placeholder="例如：journal.example.com" />
             <div class="field-help-list">
               <small class="field-help">只填写域名本身，不要带 `http://` 或 `https://`。</small>
+              <small class="field-help">未配置域名时仅后台管理可用，博客需要域名才能公开访问。</small>
             </div>
           </label>
         </div>
