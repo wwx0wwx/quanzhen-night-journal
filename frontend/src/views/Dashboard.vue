@@ -82,6 +82,25 @@
         <div class="status-banner info">
           {{ data.domain_status.reason || '尚未生成域名配置诊断。' }}
         </div>
+
+        <div class="split">
+          <button
+            v-if="data.domain_status.enabled"
+            class="btn ghost btn-small"
+            :disabled="blogProbe.busy"
+            data-tooltip="向博客公开地址发起 HTTP 请求，验证读者是否能正常访问"
+            @click="probeBlog"
+          >
+            {{ blogProbe.busy ? '检测中…' : '检测公网可达性' }}
+          </button>
+          <span v-else class="muted">未启用域名，无需检测公网可达性。</span>
+          <span v-if="blogProbe.done" class="tag" :class="blogProbe.reachable ? 'tag-success' : 'tag-danger'">
+            {{ blogProbe.reachable ? '可达' : '不可达' }}
+          </span>
+        </div>
+        <div v-if="blogProbe.done" class="status-banner" :class="blogProbe.reachable ? 'success' : 'error'">
+          {{ blogProbe.reason }}
+        </div>
       </div>
 
       <div class="stack" v-if="configWarnings.length">
@@ -293,6 +312,7 @@ const isLoading = ref(true)
 const loadError = ref('')
 const hasLoadedOnce = ref(false)
 const dismissBusy = ref(false)
+const blogProbe = reactive({ busy: false, done: false, reachable: false, reason: '' })
 const pendingRiskCount = computed(
   () => unackedFailed.value + unackedCircuitOpen.value + Number(data.risk_overview.waiting_human_signoff || 0),
 )
@@ -462,6 +482,24 @@ async function retryTask(personaId) {
     await load(false)
   } catch { /* ignore */ } finally {
     dismissBusy.value = false
+  }
+}
+
+async function probeBlog() {
+  if (blogProbe.busy) return
+  blogProbe.busy = true
+  blogProbe.done = false
+  try {
+    const result = await unwrap(api.post('/dashboard/probe-blog'))
+    blogProbe.reachable = !!result.reachable
+    blogProbe.reason = result.reason || ''
+    blogProbe.done = true
+  } catch {
+    blogProbe.reachable = false
+    blogProbe.reason = '探测请求失败，请稍后重试。'
+    blogProbe.done = true
+  } finally {
+    blogProbe.busy = false
   }
 }
 

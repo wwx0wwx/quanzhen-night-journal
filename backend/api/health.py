@@ -132,6 +132,29 @@ def _disk_check() -> dict[str, object]:
     }
 
 
+async def _domain_check(
+    config_store: ConfigStore,
+    domain_enabled: bool,
+    *,
+    probe_external: bool,
+) -> dict[str, object]:
+    reason = await config_store.get("site.domain_reason", "") or ""
+    result: dict[str, object] = {
+        "status": "ok",
+        "enabled": domain_enabled,
+        "reason": reason,
+    }
+    if probe_external and domain_enabled:
+        base_url = (await config_store.get("hugo.base_url", "/")) or "/"
+        if base_url and base_url != "/":
+            result["blog_reachability"] = await _probe_http_endpoint(base_url)
+            if result["blog_reachability"]["status"] == "error":
+                result["status"] = "error"
+        else:
+            result["blog_reachability"] = {"status": "skipped", "detail": "no_base_url"}
+    return result
+
+
 async def _collect_checks(
     request: Request,
     db: AsyncSession,
@@ -180,11 +203,7 @@ async def _collect_checks(
         },
         "llm": llm_status,
         "embedding": embedding_status,
-        "domain": {
-            "status": "ok",
-            "enabled": domain_enabled,
-            "reason": await config_store.get("site.domain_reason", "") or "",
-        },
+        "domain": await _domain_check(config_store, domain_enabled, probe_external=probe_external),
     }
 
 

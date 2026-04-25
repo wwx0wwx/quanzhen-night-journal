@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import Counter
 from datetime import date
 
+import httpx
 from fastapi import APIRouter, Depends
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -146,3 +147,39 @@ async def dashboard(
             },
         }
     )
+
+
+@router.post("/probe-blog")
+async def probe_blog(
+    config_store: ConfigStore = Depends(get_config_store),
+    _user=Depends(get_current_user),
+) -> object:
+    domain_enabled = (await config_store.get("site.domain_enabled", "0")) == "1"
+    base_url = (await config_store.get("hugo.base_url", "/")) or "/"
+
+    if not domain_enabled:
+        return success({"reachable": False, "reason": "域名未启用，无法探测公网可达性。"})
+    if not base_url or base_url == "/":
+        return success({"reachable": False, "reason": "未配置公开地址，无法探测。"})
+
+    try:
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(6.0), follow_redirects=True,
+        ) as client:
+            resp = await client.get(base_url)
+        if resp.status_code < 500:
+            return success({
+                "reachable": True,
+                "http_status": resp.status_code,
+                "reason": f"博客公网可达（HTTP {resp.status_code}）。",
+            })
+        return success({
+            "reachable": False,
+            "http_status": resp.status_code,
+            "reason": f"博客返回服务端错误（HTTP {resp.status_code}），读者当前无法正常访问。",
+        })
+    except httpx.RequestError as exc:
+        return success({
+            "reachable": False,
+            "reason": f"无法连接博客公开地址：{exc.__class__.__name__}。",
+        })

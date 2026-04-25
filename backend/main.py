@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -141,7 +141,7 @@ async def startup_self_check() -> None:
                 severity="warning",
             )
 
-        retention_cutoff = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
+        retention_cutoff = (datetime.now(UTC) - timedelta(days=90)).isoformat()
         purged = await db.execute(
             delete(PublicPageView).where(PublicPageView.created_at < retention_cutoff)
         )

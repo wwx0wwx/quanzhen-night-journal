@@ -83,8 +83,6 @@ async def _build_task_map(db: AsyncSession, task_ids: list[int]) -> dict[int, Ge
 
 def _serialize_post(post: Post, task: GenerationTask | None = None) -> dict:
     data = post_to_dict(post, task)
-    review_info = data.get("review_info", {})
-    data["review_reason"] = review_info.get("reason", "")
     data["task_status"] = task.status if task else None
     data["task_error_code"] = task.error_code if task else None
     data["task_error_message"] = task.error_message if task else None

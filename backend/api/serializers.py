@@ -95,7 +95,7 @@ def post_to_dict(post: Post, task: GenerationTask | None = None) -> dict:
         "revision": post.revision,
         "publish_target": post.publish_target,
         "digital_stamp": post.digital_stamp,
-        "review_info": review_info,
+        "review_reason": review_info.get("reason", ""),
         "created_at": post.created_at,
         "updated_at": post.updated_at,
         "duplicate_ok": qa_result.get("duplicate_ok"),

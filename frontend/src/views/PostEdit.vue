@@ -184,7 +184,6 @@ const form = reactive({
   status: 'draft',
   persona_id: null,
   publish_target: 'hugo',
-  review_info: {},
 })
 const revisions = ref([])
 const selectedRevisionId = ref(null)
@@ -212,7 +211,6 @@ function applyPost(data) {
     status: data.status || 'draft',
     persona_id: data.persona_id ?? null,
     publish_target: data.publish_target || 'hugo',
-    review_info: data.review_info || {},
   })
 }
 

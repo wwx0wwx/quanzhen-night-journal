@@ -48,7 +48,6 @@ describe('PostEdit view', () => {
         task_id: 7,
         updated_at: '2026-04-12T04:00:00+00:00',
         published_at: '',
-        review_info: {},
       })
       .mockResolvedValueOnce([
         {
