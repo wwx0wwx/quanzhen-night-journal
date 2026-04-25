@@ -175,8 +175,8 @@ const faqs = [
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: rgba(157, 183, 207, 0.08);
-  border: 1px solid rgba(155, 176, 198, 0.18);
+  background: var(--panel-soft);
+  border: 1px solid var(--line-strong);
   color: var(--ink);
   font-weight: 700;
   font-size: 0.9rem;
@@ -188,7 +188,7 @@ const faqs = [
 }
 
 .about-step code {
-  background: rgba(157, 183, 207, 0.1);
+  background: var(--panel-soft);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 0.88em;
@@ -203,8 +203,8 @@ const faqs = [
 .about-module {
   padding: 16px;
   border-radius: 12px;
-  background: rgba(157, 183, 207, 0.03);
-  border: 1px solid rgba(155, 176, 198, 0.1);
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
 }
 
 .about-module h3 {
@@ -220,7 +220,7 @@ const faqs = [
 
 .about-faq {
   padding: 14px 0;
-  border-bottom: 1px solid rgba(155, 176, 198, 0.1);
+  border-bottom: 1px solid var(--line);
 }
 
 .about-faq:last-child {
