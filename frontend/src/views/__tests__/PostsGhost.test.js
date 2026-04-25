@@ -82,8 +82,8 @@ describe('Posts and Ghost views', () => {
     expect(wrapper.text()).toContain('立即创作')
     expect(wrapper.text()).toContain('立即休眠')
     expect(wrapper.text()).toContain('解除休眠')
-    expect(wrapper.find('button[title="运行一次 AI 创作流程"]').exists()).toBe(true)
-    expect(wrapper.findComponent(RouterLinkStub).attributes('title')).toBe('手动新建一篇文章草稿')
+    expect(wrapper.find('button[data-tooltip="运行一次 AI 创作流程"]').exists()).toBe(true)
+    expect(wrapper.findComponent(RouterLinkStub).attributes('data-tooltip')).toBe('手动新建一篇文章草稿')
   })
 
   it('triggers publish, hibernate and wake actions from posts page header', async () => {

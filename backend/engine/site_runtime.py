@@ -67,7 +67,8 @@ class SiteRuntimeManager:
         inspection = await self.inspect_domain(domain)
 
         base_url = f"https://{inspection.normalized_domain}/" if inspection.enabled else "/"
-        caddyfile = self._render_caddyfile(inspection.normalized_domain if inspection.enabled else "", admin_port=admin_port)
+        domain_for_caddy = inspection.normalized_domain if inspection.enabled else ""
+        caddyfile = self._render_caddyfile(domain_for_caddy, admin_port=admin_port)
         hugo_config = self._render_hugo_config(
             site_title=site_title,
             site_subtitle=site_subtitle,

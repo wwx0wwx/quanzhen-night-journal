@@ -61,13 +61,16 @@ async def dashboard(
     recent_tasks = []
     attention_items = []
     task_counter = Counter()
+    acknowledged_counter = Counter()
     for task in tasks:
         task_data = task_to_dict(task, post_map.get(task.post_id))
         recent_tasks.append(task_data)
         task_counter[task.status] += 1
 
         if task.status in {"failed", "circuit_open"}:
-            if not task.acknowledged_at:
+            if task.acknowledged_at:
+                acknowledged_counter[task.status] += 1
+            else:
                 attention_items.append(
                     {
                         "severity": "error",
@@ -76,8 +79,6 @@ async def dashboard(
                         "message": task.error_message or "任务执行失败",
                     }
                 )
-            else:
-                task_counter[task.status] -= 1
         elif task.status == "waiting_human_signoff":
             attention_items.append(
                 {
@@ -129,6 +130,8 @@ async def dashboard(
                 "failed": task_counter["failed"],
                 "circuit_open": task_counter["circuit_open"],
                 "waiting_human_signoff": task_counter["waiting_human_signoff"],
+                "failed_acknowledged": acknowledged_counter["failed"],
+                "circuit_open_acknowledged": acknowledged_counter["circuit_open"],
             },
             "attention_items": attention_items[:5],
             "domain_status": domain_status,

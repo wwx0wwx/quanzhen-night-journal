@@ -3,10 +3,11 @@ from __future__ import annotations
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from backend.api.router import router as api_router
 from backend.config import get_settings
@@ -16,7 +17,7 @@ from backend.engine.folder_monitor_manager import FolderMonitorManager
 from backend.engine.persona_engine import PersonaEngine
 from backend.engine.site_runtime import SiteRuntimeManager
 from backend.middleware.rate_limit import RateLimitMiddleware
-from backend.models import GenerationTask, Persona
+from backend.models import GenerationTask, Persona, PublicPageView
 from backend.scheduler.jobs import ensure_seed_persona
 from backend.scheduler.scheduler import setup_scheduler
 from backend.security.encryption import ensure_encryptor
@@ -139,6 +140,14 @@ async def startup_self_check() -> None:
                 {"persona_ids": repaired_personas},
                 severity="warning",
             )
+
+        retention_cutoff = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
+        purged = await db.execute(
+            delete(PublicPageView).where(PublicPageView.created_at < retention_cutoff)
+        )
+        if purged.rowcount:
+            logger.info("startup purged_stale_page_views count=%d", purged.rowcount)
+
         await db.commit()
 
 

@@ -92,7 +92,7 @@ describe('Dashboard view', () => {
 
     await flushPromises()
 
-    expect(wrapper.text()).toContain('invalid_model_output')
+    expect(wrapper.text()).toContain('模型输出格式异常')
     expect(wrapper.text()).toContain('placeholder_question_marks_detected')
     expect(wrapper.text()).toContain('人工签发（历史推断）')
     expect(wrapper.text()).toContain('大脑接入')

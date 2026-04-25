@@ -12,13 +12,28 @@ from backend.utils.time import utcnow_iso
 router = APIRouter()
 
 
+def _anonymize_ip(ip: str) -> str:
+    ip = ip.strip()
+    if not ip:
+        return ""
+    if ":" in ip:
+        parts = ip.split(":")
+        if len(parts) > 4:
+            return ":".join(parts[:4]) + "::"
+        return ip
+    parts = ip.split(".")
+    if len(parts) == 4:
+        return ".".join(parts[:3]) + ".0"
+    return ip
+
+
 def _client_ip(request: Request) -> str:
     for header in ("cf-connecting-ip", "x-real-ip", "x-forwarded-for"):
         value = request.headers.get(header, "").strip()
         if value:
-            return value.split(",")[0].strip()
+            return _anonymize_ip(value.split(",")[0].strip())
     if request.client and request.client.host:
-        return request.client.host
+        return _anonymize_ip(request.client.host)
     return ""
 
 

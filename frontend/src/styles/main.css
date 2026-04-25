@@ -1,7 +1,7 @@
 :root {
   color-scheme: dark;
-  --font-ui: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
-  --font-display: "Noto Serif SC", "Source Han Serif SC", Georgia, serif;
+  --font-ui: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, sans-serif;
+  --font-display: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", Georgia, serif;
   --bg: #090d14;
   --bg-top: #111826;
   --bg-bottom: #05070d;

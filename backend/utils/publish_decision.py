@@ -59,6 +59,8 @@ def build_publish_decision(
     elif task_status in {"failed", "circuit_open", "aborted"} and post_status in POST_PUBLISHED_STATUSES:
         path = "human_approved_legacy_inferred"
         reason = "task_failed_but_post_was_published_separately"
+        human_approved = True
+        final_publish_allowed = True
     elif task_status == "waiting_human_signoff":
         path = "waiting_human_signoff"
         reason = "high_risk_content_waiting_for_human_signoff"

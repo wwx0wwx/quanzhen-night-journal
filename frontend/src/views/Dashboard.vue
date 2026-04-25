@@ -275,7 +275,7 @@ function createDashboardState() {
     },
     persona_stability: 0,
     memory_coherence: 0,
-    risk_overview: { failed: 0, circuit_open: 0, waiting_human_signoff: 0 },
+    risk_overview: { failed: 0, circuit_open: 0, waiting_human_signoff: 0, failed_acknowledged: 0, circuit_open_acknowledged: 0 },
     attention_items: [],
     config_status: {
       system_initialized: false,
@@ -294,9 +294,15 @@ const dismissBusy = ref(false)
 const totalRiskCount = computed(
   () => Number(data.risk_overview.failed || 0) + Number(data.risk_overview.circuit_open || 0) + Number(data.risk_overview.waiting_human_signoff || 0),
 )
+const unackedFailed = computed(
+  () => Number(data.risk_overview.failed || 0) - Number(data.risk_overview.failed_acknowledged || 0),
+)
+const unackedCircuitOpen = computed(
+  () => Number(data.risk_overview.circuit_open || 0) - Number(data.risk_overview.circuit_open_acknowledged || 0),
+)
 const configConclusionTagClass = computed(() => {
   if (!data.config_status.system_initialized || !data.config_status.llm_ready) return 'tag-danger'
-  if (Number(data.risk_overview.failed || 0) > 0 || Number(data.risk_overview.circuit_open || 0) > 0 || Number(data.risk_overview.waiting_human_signoff || 0) > 0) {
+  if (unackedFailed.value > 0 || unackedCircuitOpen.value > 0 || Number(data.risk_overview.waiting_human_signoff || 0) > 0) {
     return 'tag-warning'
   }
   return 'tag-success'
@@ -309,10 +315,10 @@ const systemState = computed(() => {
   if (!data.config_status.llm_ready) {
     return { label: '无法自动发文', description: '大脑接入尚未配置完成，自动生成会直接失败。' }
   }
-  if (Number(data.risk_overview.waiting_human_signoff || 0) > 0 || Number(data.risk_overview.circuit_open || 0) > 0) {
+  if (Number(data.risk_overview.waiting_human_signoff || 0) > 0 || unackedCircuitOpen.value > 0) {
     return { label: '可降级发文', description: '系统可运行，但存在待签发或熔断风险。' }
   }
-  if (Number(data.risk_overview.failed || 0) > 0) {
+  if (unackedFailed.value > 0) {
     return { label: '需先排错', description: '最近已有失败任务，建议先检查原因。' }
   }
   return { label: '可正常发文', description: '当前配置和近期任务状态允许继续发文。' }
@@ -331,7 +337,7 @@ const nextStep = computed(() => {
   if (Number(data.risk_overview.waiting_human_signoff || 0) > 0) {
     return { title: '先审阅待签发稿件', description: '优先检查高风险稿件，再决定是否发布。' }
   }
-  if (Number(data.risk_overview.failed || 0) > 0 || Number(data.risk_overview.circuit_open || 0) > 0) {
+  if (unackedFailed.value > 0 || unackedCircuitOpen.value > 0) {
     return { title: '先排查失败任务', description: '先看失败任务和熔断原因，再继续发文。' }
   }
   return { title: '可以开始今晚写作', description: '当前系统状态稳定，可以触发新的写作任务。' }
