@@ -27,6 +27,8 @@
       <button class="btn ghost nav-toggle" type="button" @click="drawerOpen = !drawerOpen">
         {{ drawerOpen ? '收起导航' : '展开导航' }}
       </button>
+
+      <ThemeToggle class="nav-theme-toggle" />
     </div>
 
     <div v-if="showSubmenu" class="nav-submenu panel">
@@ -97,6 +99,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { api, unwrap } from '../api'
 import { useAuthStore } from '../stores/auth'
+import ThemeToggle from './ThemeToggle.vue'
 
 const overview = { label: '总览', to: '/admin/' }
 
@@ -236,7 +239,7 @@ onBeforeUnmount(() => {
   margin: 0 auto;
   padding: 18px 22px;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   gap: 22px;
   align-items: center;
 }
@@ -372,7 +375,7 @@ onBeforeUnmount(() => {
 
 @media (max-width: 1080px) {
   .nav-inner {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr auto auto;
     align-items: start;
   }
 
@@ -426,5 +429,9 @@ onBeforeUnmount(() => {
   .brand {
     max-width: 200px;
   }
+}
+
+.nav-theme-toggle {
+  align-self: center;
 }
 </style>

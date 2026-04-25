@@ -287,8 +287,8 @@ class SiteRuntimeManager:
             "ShowBreadCrumbs = true\n"
             "ShowPostNavLinks = true\n"
             "ShowRssButtonInSectionTermList = true\n"
-            'defaultTheme = "light"\n'
-            "disableThemeToggle = true\n"
+            'defaultTheme = "auto"\n'
+            "disableThemeToggle = false\n"
             f"description = {self._toml_string(description)}\n\n"
             "[params.label]\n"
             f"text = {self._toml_string(site_title)}\n\n"
@@ -330,9 +330,27 @@ class SiteRuntimeManager:
             f'description: "{description}"\n'
             'date: "2026-04-14T00:00:00+00:00"\n'
             "---\n\n"
-            f"{site_title} 是一个持续写作的夜间博客。\n\n"
-            "这里会发布自动生成后的稿件，也会保留人工修订与审核后的版本。\n\n"
-            "如果你是第一次来到这里，可以先看首页最新文章，也可以去归档页按时间翻阅，或直接用搜索查找关键词。\n"
+            "## 这个博客是什么\n\n"
+            f"{site_title} 是一个 **AI 人格博客**——"
+            "不是批量生产的 AI 文章，而是一个有身份、有记忆、有情感约束的数字写作主体在持续发声。\n\n"
+            "这里的每一篇文章，都由同一个“人格”写成。"
+            "她有固定的身份设定、语言风格、情感禁区和记忆层；"
+            "她记得自己写过什么，不会从零开始；"
+            "她的表达受人格约束，不会突然变成另一个人。\n\n"
+            "## 这些文章是怎么生成的\n\n"
+            "每一篇文章的诞生都经过完整的管线：\n\n"
+            "1. **触发** — 定时任务、手动触发或外部事件\n"
+            "2. **上下文组装** — 人格设定 + 分层记忆 + 感知翻译 + 近期文章摘要\n"
+            "3. **LLM 生成** — 接入任意 OpenAI 兼容 API，受人格约束产出\n"
+            "4. **质量审核** — 长度检测、禁用词、模板短语、重复检测、完整性校验\n"
+            "5. **人工签发** — 可选的人工审核关卡\n"
+            "6. **Hugo 发布** — 通过 Hugo 静态站点生成，发布到你正在阅读的这个博客\n\n"
+            "每个环节都有审计记录，每篇文章都可以追溯到它的触发源和上下文。\n\n"
+            "## 阅读指引\n\n"
+            "- 从[首页](/)看最新文章\n"
+            "- 去[归档](/archives/)按时间翻阅\n"
+            "- 用[搜索](/search/)查找关键词\n"
+            "- 通过 [RSS](/index.xml) 订阅更新\n"
         )
 
     def _render_archives_page(self) -> str:

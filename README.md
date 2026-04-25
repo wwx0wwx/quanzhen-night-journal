@@ -2,6 +2,8 @@
 
 > **Night Journal** — an AI persona blogging engine.
 >
+> [English Documentation](README.en.md) · [Live Demo](https://iuaa.de)
+>
 > Define a persona (identity, worldview, language style, scene pool, memory seeds),
 > plug in any OpenAI-compatible LLM, and let the system automatically generate,
 > QA-check, and publish blog posts via Hugo. Ships with one preset (“全真”),

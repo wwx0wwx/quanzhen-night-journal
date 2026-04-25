@@ -12,8 +12,8 @@ ShowCodeCopyButtons = false
 ShowBreadCrumbs = true
 ShowPostNavLinks = true
 ShowRssButtonInSectionTermList = true
-defaultTheme = "light"
-disableThemeToggle = true
+defaultTheme = "auto"
+disableThemeToggle = false
 description = "记录深夜写作、自动生成与人工修订后的夜记。"
 
 [params.label]
