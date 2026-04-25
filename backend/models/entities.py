@@ -178,6 +178,7 @@ class GenerationTask(Base):
         ForeignKey("posts.id", ondelete="SET NULL"),
         nullable=True,
     )
+    acknowledged_at: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class Post(Base):

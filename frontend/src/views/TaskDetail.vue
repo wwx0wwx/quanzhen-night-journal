@@ -28,6 +28,12 @@
           <button class="btn ghost" :disabled="actionBusy" @click="abort">
             {{ activeAction === 'abort' ? '处理中…' : '终止任务' }}
           </button>
+          <button v-if="isFailedOrCircuitOpen" class="btn ghost" :disabled="actionBusy" @click="dismiss">
+            {{ activeAction === 'dismiss' ? '处理中…' : '忽略此错误' }}
+          </button>
+          <button v-if="isFailedOrCircuitOpen" class="btn ghost" :disabled="actionBusy" @click="retry">
+            {{ activeAction === 'retry' ? '处理中…' : '重新触发' }}
+          </button>
         </div>
       </div>
 
@@ -41,7 +47,7 @@
           <div class="button-row">
             <span class="tag" :class="getStatusClass('task', task.status)">{{ getStatusLabel('task', task.status) }}</span>
             <span class="tag" :class="getPublishDecisionClass(task)">{{ getPublishDecisionLabel(task) }}</span>
-            <span v-if="task.error_code" class="tag tag-danger">{{ task.error_code }}</span>
+            <span v-if="task.error_code" class="tag tag-danger">{{ describeErrorCode(task.error_code) || task.error_code }}</span>
           </div>
           <dl class="meta-grid">
             <div>
@@ -99,7 +105,7 @@ import { api, unwrap } from '../api'
 import AppError from '../components/AppError.vue'
 import AppLoading from '../components/AppLoading.vue'
 import TaskTimeline from '../components/TaskTimeline.vue'
-import { describeError } from '../utils/errors'
+import { describeError, describeErrorCode } from '../utils/errors'
 import { getPublishDecisionClass, getPublishDecisionDescription, getPublishDecisionLabel } from '../utils/publishDecision'
 import { getStatusClass, getStatusDescription, getStatusLabel } from '../utils/statusMeta'
 import { formatDateTimeWithRelative, formatDurationMs } from '../utils/time'
@@ -113,6 +119,7 @@ const message = ref('')
 const messageType = ref('info')
 
 const actionBusy = computed(() => !!activeAction.value)
+const isFailedOrCircuitOpen = computed(() => ['failed', 'circuit_open'].includes(task.status) && !task.acknowledged_at)
 const traceText = computed(() => JSON.stringify(task.trace || {}, null, 2))
 const taskPrimaryMessage = computed(() => {
   if (task.error_message) return task.error_message
@@ -169,6 +176,40 @@ async function abort() {
   } catch (error) {
     messageType.value = 'error'
     message.value = describeError(error, '终止任务失败。')
+  } finally {
+    activeAction.value = ''
+  }
+}
+
+async function dismiss() {
+  if (activeAction.value) return
+  activeAction.value = 'dismiss'
+  message.value = ''
+  try {
+    await unwrap(api.post(`/tasks/${route.params.id}/dismiss`))
+    messageType.value = 'success'
+    message.value = '已标记为已知悉，总览页将不再提示此任务。'
+    await load()
+  } catch (err) {
+    messageType.value = 'error'
+    message.value = describeError(err, '操作失败。')
+  } finally {
+    activeAction.value = ''
+  }
+}
+
+async function retry() {
+  if (activeAction.value) return
+  activeAction.value = 'retry'
+  message.value = ''
+  try {
+    const payload = task.persona_id ? { persona_id: task.persona_id } : {}
+    const result = await unwrap(api.post('/tasks/trigger', payload))
+    messageType.value = 'success'
+    message.value = `已重新触发任务 #${result.id}。`
+  } catch (err) {
+    messageType.value = 'error'
+    message.value = describeError(err, '重新触发失败。')
   } finally {
     activeAction.value = ''
   }

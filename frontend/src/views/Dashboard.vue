@@ -134,7 +134,17 @@
 
       <div class="grid two dashboard-columns">
         <div class="panel panel-pad stack">
-          <div class="section-title">近期风险提醒</div>
+          <div class="split">
+            <div class="section-title">近期风险提醒</div>
+            <button
+              v-if="hasFailedAttention"
+              class="btn ghost btn-small"
+              :disabled="dismissBusy"
+              @click="dismissAll"
+            >
+              {{ dismissBusy ? '处理中…' : '全部已知悉' }}
+            </button>
+          </div>
 
           <AppEmpty
             v-if="!attentionCards.length"
@@ -144,11 +154,10 @@
           />
 
           <div v-else class="list">
-            <RouterLink
+            <div
               v-for="item in attentionCards"
               :key="`${item.kind}-${item.id}`"
               class="list-item stack"
-              :to="item.kind === 'task' ? `/admin/tasks/${item.id}` : '/admin/settings'"
             >
               <div class="button-row">
                 <span class="tag" :class="item.severity === 'error' ? 'tag-danger' : 'tag-warning'">
@@ -156,9 +165,15 @@
                 </span>
                 <span class="tag">{{ attentionLabel(item.label) }}</span>
               </div>
-              <strong>{{ item.title }}</strong>
+              <RouterLink :to="item.kind === 'task' ? `/admin/tasks/${item.id}` : '/admin/settings'">
+                <strong>{{ item.title }}</strong>
+              </RouterLink>
               <div class="muted">{{ item.message }}</div>
-            </RouterLink>
+              <div v-if="item.kind === 'task' && item.severity === 'error'" class="button-row">
+                <button class="btn ghost btn-small" :disabled="dismissBusy" @click="dismissTask(item.id)">忽略</button>
+                <button class="btn ghost btn-small" :disabled="dismissBusy" @click="retryTask(item.personaId)">重试</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -189,7 +204,7 @@
               </div>
               <div class="button-row">
                 <span class="tag" :class="getPublishDecisionClass(task)">{{ getPublishDecisionLabel(task) }}</span>
-                <span v-if="task.error_code" class="tag tag-danger">{{ task.error_code }}</span>
+                <span v-if="task.error_code" class="tag tag-danger">{{ describeErrorCode(task.error_code) || task.error_code }}</span>
                 <span v-if="task.qa_risk_level && task.qa_risk_level !== 'unknown'" class="tag">{{ task.qa_risk_level }}</span>
                 <span v-if="task.queue_wait_ms" class="tag">{{ formatDurationMs(task.queue_wait_ms) }}</span>
               </div>
@@ -238,7 +253,7 @@ import AppError from '../components/AppError.vue'
 import AppLoading from '../components/AppLoading.vue'
 import CostChart from '../components/CostChart.vue'
 import StabilityGauge from '../components/StabilityGauge.vue'
-import { describeError } from '../utils/errors'
+import { describeError, describeErrorCode } from '../utils/errors'
 import { getPublishDecisionClass, getPublishDecisionDescription, getPublishDecisionLabel } from '../utils/publishDecision'
 import { getStatusClass, getStatusDescription, getStatusLabel } from '../utils/statusMeta'
 import { formatDateTimeWithRelative, formatDateTime, formatDurationMs } from '../utils/time'
@@ -274,6 +289,7 @@ const data = reactive(createDashboardState())
 const isLoading = ref(true)
 const loadError = ref('')
 const hasLoadedOnce = ref(false)
+const dismissBusy = ref(false)
 const totalRiskCount = computed(
   () => Number(data.risk_overview.failed || 0) + Number(data.risk_overview.circuit_open || 0) + Number(data.risk_overview.waiting_human_signoff || 0),
 )
@@ -330,14 +346,19 @@ const configWarnings = computed(() => {
 })
 
 const attentionCards = computed(() => {
-  const cards = data.attention_items.map((item) => ({
-    kind: 'task',
-    id: item.task_id,
-    severity: item.severity,
-    label: item.label,
-    title: `任务 #${item.task_id}`,
-    message: item.message,
-  }))
+  const taskIndex = Object.fromEntries(data.recent_tasks.map((t) => [t.id, t]))
+  const cards = data.attention_items.map((item) => {
+    const task = taskIndex[item.task_id]
+    return {
+      kind: 'task',
+      id: item.task_id,
+      severity: item.severity,
+      label: item.label,
+      title: `任务 #${item.task_id}`,
+      message: describeErrorCode(item.label) || item.message,
+      personaId: task?.persona_id,
+    }
+  })
 
   if (!data.config_status.llm_ready) {
     cards.push({
@@ -363,6 +384,8 @@ const attentionCards = computed(() => {
   return cards.slice(0, 6)
 })
 
+const hasFailedAttention = computed(() => attentionCards.value.some((c) => c.kind === 'task' && c.severity === 'error'))
+
 function taskTagClass(status) {
   return getStatusClass('task', status)
 }
@@ -374,7 +397,7 @@ function taskSummary(status) {
 function attentionLabel(label) {
   if (label === 'legacy_publish_decision') return '历史签发待复核'
   if (label === 'waiting_human_signoff') return '待人工签发'
-  return label
+  return describeErrorCode(label) || label
 }
 
 function formatCheckedAt(value) {
@@ -388,6 +411,40 @@ function taskPrimaryMessage(task) {
     return getPublishDecisionDescription(task)
   }
   return taskSummary(task.status)
+}
+
+async function dismissTask(taskId) {
+  if (dismissBusy.value) return
+  dismissBusy.value = true
+  try {
+    await unwrap(api.post(`/tasks/${taskId}/dismiss`))
+    await load(false)
+  } catch { /* ignore */ } finally {
+    dismissBusy.value = false
+  }
+}
+
+async function dismissAll() {
+  if (dismissBusy.value) return
+  dismissBusy.value = true
+  try {
+    await unwrap(api.post('/tasks/dismiss-all'))
+    await load(false)
+  } catch { /* ignore */ } finally {
+    dismissBusy.value = false
+  }
+}
+
+async function retryTask(personaId) {
+  if (dismissBusy.value) return
+  dismissBusy.value = true
+  try {
+    const payload = personaId ? { persona_id: personaId } : {}
+    await unwrap(api.post('/tasks/trigger', payload))
+    await load(false)
+  } catch { /* ignore */ } finally {
+    dismissBusy.value = false
+  }
 }
 
 async function load(showLoading = !hasLoadedOnce.value) {

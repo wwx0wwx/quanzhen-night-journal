@@ -62,6 +62,7 @@ def task_to_dict(task: GenerationTask, post: Post | None = None) -> dict:
         "queue_wait_ms": task.queue_wait_ms,
         "error_code": task.error_code,
         "error_message": task.error_message,
+        "acknowledged_at": task.acknowledged_at,
         "duplicate_ok": qa_result.get("duplicate_ok"),
         "duplicate_score": qa_result.get("duplicate_score"),
         "duplicate_post_id": qa_result.get("duplicate_post_id"),

@@ -128,6 +128,7 @@ async def init_database(settings: Settings | None = None) -> None:
         await _ensure_column(conn, "generation_tasks", "queue_wait_ms", "INTEGER NOT NULL DEFAULT 0")
         await _ensure_column(conn, "generation_tasks", "trace_json", "TEXT NOT NULL DEFAULT '[]'")
         await _ensure_column(conn, "generation_tasks", "error_code", "TEXT")
+        await _ensure_column(conn, "generation_tasks", "acknowledged_at", "TEXT")
         await _ensure_column(conn, "sensory_snapshots", "io_read_delta_bytes", "INTEGER")
         await _ensure_column(conn, "sensory_snapshots", "io_write_delta_bytes", "INTEGER")
         await _ensure_column(conn, "sensory_snapshots", "io_read_bytes_per_sec", "REAL")

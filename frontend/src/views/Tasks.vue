@@ -66,7 +66,7 @@
                 <span class="tag" :class="getPublishDecisionClass(task)">
                   {{ getPublishDecisionLabel(task) }}
                 </span>
-                <span v-if="task.error_code" class="tag tag-danger">{{ task.error_code }}</span>
+                <span v-if="task.error_code" class="tag tag-danger">{{ describeErrorCode(task.error_code) || task.error_code }}</span>
               </div>
 
               <div class="stack" style="gap: 4px;">
@@ -134,7 +134,7 @@ import { api, unwrap } from '../api'
 import AppEmpty from '../components/AppEmpty.vue'
 import AppError from '../components/AppError.vue'
 import AppLoading from '../components/AppLoading.vue'
-import { describeError } from '../utils/errors'
+import { describeError, describeErrorCode } from '../utils/errors'
 import { getPublishDecisionClass, getPublishDecisionLabel } from '../utils/publishDecision'
 import { getStatusClass, getStatusDescription, getStatusLabel } from '../utils/statusMeta'
 import { formatDateTimeWithRelative, formatDurationMs } from '../utils/time'

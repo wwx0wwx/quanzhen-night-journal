@@ -67,14 +67,17 @@ async def dashboard(
         task_counter[task.status] += 1
 
         if task.status in {"failed", "circuit_open"}:
-            attention_items.append(
-                {
-                    "severity": "error",
-                    "task_id": task.id,
-                    "label": task.error_code or task.status,
-                    "message": task.error_message or "任务执行失败",
-                }
-            )
+            if not task.acknowledged_at:
+                attention_items.append(
+                    {
+                        "severity": "error",
+                        "task_id": task.id,
+                        "label": task.error_code or task.status,
+                        "message": task.error_message or "任务执行失败",
+                    }
+                )
+            else:
+                task_counter[task.status] -= 1
         elif task.status == "waiting_human_signoff":
             attention_items.append(
                 {

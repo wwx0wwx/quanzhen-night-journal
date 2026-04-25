@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.deps import get_event_engine, get_orchestrator, get_persona_engine
@@ -14,6 +14,7 @@ from backend.models import GenerationTask, Persona, Post
 from backend.schemas.task import TaskApproveRequest, TaskTriggerRequest
 from backend.security.auth import get_current_user
 from backend.utils.response import error, paginated, success
+from backend.utils.time import utcnow_iso
 
 router = APIRouter()
 
@@ -126,3 +127,34 @@ async def task_trace(
     if task is None:
         return error(1002, "任务不存在", status_code=404)
     return success(await orchestrator.get_trace(task))
+
+
+@router.post("/{task_id}/dismiss")
+async def dismiss_task(
+    task_id: int,
+    db: AsyncSession = Depends(get_session),
+    _user=Depends(get_current_user),
+) -> object:
+    task = await db.get(GenerationTask, task_id)
+    if task is None:
+        return error(1002, "任务不存在", status_code=404)
+    if task.status not in {"failed", "circuit_open"}:
+        return error(1001, "只能忽略失败或熔断状态的任务", status_code=409)
+    task.acknowledged_at = utcnow_iso()
+    await db.commit()
+    return success({"id": task.id, "acknowledged_at": task.acknowledged_at})
+
+
+@router.post("/dismiss-all")
+async def dismiss_all_tasks(
+    db: AsyncSession = Depends(get_session),
+    _user=Depends(get_current_user),
+) -> object:
+    result = await db.execute(
+        update(GenerationTask)
+        .where(GenerationTask.status.in_(["failed", "circuit_open"]))
+        .where(GenerationTask.acknowledged_at.is_(None))
+        .values(acknowledged_at=utcnow_iso())
+    )
+    await db.commit()
+    return success({"dismissed": result.rowcount})

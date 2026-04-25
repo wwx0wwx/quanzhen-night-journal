@@ -16,6 +16,23 @@ const RAW_MESSAGE_MAP = {
   no_active_persona: '当前没有启用中的人格设定，请先检查人格设置。',
 }
 
+const ERROR_CODE_LABELS = {
+  container_restart: '系统重启导致任务中断',
+  invalid_model_output: '模型输出格式异常',
+  qa_circuit_open: '质量检查多次未通过',
+  budget_exhausted: '当日/当月预算已用完',
+  publish_failed: '文章发布到博客失败',
+  task_aborted: '任务已被手动终止',
+  llm_request_failed: '大脑接入请求失败',
+  llm_timeout: '大脑接入请求超时',
+  embedding_failed: '记忆检索请求失败',
+}
+
+export function describeErrorCode(code) {
+  if (!code) return ''
+  return ERROR_CODE_LABELS[code] || code
+}
+
 export function describeError(error, fallback = '请求失败，请稍后重试。') {
   const code = error?.response?.data?.code ?? error?.responseData?.code ?? error?.code
   if (code && CODE_MESSAGES[code]) {
