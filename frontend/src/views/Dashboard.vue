@@ -45,12 +45,12 @@
       <div class="panel panel-pad stack">
         <div class="settings-section-head">
           <div>
-            <h2>站点访问状态</h2>
-            <p class="muted">先确认对外入口是否稳定，再决定是否需要排查构建、域名或回源问题。</p>
+            <h2>域名配置诊断</h2>
+            <p class="muted">检查域名绑定与 DNS 配置是否就绪，不代表公网可达性。实际访问状态请以浏览器验证为准。</p>
           </div>
           <div class="button-row">
             <span class="tag" :class="data.domain_status.enabled ? 'tag-success' : 'tag-warning'">
-              {{ data.domain_status.enabled ? '域名已启用' : '博客未公开' }}
+              {{ data.domain_status.enabled ? '配置就绪' : '博客未公开' }}
             </span>
             <span class="tag">{{ data.domain_status.status || 'unknown' }}</span>
           </div>
@@ -60,17 +60,17 @@
           <div class="metric">
             <div class="muted">绑定域名</div>
             <strong>{{ data.domain_status.domain || '未配置' }}</strong>
-            <div class="muted">当前公开入口域名。</div>
+            <div class="muted">当前配置的域名。</div>
           </div>
           <div class="metric">
-            <div class="muted">公开地址</div>
+            <div class="muted">Hugo 基准地址</div>
             <strong>{{ data.domain_status.base_url || '/' }}</strong>
-            <div class="muted">对外访问基准路径。</div>
+            <div class="muted">Hugo 构建使用的 base_url。</div>
           </div>
           <div class="metric">
             <div class="muted">最近检查</div>
             <strong>{{ formatCheckedAt(data.domain_status.checked_at) }}</strong>
-            <div class="muted">域名诊断刷新时间。</div>
+            <div class="muted">域名配置诊断刷新时间。</div>
           </div>
           <div class="metric">
             <div class="muted">当日点击</div>
@@ -80,7 +80,7 @@
         </div>
 
         <div class="status-banner info">
-          {{ data.domain_status.reason || '尚未生成站点访问诊断。' }}
+          {{ data.domain_status.reason || '尚未生成域名配置诊断。' }}
         </div>
       </div>
 
@@ -111,16 +111,18 @@
 
       <div class="card-row">
         <div class="metric">
-          <div class="muted">风险任务总数</div>
-          <strong>{{ totalRiskCount }}</strong>
+          <div class="muted">待处理风险</div>
+          <strong>{{ pendingRiskCount }}</strong>
         </div>
         <div class="metric">
           <div class="muted">失败任务</div>
-          <strong>{{ data.risk_overview.failed }}</strong>
+          <strong>{{ unackedFailed }}</strong>
+          <div v-if="Number(data.risk_overview.failed_acknowledged || 0) > 0" class="muted">含 {{ data.risk_overview.failed_acknowledged }} 已知悉</div>
         </div>
         <div class="metric">
           <div class="muted">QA 熔断</div>
-          <strong>{{ data.risk_overview.circuit_open }}</strong>
+          <strong>{{ unackedCircuitOpen }}</strong>
+          <div v-if="Number(data.risk_overview.circuit_open_acknowledged || 0) > 0" class="muted">含 {{ data.risk_overview.circuit_open_acknowledged }} 已知悉</div>
         </div>
         <div class="metric">
           <div class="muted">待人工签发</div>
@@ -291,8 +293,8 @@ const isLoading = ref(true)
 const loadError = ref('')
 const hasLoadedOnce = ref(false)
 const dismissBusy = ref(false)
-const totalRiskCount = computed(
-  () => Number(data.risk_overview.failed || 0) + Number(data.risk_overview.circuit_open || 0) + Number(data.risk_overview.waiting_human_signoff || 0),
+const pendingRiskCount = computed(
+  () => unackedFailed.value + unackedCircuitOpen.value + Number(data.risk_overview.waiting_human_signoff || 0),
 )
 const unackedFailed = computed(
   () => Number(data.risk_overview.failed || 0) - Number(data.risk_overview.failed_acknowledged || 0),

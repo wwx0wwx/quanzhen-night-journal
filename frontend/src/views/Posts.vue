@@ -106,7 +106,7 @@
                   {{ getPublishDecisionLabel(post) }}
                 </span>
                 <span v-if="post.review_reason" class="tag tag-warning">{{ getReviewReasonLabel(post.review_reason) }}</span>
-                <span v-if="post.task_error_code" class="tag tag-danger">{{ post.task_error_code }}</span>
+                <span v-if="post.task_error_code" class="tag tag-danger">{{ describeErrorCode(post.task_error_code) }}</span>
                 <span v-if="post.qa_risk_level && post.qa_risk_level !== 'unknown'" class="tag">
                   {{ post.qa_risk_level }}
                 </span>
@@ -231,7 +231,7 @@ import { api, unwrap } from '../api'
 import AppEmpty from '../components/AppEmpty.vue'
 import AppError from '../components/AppError.vue'
 import AppLoading from '../components/AppLoading.vue'
-import { describeError } from '../utils/errors'
+import { describeError, describeErrorCode } from '../utils/errors'
 import { getPublishDecisionClass, getPublishDecisionDescription, getPublishDecisionLabel } from '../utils/publishDecision'
 import { POST_STATUS_OPTIONS, getReviewReasonLabel, getStatusClass, getStatusLabel } from '../utils/statusMeta'
 import { formatDateTimeWithRelative, formatDurationMs } from '../utils/time'
