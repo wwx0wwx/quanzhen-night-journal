@@ -108,6 +108,25 @@ def derive_summary(content: str, *, title: str | None = None, max_length: int = 
     source = _SPACE_RE.sub(" ", source).strip()
     if title and source.startswith(title):
         source = source[len(title) :].lstrip("：:-— ")
+    source = _cap_sentences(source, max_sentences=2)
     if max_length > 0:
         source = source[:max_length].strip()
     return source or title
+
+
+def _cap_sentences(text: str, *, max_sentences: int = 2) -> str:
+    if not text:
+        return text
+    parts = _SENTENCE_BREAK_RE.split(text, max_sentences)
+    if len(parts) <= max_sentences:
+        return text
+    kept = ""
+    pos = 0
+    for i in range(max_sentences):
+        idx = text.find(parts[i], pos)
+        pos = idx + len(parts[i])
+        kept = text[: pos]
+    end_match = _SENTENCE_BREAK_RE.search(text, pos)
+    if end_match and end_match.start() == pos:
+        kept = text[: end_match.end()]
+    return kept.strip()
