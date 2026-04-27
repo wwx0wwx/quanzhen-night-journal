@@ -52,6 +52,7 @@ INSERT OR IGNORE INTO system_config (key, value, category) VALUES
     ('llm.base_url',         '',                   'llm'),
     ('llm.api_key',          '',                   'llm'),
     ('llm.model_id',         '',                   'llm'),
+    ('llm.max_tokens',       '2400',               'llm'),
     ('embedding.base_url',   '',                   'embedding'),
     ('embedding.api_key',    '',                   'embedding'),
     ('embedding.model_id',   '',                   'embedding'),

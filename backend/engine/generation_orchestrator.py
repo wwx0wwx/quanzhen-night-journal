@@ -46,7 +46,7 @@ class GenerationOrchestrator:
     VALID_TRANSITIONS = {
         "queued": ["preparing_context", "failed", "aborted"],
         "preparing_context": ["generating", "failed", "aborted"],
-        "generating": ["qa_checking", "failed", "aborted"],
+        "generating": ["qa_checking", "rewrite_pending", "failed", "aborted"],
         "qa_checking": [
             "ready_to_publish",
             "waiting_human_signoff",
@@ -169,9 +169,33 @@ class GenerationOrchestrator:
                         latency_ms=latency,
                         prompt_tokens=int(usage.get("prompt_tokens", 0)),
                         completion_tokens=int(usage.get("completion_tokens", 0)),
+                        finish_reason=usage.get("finish_reason", ""),
+                        requested_max_tokens=usage.get("requested_max_tokens"),
                         content_preview=self._preview_text(content),
                     )
                     await self.db.commit()
+
+                    if self._is_truncated_generation(content, usage):
+                        self._append_trace(
+                            task,
+                            "generation_truncated",
+                            attempt=task.retry_count + 1,
+                            finish_reason=usage.get("finish_reason", ""),
+                            completion_tokens=int(usage.get("completion_tokens", 0)),
+                            requested_max_tokens=usage.get("requested_max_tokens"),
+                        )
+                        await self.db.commit()
+                        if task.retry_count >= task.max_retries:
+                            return await self._transition(
+                                task,
+                                "failed",
+                                error="model output was truncated by token limit",
+                                error_code="llm_output_truncated",
+                            )
+                        task.retry_count += 1
+                        await self._transition(task, "rewrite_pending")
+                        prompt = self._build_truncation_retry_prompt(prompt, content)
+                        continue
 
                     await self._transition(task, "qa_checking")
                     qa_result = await self.qa_engine.check(content, persona.id)
@@ -496,10 +520,10 @@ class GenerationOrchestrator:
         api_key = await self.config_store.get("llm.api_key", "")
         model_id = await self.config_store.get("llm.model_id", "")
         temperature = 0.72
-        max_tokens = 1000
+        max_tokens = self._safe_int(await self.config_store.get("llm.max_tokens", "2400"), default=2400)
         if anti_perfection:
             temperature = 1.05
-            max_tokens = 420
+            max_tokens = max(max_tokens, 2400)
         return await self.llm_adapter.chat(
             base_url=base_url or "",
             api_key=api_key or "",
@@ -517,6 +541,29 @@ class GenerationOrchestrator:
             temperature=temperature,
             max_tokens=max_tokens,
         )
+
+    def _is_truncated_generation(self, content: str, usage: dict) -> bool:
+        finish_reason = str(usage.get("finish_reason", "")).lower()
+        if finish_reason in {"length", "max_tokens"}:
+            return True
+        requested_max_tokens = self._safe_int(usage.get("requested_max_tokens"), default=0)
+        completion_tokens = self._safe_int(usage.get("completion_tokens"), default=0)
+        if requested_max_tokens and completion_tokens >= max(1, int(requested_max_tokens * 0.98)):
+            return not self._has_plausible_ending(content)
+        return False
+
+    def _has_plausible_ending(self, content: str) -> bool:
+        tail = content.rstrip()
+        if not tail:
+            return False
+        return tail.endswith(("。", "！", "？", ".", "!", "?", "”", "」", "』", "…"))
+
+    def _safe_int(self, value: object, *, default: int) -> int:
+        try:
+            parsed = int(value)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            return default
+        return parsed if parsed > 0 else default
 
     async def _create_post(
         self,
@@ -586,6 +633,17 @@ class GenerationOrchestrator:
             f"Issues to fix: {issues}.\n"
             "Rewrite the draft from scratch: keep the same persona, but shift to "
             "a new scene, new concrete action, and new narrative progression."
+        )
+
+    def _build_truncation_retry_prompt(self, prompt: str, content: str) -> str:
+        return (
+            f"{prompt}\n\n"
+            "上一版生成在模型长度上限处被截断，不能使用。请重新写一版完整稿：\n"
+            "- 控制篇幅，避免铺得过长。\n"
+            "- 必须有明确收束，最后一句必须自然结束。\n"
+            "- 不要续写上一版，不要提到截断或重试。\n"
+            f"上一版截断结尾参考：{self._preview_text(content[-260:])}\n"
+            "重新输出完整 Markdown 正文，不要解释。"
         )
 
     def _append_trace(self, task: GenerationTask, stage: str, **detail: object) -> None:

@@ -161,6 +161,96 @@ def test_invalid_model_output_is_classified_and_blocked(monkeypatch, authed_clie
     )
 
 
+def test_truncated_generation_is_retried_and_not_saved(monkeypatch, authed_client):
+    calls = 0
+    complete_content = (
+        "# 雨停在檐角\n\n"
+        "雨在檐角停住时，我正把灯罩擦干。王爷在屋里翻过一页卷宗，纸声很轻。"
+        "我没有进去，只把被风吹乱的竹帘重新压好，让那一点冷意留在门外。"
+        "檐下的水还在滴，落到青砖上，一声一声，像有人在很远处扣门。"
+        "我握着刀站了一会儿，等灯火稳下来，才退回阴影里。夜色没有说话，我也没有。"
+    )
+
+    async def sometimes_truncated(self, **_kwargs):  # noqa: ANN001
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return (
+                "# 雨停在檐角\n\n雨在檐角停住时，我正把灯罩擦",
+                {"prompt_tokens": 12, "completion_tokens": 2400, "finish_reason": "length"},
+                5,
+            )
+        return (
+            complete_content,
+            {"prompt_tokens": 12, "completion_tokens": 120, "finish_reason": "stop"},
+            5,
+        )
+
+    monkeypatch.setattr(LLMAdapter, "chat", sometimes_truncated)
+
+    config = authed_client.put(
+        "/api/config",
+        json={"items": [{"key": "qa.min_length", "value": "1", "category": "qa"}]},
+    )
+    assert config.status_code == 200
+
+    response = authed_client.post(
+        "/api/tasks/trigger",
+        json={"trigger_source": "manual", "semantic_hint": "write a complete note", "payload": {"kind": "manual"}},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "published"
+    assert calls == 2
+
+    detail = authed_client.get(f"/api/tasks/{data['id']}")
+    assert detail.status_code == 200
+    task_data = detail.json()["data"]
+    assert task_data["retry_count"] == 1
+    assert any(item["stage"] == "generation_truncated" for item in task_data["trace"]["trace_events"])
+
+    post = authed_client.get(f"/api/posts/{task_data['post_id']}")
+    assert post.status_code == 200
+    assert post.json()["data"]["content_markdown"] == complete_content
+
+
+def test_repeated_truncated_generation_fails_without_post(monkeypatch, authed_client):
+    async def always_truncated(self, **_kwargs):  # noqa: ANN001
+        return (
+            "# 断在这里\n\n雨声还没",
+            {"prompt_tokens": 12, "completion_tokens": 2400, "finish_reason": "length"},
+            5,
+        )
+
+    monkeypatch.setattr(LLMAdapter, "chat", always_truncated)
+
+    config = authed_client.put(
+        "/api/config",
+        json={
+            "items": [
+                {"key": "qa.max_retries", "value": "1", "category": "qa"},
+                {"key": "qa.min_length", "value": "1", "category": "qa"},
+            ]
+        },
+    )
+    assert config.status_code == 200
+
+    response = authed_client.post(
+        "/api/tasks/trigger",
+        json={"trigger_source": "manual", "semantic_hint": "write a complete note", "payload": {"kind": "manual"}},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "failed"
+
+    detail = authed_client.get(f"/api/tasks/{data['id']}")
+    assert detail.status_code == 200
+    task_data = detail.json()["data"]
+    assert task_data["post_id"] is None
+    assert task_data["error_code"] == "llm_output_truncated"
+    assert task_data["retry_count"] == 1
+
+
 @pytest.mark.parametrize(
     ("error_factory", "expected_code"),
     [

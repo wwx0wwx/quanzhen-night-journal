@@ -148,6 +148,7 @@ docker compose up -d --build
 - Docker 部署下后台端口由 `docker-compose.yml` 端口映射控制，生产环境不支持在后台直接改动 `panel.port`。
 - 健康检查的外部探测会访问 OpenAI-compatible `/models` 端点；401、403、404 不会被视为可用，只会让系统进入 degraded 状态。
 - 默认质量策略会检查目标语言。`qa.required_language=zh` 时，英文漂移内容会进入人工签发。
+- 正文生成默认 `llm.max_tokens=2400`。如果模型返回 `finish_reason=length/max_tokens`，系统会自动重写；重试耗尽时会失败，不会发布半截文章。
 - Caddy admin reload 端口 `2019` 只在 Docker 内部网络开放，`docker-compose.yml` 不发布到宿主机；不要额外映射该端口到公网。
 - 域名默认要求 **DNS 直接解析到 `PUBLIC_SERVER_IP`**；如果域名走 Cloudflare 代理，请同时设置 `ALLOW_CLOUDFLARE_PROXY_DOMAIN=true`。
 - Cloudflare 代理模式下，系统会按代理域名生成 HTTPS 站点；但证书签发成功不等于公网一定可用，Cloudflare 仍需要能够回源访问服务器的 `80/443`。

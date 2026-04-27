@@ -94,6 +94,17 @@ export const settingsSections = [
         placeholder: '例如：gpt-4.1-mini、qwen-max、deepseek-chat',
         help: '填写服务商文档里要求的模型名称，用于生成正文。',
       },
+      {
+        key: 'llm.max_tokens',
+        label: '正文输出上限',
+        type: 'number',
+        placeholder: '2400',
+        defaultValue: '2400',
+        help: '单次正文生成允许的最大输出 token。过小会导致文章被模型截断。',
+        min: 512,
+        max: 8000,
+        step: 1,
+      },
     ],
   },
   {

@@ -76,6 +76,7 @@ def _validate_config_value(key: str, value: str) -> None:
     elif key == "panel.port":
         _validate_int_range(key, stripped, min_value=1024, max_value=65535)
     elif key in {
+        "llm.max_tokens",
         "schedule.days_per_cycle",
         "schedule.posts_per_cycle",
         "schedule.sample_interval_minutes",
@@ -119,6 +120,8 @@ def _validate_config_value(key: str, value: str) -> None:
 
     if key == "qa.max_length":
         _validate_int_range(key, stripped, min_value=1)
+    if key == "llm.max_tokens":
+        _validate_int_range(key, stripped, min_value=512, max_value=8000)
     bounded_percent_keys = {
         "qa.duplicate_threshold",
         "sensory.cpu_high_threshold",

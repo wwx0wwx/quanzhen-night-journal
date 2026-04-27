@@ -47,11 +47,14 @@ class LLMAdapter:
             retries=max(0, int(settings.llm_request_retries)),
             backoff_seconds=max(0.0, float(settings.llm_retry_backoff_seconds)),
         )
-        content = data["choices"][0]["message"]["content"]
+        choice = data["choices"][0]
+        content = choice["message"]["content"]
         usage = data.get("usage") or {
             "prompt_tokens": estimate_tokens(str(messages)),
             "completion_tokens": estimate_tokens(content),
         }
+        usage["finish_reason"] = choice.get("finish_reason") or ""
+        usage["requested_max_tokens"] = max_tokens
         return content, usage, int((time.perf_counter() - started) * 1000)
 
     async def test_connection(self, *, base_url: str, api_key: str, model_id: str) -> dict[str, Any]:

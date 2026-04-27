@@ -14,7 +14,7 @@ while true; do
     if [ -f /hugo/data/hugo.toml ]; then
       CONFIG_FILE="/hugo/data/hugo.toml"
     fi
-    if hugo --source /hugo --destination /hugo/public --config "$CONFIG_FILE"; then
+    if hugo --source /hugo --destination /hugo/public --config "$CONFIG_FILE" --cleanDestinationDir; then
       printf '{"status":"ok","built_at":"%s"}\n' "$(date -Iseconds)" > /hugo/data/build_status.json
     else
       printf '{"status":"error","built_at":"%s","error":"hugo_build_failed"}\n' "$(date -Iseconds)" > /hugo/data/build_status.json
