@@ -152,6 +152,7 @@ cd frontend && npm run typecheck && npm run lint && npm test && npm run build
 - In Docker deployments, the admin port is controlled by `docker-compose.yml`; production mode rejects runtime `panel.port` changes from the admin UI/API.
 - External health probes check the OpenAI-compatible `/models` endpoint. HTTP 401, 403, and 404 are reported as degraded, not healthy.
 - The default QA policy enforces Chinese output with `qa.required_language=zh`; language drift is held for human sign-off.
+- The default QA policy enforces first-person article bodies with `qa.required_perspective=first_person`; second-person narration such as `你/您` is retried and is not published if retries are exhausted.
 - Article generation defaults to `llm.max_tokens=2400`. If the provider reports `finish_reason=length/max_tokens`, the task retries; if retries are exhausted, the task fails instead of publishing a truncated post.
 - Caddy's admin reload port `2019` is only available inside the Docker network and is not published by `docker-compose.yml`; do not expose it publicly.
 

@@ -248,6 +248,18 @@ export const settingsSections = [
         help: '生成正文若偏离目标语言，会进入高风险人工签发。',
       },
       {
+        key: 'qa.required_perspective',
+        label: '叙事人称',
+        type: 'select',
+        placeholder: 'first_person',
+        defaultValue: 'first_person',
+        options: [
+          { value: 'first_person', label: '第一人称' },
+          { value: 'any', label: '不限制' },
+        ],
+        help: '默认要求正文使用第一人称，出现“你/您”等第二人称会自动重写。',
+      },
+      {
         key: 'qa.forbidden_words',
         label: '禁用词列表',
         type: 'textarea',

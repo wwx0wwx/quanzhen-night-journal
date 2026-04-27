@@ -30,8 +30,8 @@ def test_generation_trigger_publishes(authed_client):
 def test_high_risk_task_waits_for_human_signoff(monkeypatch, authed_client):
     async def risky_chat(self, **_kwargs):  # noqa: ANN001
         return (
-            "tonight drifts through the machine room and refuses to leave.",
-            {"prompt_tokens": 12, "completion_tokens": 20},
+            "# 禁词夜\n\n属下在今晚的风里记下 tonight 这个词，又把灯花剪低。",
+            {"prompt_tokens": 12, "completion_tokens": 40},
             5,
         )
 
@@ -113,6 +113,111 @@ def test_language_drift_requires_human_signoff(monkeypatch, authed_client):
     task_data = detail.json()["data"]
     assert task_data["language_ok"] is False
     assert task_data["qa_risk_level"] == "high"
+
+
+def test_second_person_generation_is_retried_as_first_person(monkeypatch, authed_client):
+    calls = 0
+
+    async def fake_embed(self, **_kwargs):  # noqa: ANN001
+        return [[1.0, 0.0]]
+
+    async def perspective_drifting_chat(self, **_kwargs):  # noqa: ANN001
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return (
+                "# 廊雨\n\n"
+                "你站在书房外，听见王爷咳了一声。你把药碗端稳，又把门缝里的风挡住。"
+                "你知道自己不该多看，可灯影落下来时，还是让袖中的手指慢慢收紧。",
+                {"prompt_tokens": 12, "completion_tokens": 120, "finish_reason": "stop"},
+                5,
+            )
+        return (
+            "# 廊雨\n\n"
+            "属下站在书房外，听见王爷咳了一声。药碗还温着，掌心却先凉了半寸。"
+            "属下把门缝里的风挡住，又退回原处，不让灯影照见袖中收紧的手指。"
+            "这一夜很静，静到属下只敢把担心压低，压成一句不会出口的话。",
+            {"prompt_tokens": 12, "completion_tokens": 140, "finish_reason": "stop"},
+            5,
+        )
+
+    monkeypatch.setattr(EmbeddingAdapter, "embed", fake_embed)
+    monkeypatch.setattr(LLMAdapter, "chat", perspective_drifting_chat)
+
+    config = authed_client.put(
+        "/api/config",
+        json={"items": [{"key": "qa.min_length", "value": "1", "category": "qa"}]},
+    )
+    assert config.status_code == 200
+
+    response = authed_client.post(
+        "/api/tasks/trigger",
+        json={"trigger_source": "manual", "semantic_hint": "write a first-person note", "payload": {"kind": "manual"}},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "published"
+    assert calls == 2
+
+    detail = authed_client.get(f"/api/tasks/{data['id']}")
+    assert detail.status_code == 200
+    task_data = detail.json()["data"]
+    assert task_data["retry_count"] == 1
+    assert task_data["perspective_ok"] is True
+    assert any(
+        item["stage"] == "qa_completed" and item["detail"].get("perspective_ok") is False
+        for item in task_data["trace"]["trace_events"]
+    )
+
+    post = authed_client.get(f"/api/posts/{task_data['post_id']}")
+    assert post.status_code == 200
+    content = post.json()["data"]["content_markdown"]
+    assert "属下" in content
+    assert "你" not in content
+
+
+def test_repeated_second_person_generation_fails_without_post(monkeypatch, authed_client):
+    async def fake_embed(self, **_kwargs):  # noqa: ANN001
+        return [[1.0, 0.0]]
+
+    async def second_person_chat(self, **_kwargs):  # noqa: ANN001
+        return (
+            "# 门外\n\n"
+            "你守在门外，听见雨打在檐角。你把剑横回袖中，像把一句话重新压下去。"
+            "王爷没有回头，你也没有出声，只让夜色一点一点落在肩上。",
+            {"prompt_tokens": 12, "completion_tokens": 120, "finish_reason": "stop"},
+            5,
+        )
+
+    monkeypatch.setattr(EmbeddingAdapter, "embed", fake_embed)
+    monkeypatch.setattr(LLMAdapter, "chat", second_person_chat)
+
+    config = authed_client.put(
+        "/api/config",
+        json={
+            "items": [
+                {"key": "qa.max_retries", "value": "1", "category": "qa"},
+                {"key": "qa.min_length", "value": "1", "category": "qa"},
+            ]
+        },
+    )
+    assert config.status_code == 200
+
+    response = authed_client.post(
+        "/api/tasks/trigger",
+        json={"trigger_source": "manual", "semantic_hint": "avoid second person", "payload": {"kind": "manual"}},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "failed"
+
+    detail = authed_client.get(f"/api/tasks/{data['id']}")
+    assert detail.status_code == 200
+    task_data = detail.json()["data"]
+    assert task_data["post_id"] is None
+    assert task_data["error_code"] == "perspective_drift"
+    assert task_data["perspective_ok"] is False
+    assert task_data["retry_count"] == 1
 
 
 def test_approve_rejects_tasks_not_waiting_human_signoff(authed_client):

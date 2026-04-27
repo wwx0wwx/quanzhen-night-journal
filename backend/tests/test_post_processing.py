@@ -41,7 +41,7 @@ def test_extract_title_skips_generic_site_heading_and_summary_skips_opening_line
 
 def test_generation_uses_clean_title_and_unicode_slug(monkeypatch, authed_client):
     async def titled_chat(self, **_kwargs):  # noqa: ANN001
-        content = "# 全真夜记：雨点与屏息\n\n窗外的风沿着机房的壳体慢慢滑过去。"
+        content = "# 全真夜记：雨点与屏息\n\n我听见窗外的风沿着机房的壳体慢慢滑过去。"
         usage = {"prompt_tokens": 12, "completion_tokens": 30}
         return content, usage, 5
 
@@ -66,7 +66,7 @@ def test_generation_uses_clean_title_and_unicode_slug(monkeypatch, authed_client
     latest = posts.json()["data"]["items"][0]
     assert latest["title"] == "全真夜记：雨点与屏息"
     assert latest["slug"] == f"{task['id']}-全真夜记-雨点与屏息"
-    assert latest["summary"].startswith("窗外的风沿着机房的壳体慢慢滑过去")
+    assert latest["summary"].startswith("我听见窗外的风沿着机房的壳体慢慢滑过去")
 
 
 def test_generation_skips_generic_site_title_heading(monkeypatch, authed_client):

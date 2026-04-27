@@ -45,6 +45,7 @@ function makeConfig() {
     'qa.max_length': { value: '5000', category: 'qa', encrypted: false },
     'qa.duplicate_threshold': { value: '0.85', category: 'qa', encrypted: false },
     'qa.required_language': { value: 'zh', category: 'qa', encrypted: false },
+    'qa.required_perspective': { value: 'first_person', category: 'qa', encrypted: false },
     'qa.forbidden_words': { value: '[]', category: 'qa', encrypted: false },
     'qa.template_phrases': { value: '[]', category: 'qa', encrypted: false },
     'webhook.auth_mode': { value: 'bearer', category: 'webhook', encrypted: false },
@@ -101,6 +102,7 @@ describe('Settings view', () => {
     expect(wrapper.text()).toContain('大脑接入（LLM）')
     expect(wrapper.text()).toContain('记忆检索（Embedding）')
     expect(wrapper.text()).toContain('目标语言')
+    expect(wrapper.text()).toContain('叙事人称')
     expect(wrapper.text()).toContain('测试大脑接入')
     expect(wrapper.text()).toContain('测试记忆检索')
     expect(

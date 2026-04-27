@@ -211,18 +211,21 @@ class GenerationOrchestrator:
                         duplicate_post_id=qa_result.get("duplicate_post_id"),
                         duplicate_score=qa_result.get("duplicate_score"),
                         duplicate_review_required=qa_result.get("duplicate_review_required", False),
+                        perspective_ok=bool(qa_result.get("perspective_ok", True)),
+                        perspective_reason=qa_result.get("perspective_reason", ""),
                         integrity_ok=bool(qa_result.get("integrity_ok", True)),
                         integrity_reason=qa_result.get("integrity_reason", ""),
                     )
                     await self.db.commit()
 
-                    if not qa_result.get("integrity_ok", True):
+                    if not qa_result.get("integrity_ok", True) or not qa_result.get("perspective_ok", True):
+                        reason, error_code = self._qa_rewrite_failure(qa_result)
                         if task.retry_count >= task.max_retries:
                             return await self._transition(
                                 task,
                                 "failed",
-                                error=qa_result.get("integrity_reason") or "invalid generated content",
-                                error_code="invalid_model_output",
+                                error=reason,
+                                error_code=error_code,
                             )
                         task.retry_count += 1
                         await self._transition(task, "rewrite_pending")
@@ -340,15 +343,14 @@ class GenerationOrchestrator:
         if task.status != "waiting_human_signoff":
             raise InvalidTransition(f"task {task.id} is not waiting_human_signoff")
         qa_result = json_loads(task.qa_result, {})
-        if not qa_result.get("integrity_ok", True):
-            self._append_trace(
-                task, "approval_blocked", reason=qa_result.get("integrity_reason", "invalid_model_output")
-            )
+        if not qa_result.get("integrity_ok", True) or not qa_result.get("perspective_ok", True):
+            reason, error_code = self._qa_rewrite_failure(qa_result)
+            self._append_trace(task, "approval_blocked", reason=reason)
             return await self._transition(
                 task,
                 "failed",
-                error=qa_result.get("integrity_reason") or "invalid generated content",
-                error_code="invalid_model_output",
+                error=reason,
+                error_code=error_code,
             )
         await self._transition(task, "ready_to_publish")
         if not publish_immediately or not task.post_id:
@@ -532,8 +534,9 @@ class GenerationOrchestrator:
                 {
                     "role": "system",
                     "content": (
-                        f"You are writing as persona {persona.name}."
-                        " Stay restrained, concrete, and in character."
+                        f"以人格 {persona.name} 的第一人称写作。"
+                        "正文叙述者只能自称“我”或人格设定中的自称，禁止用“你”“您”“你们”作为叙事视角。"
+                        "保持克制、具体、人格一致。"
                     ),
                 },
                 {"role": "user", "content": prompt},
@@ -627,12 +630,17 @@ class GenerationOrchestrator:
         integrity_reason = qa_result.get("integrity_reason", "")
         if integrity_reason:
             failed.append(f"integrity:{integrity_reason}")
+        perspective_reason = qa_result.get("perspective_reason", "")
+        if perspective_reason:
+            failed.append(f"perspective:{perspective_reason}")
         issues = ", ".join(failed) if failed else "generic_quality"
         return (
             f"Previous draft:\n{content}\n\n"
             f"Issues to fix: {issues}.\n"
             "Rewrite the draft from scratch: keep the same persona, but shift to "
-            "a new scene, new concrete action, and new narrative progression."
+            "a new scene, new concrete action, and new narrative progression. "
+            "Use strict first-person narration in the article body: write as 我/属下, "
+            "and do not address the reader, 王爷, or any narration target as 你/您/你们."
         )
 
     def _build_truncation_retry_prompt(self, prompt: str, content: str) -> str:
@@ -641,10 +649,18 @@ class GenerationOrchestrator:
             "上一版生成在模型长度上限处被截断，不能使用。请重新写一版完整稿：\n"
             "- 控制篇幅，避免铺得过长。\n"
             "- 必须有明确收束，最后一句必须自然结束。\n"
+            "- 必须保持第一人称正文，自称“我”或“属下”，不得写成“你/您/你们”。\n"
             "- 不要续写上一版，不要提到截断或重试。\n"
             f"上一版截断结尾参考：{self._preview_text(content[-260:])}\n"
             "重新输出完整 Markdown 正文，不要解释。"
         )
+
+    def _qa_rewrite_failure(self, qa_result: dict) -> tuple[str, str]:
+        if not qa_result.get("integrity_ok", True):
+            return qa_result.get("integrity_reason") or "invalid generated content", "invalid_model_output"
+        if not qa_result.get("perspective_ok", True):
+            return qa_result.get("perspective_reason") or "first person perspective required", "perspective_drift"
+        return "generated content needs rewrite", "qa_rewrite_required"
 
     def _append_trace(self, task: GenerationTask, stage: str, **detail: object) -> None:
         trace = json_loads(task.trace_json, [])

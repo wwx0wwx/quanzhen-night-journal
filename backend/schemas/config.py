@@ -111,6 +111,9 @@ def _validate_config_value(key: str, value: str) -> None:
     elif key == "qa.required_language":
         if stripped not in {"zh", "en", "any"}:
             raise ValueError("qa.required_language must be one of zh, en, any")
+    elif key == "qa.required_perspective":
+        if stripped not in {"first_person", "any"}:
+            raise ValueError("qa.required_perspective must be one of first_person, any")
     elif key == "webhook.auth_mode":
         if stripped not in {"bearer", "hmac"}:
             raise ValueError("webhook.auth_mode must be bearer or hmac")

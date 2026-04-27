@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +12,11 @@ from backend.models import Post, PostVector
 from backend.utils.serde import json_dumps, json_loads
 
 logger = logging.getLogger(__name__)
+
+FIRST_PERSON_MARKERS = ("我", "属下", "在下", "末将", "卑职", "小人", "奴婢")
+SECOND_PERSON_MARKERS = ("你", "您")
+ENGLISH_FIRST_PERSON_RE = re.compile(r"\b(i|me|my|mine|we|us|our|ours)\b", re.IGNORECASE)
+ENGLISH_SECOND_PERSON_RE = re.compile(r"\b(you|your|yours)\b", re.IGNORECASE)
 
 
 class QAEngine:
@@ -24,6 +30,7 @@ class QAEngine:
         forbidden_ok = await self._check_forbidden(content)
         template_ok = await self._check_template_phrases(content)
         language_ok = await self._check_language(content)
+        perspective_ok, perspective_reason = await self._check_perspective(content)
         duplicate_result = await self._check_duplicate(content, persona_id)
         duplicate_ok = duplicate_result["duplicate_ok"]
         integrity_ok, integrity_reason = self._check_content_integrity(content)
@@ -32,6 +39,7 @@ class QAEngine:
             forbidden_ok,
             template_ok,
             language_ok,
+            perspective_ok,
             duplicate_ok,
             integrity_ok,
             duplicate_result["duplicate_review_required"],
@@ -41,6 +49,8 @@ class QAEngine:
             "forbidden_ok": forbidden_ok,
             "template_ok": template_ok,
             "language_ok": language_ok,
+            "perspective_ok": perspective_ok,
+            "perspective_reason": perspective_reason,
             "duplicate_ok": duplicate_ok,
             "duplicate_score": duplicate_result["duplicate_score"],
             "duplicate_post_id": duplicate_result["duplicate_post_id"],
@@ -56,6 +66,7 @@ class QAEngine:
                     forbidden_ok,
                     template_ok,
                     language_ok,
+                    perspective_ok,
                     duplicate_ok,
                     integrity_ok,
                     not duplicate_result["duplicate_review_required"],
@@ -113,6 +124,31 @@ class QAEngine:
         if required == "en":
             return latin_count >= 20 and latin_count >= cjk_count * 2
         return True
+
+    async def _check_perspective(self, content: str) -> tuple[bool, str]:
+        required = (await self.config_store.get("qa.required_perspective", "first_person") or "first_person").strip()
+        if required == "any":
+            return True, ""
+
+        body = self._body_text(content)
+        second_person_count = sum(body.count(marker) for marker in SECOND_PERSON_MARKERS)
+        if second_person_count or ENGLISH_SECOND_PERSON_RE.search(body):
+            return False, "second_person_pronoun_detected"
+
+        first_person_count = sum(body.count(marker) for marker in FIRST_PERSON_MARKERS)
+        if first_person_count == 0 and not ENGLISH_FIRST_PERSON_RE.search(body):
+            return False, "first_person_marker_missing"
+
+        return True, ""
+
+    def _body_text(self, content: str) -> str:
+        lines = content.splitlines()
+        if lines and lines[0].strip() == "---":
+            for index, line in enumerate(lines[1:], start=1):
+                if line.strip() == "---":
+                    lines = lines[index + 1 :]
+                    break
+        return "\n".join(line for line in lines if not line.lstrip().startswith("#"))
 
     async def _check_duplicate(self, content: str, persona_id: int) -> dict:
         threshold = float(await self.config_store.get("qa.duplicate_threshold", "0.85") or 0.85)
@@ -194,6 +230,7 @@ class QAEngine:
         forbidden_ok: bool,
         template_ok: bool,
         language_ok: bool,
+        perspective_ok: bool,
         duplicate_ok: bool,
         integrity_ok: bool,
         duplicate_review_required: bool,
@@ -201,6 +238,8 @@ class QAEngine:
         if not integrity_ok:
             return "high"
         if not language_ok:
+            return "high"
+        if not perspective_ok:
             return "high"
         if duplicate_review_required:
             return "high"

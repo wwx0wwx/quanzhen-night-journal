@@ -120,6 +120,12 @@ def test_config_update_rejects_invalid_json_arrays_and_language(authed_client):
     )
     assert bad_language.status_code == 422
 
+    bad_perspective = authed_client.put(
+        "/api/config",
+        json={"items": [{"key": "qa.required_perspective", "value": "second_person", "category": "qa"}]},
+    )
+    assert bad_perspective.status_code == 422
+
 
 def test_cloudflare_proxy_domain_can_be_allowed(monkeypatch, authed_client):
     async def _inner() -> None:

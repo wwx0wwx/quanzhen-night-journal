@@ -21,7 +21,7 @@ class LLMAdapter:
         messages: list[dict[str, str]],
         temperature: float = 0.7,
         max_tokens: int = 900,
-    ) -> tuple[str, dict[str, int], int]:
+    ) -> tuple[str, dict[str, Any], int]:
         settings = get_settings()
         started = time.perf_counter()
 
