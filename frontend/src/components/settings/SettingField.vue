@@ -1,5 +1,8 @@
 <template>
-  <label class="field" :class="{ wide: field.wide, 'field-boolean': field.type === 'boolean' }">
+  <label
+    class="field"
+    :class="{ wide: field.wide, 'field-boolean': field.type === 'boolean' }"
+  >
     <div class="field-head">
       <span class="setting-field-label">{{ field.label }}</span>
     </div>
@@ -12,7 +15,7 @@
             :disabled="isDisabled"
             type="checkbox"
             @change="updateBoolean"
-          />
+          >
           <span>{{ Boolean(modelValue) ? '已启用' : '未启用' }}</span>
         </label>
       </div>
@@ -37,7 +40,7 @@
           :type="showSecret ? 'text' : 'password'"
           :value="secretDisplayValue"
           @input="updateText"
-        />
+        >
         <button
           class="btn ghost btn-small"
           type="button"
@@ -50,24 +53,70 @@
     </template>
 
     <template v-else-if="field.type === 'schedule'">
-      <div v-if="scheduleMode === 'visual'" class="schedule-wrap">
-        <select :disabled="isDisabled" :value="scheduleFreq" @change="onScheduleFreqChange">
-          <option v-for="opt in FREQ_LABELS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+      <div
+        v-if="scheduleMode === 'visual'"
+        class="schedule-wrap"
+      >
+        <select
+          :disabled="isDisabled"
+          :value="scheduleFreq"
+          @change="onScheduleFreqChange"
+        >
+          <option
+            v-for="opt in FREQ_LABELS"
+            :key="opt.value"
+            :value="opt.value"
+          >{{ opt.label }}</option>
         </select>
-        <input type="time" :disabled="isDisabled" :value="scheduleTime" @input="onScheduleTimeChange" />
-        <button class="btn ghost btn-small" type="button" @click="scheduleMode = 'text'">编辑表达式</button>
+        <input
+          type="time"
+          :disabled="isDisabled"
+          :value="scheduleTime"
+          @input="onScheduleTimeChange"
+        >
+        <button
+          class="btn ghost btn-small"
+          type="button"
+          @click="scheduleMode = 'text'"
+        >编辑表达式</button>
       </div>
-      <div v-else class="schedule-wrap">
+      <div
+        v-else
+        class="schedule-wrap"
+      >
         <input
           :disabled="isDisabled"
           :placeholder="field.placeholder || ''"
           type="text"
           :value="stringValue"
           @input="updateText"
-        />
-        <button class="btn ghost btn-small" type="button" @click="tryVisualMode">切换选择器</button>
+        >
+        <button
+          class="btn ghost btn-small"
+          type="button"
+          @click="tryVisualMode"
+        >切换选择器</button>
       </div>
-      <small v-if="cronDescription" class="field-help cron-hint">{{ cronDescription }}</small>
+      <small
+        v-if="cronDescription"
+        class="field-help cron-hint"
+      >{{ cronDescription }}</small>
+    </template>
+
+    <template v-else-if="field.type === 'select'">
+      <select
+        :disabled="isDisabled"
+        :value="stringValue"
+        @change="updateText"
+      >
+        <option
+          v-for="option in field.options || []"
+          :key="option.value"
+          :value="option.value"
+        >
+          {{ option.label }}
+        </option>
+      </select>
     </template>
 
     <template v-else>
@@ -81,12 +130,22 @@
         :type="inputType"
         :value="stringValue"
         @input="updateText"
-      />
+      >
     </template>
 
-    <div class="field-help-list" v-if="helpLines.length || showMaskHint">
-      <small v-for="line in helpLines" :key="line" class="field-help">{{ line }}</small>
-      <small v-if="showMaskHint" class="field-help">保留 `******` 表示沿用当前密钥，不会覆盖后端已保存值。</small>
+    <div
+      v-if="helpLines.length || showMaskHint"
+      class="field-help-list"
+    >
+      <small
+        v-for="line in helpLines"
+        :key="line"
+        class="field-help"
+      >{{ line }}</small>
+      <small
+        v-if="showMaskHint"
+        class="field-help"
+      >保留 `******` 表示沿用当前密钥，不会覆盖后端已保存值。</small>
     </div>
   </label>
 </template>
@@ -125,7 +184,9 @@ const inputType = computed(() => {
   return 'text'
 })
 const stringValue = computed(() => (props.modelValue ?? '').toString())
-const showMaskHint = computed(() => props.field.type === 'secret' && stringValue.value === '******' && !showSecret.value)
+const showMaskHint = computed(
+  () => props.field.type === 'secret' && stringValue.value === '******' && !showSecret.value,
+)
 const helpLines = computed(() => {
   if (!props.field.help) return []
   return Array.isArray(props.field.help) ? props.field.help : [props.field.help]

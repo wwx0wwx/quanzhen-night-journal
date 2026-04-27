@@ -4,6 +4,11 @@ defaultContentLanguage = "zh"
 title = "全真夜记"
 theme = "PaperMod"
 hasCJKLanguage = true
+mainSections = ["posts"]
+
+[services]
+[services.rss]
+limit = 20
 
 [params]
 ShowReadingTime = true
@@ -20,8 +25,8 @@ description = "记录深夜写作、自动生成与人工修订后的夜记。"
 text = "全真夜记"
 
 [params.homeInfoParams]
-Title = "这个博客是什么"
-Content = "记录深夜写作、自动生成与人工修订后的夜记。"
+Title = "全真夜记"
+Content = "记录深夜写作、自动生成与人工修订后的夜记。这里不是批量生成内容，而是由人格、记忆、感知和人工护栏共同约束的持续写作。"
 
 [outputs]
 home = ["HTML", "RSS", "JSON"]

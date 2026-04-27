@@ -1,11 +1,20 @@
 <template>
   <div class="shell">
     <Navbar v-if="showChrome" />
-    <main class="view-shell" :class="{ solo: !showChrome }">
+    <main
+      class="view-shell"
+      :class="{ solo: !showChrome }"
+    >
       <AppErrorBoundary>
         <router-view v-slot="{ Component }">
-          <Transition name="page" mode="out-in">
-            <component :is="Component" :key="$route.path" />
+          <Transition
+            name="page"
+            mode="out-in"
+          >
+            <component
+              :is="Component"
+              :key="$route.path"
+            />
           </Transition>
         </router-view>
       </AppErrorBoundary>
@@ -27,7 +36,9 @@ const showChrome = computed(() => !['/admin/login', '/admin/setup'].includes(rou
 <style>
 .page-enter-active,
 .page-leave-active {
-  transition: opacity 0.22s ease, transform 0.22s ease;
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
 }
 
 .page-enter-from {

@@ -17,33 +17,61 @@
     <template v-else>
       <div class="hero personas-hero">
         <div>
-          <div class="hero-kicker">Persona Register</div>
+          <div class="hero-kicker">
+            Persona Register
+          </div>
           <h1>人格设定（写作风格）</h1>
-          <p>维护不同人格设定、默认人格，以及对应的语言习惯和感知词典。每一张人格卡都应该像一份可长期复用的夜间角色档案。</p>
+          <p>
+            维护不同人格设定、默认人格，以及对应的语言习惯和感知词典。每一张人格卡都应该像一份可长期复用的夜间角色档案。
+          </p>
         </div>
         <div class="personas-hero-actions">
-          <div class="muted">默认人格决定当前系统主要写作口吻，其余人格更适合作为分支风格或专题语气。</div>
-          <RouterLink class="btn primary" to="/admin/personas/new">新建人格设定</RouterLink>
+          <div class="muted">
+            默认人格决定当前系统主要写作口吻，其余人格更适合作为分支风格或专题语气。
+          </div>
+          <RouterLink
+            class="btn primary"
+            to="/admin/personas/new"
+          >
+            新建人格设定
+          </RouterLink>
         </div>
       </div>
 
-      <div v-if="actionError" class="status-banner error">{{ actionError }}</div>
+      <div
+        v-if="actionError"
+        class="status-banner error"
+      >
+        {{ actionError }}
+      </div>
 
       <div class="card-row">
         <div class="metric">
-          <div class="muted">人格总数</div>
+          <div class="muted">
+            人格总数
+          </div>
           <strong>{{ personas.length }}</strong>
-          <div class="muted">包含当前默认人格在内的全部已建档风格。</div>
+          <div class="muted">
+            包含当前默认人格在内的全部已建档风格。
+          </div>
         </div>
         <div class="metric">
-          <div class="muted">启用中</div>
+          <div class="muted">
+            启用中
+          </div>
           <strong>{{ activeCount }}</strong>
-          <div class="muted">仍可被编辑、切换和用于生成任务的人格卡。</div>
+          <div class="muted">
+            仍可被编辑、切换和用于生成任务的人格卡。
+          </div>
         </div>
         <div class="metric">
-          <div class="muted">默认人格</div>
+          <div class="muted">
+            默认人格
+          </div>
           <strong>{{ defaultPersonaName }}</strong>
-          <div class="muted">默认人格会优先参与写作与记忆读取。</div>
+          <div class="muted">
+            默认人格会优先参与写作与记忆读取。
+          </div>
         </div>
       </div>
 
@@ -53,7 +81,10 @@
         description="当前只有默认人格。可以先新建一个人格设定，再按写作需求切换使用。"
       />
 
-      <div v-else class="list persona-list">
+      <div
+        v-else
+        class="list persona-list"
+      >
         <div
           v-for="persona in personas"
           :key="persona.id"
@@ -61,14 +92,24 @@
         >
           <div class="split persona-card-head">
             <div class="persona-card-title">
-              <div class="persona-card-index">#{{ persona.id }}</div>
+              <div class="persona-card-index">
+                #{{ persona.id }}
+              </div>
               <strong>{{ persona.name }}</strong>
-              <div class="muted">{{ persona.description || '暂无描述' }}</div>
+              <div class="muted">
+                {{ persona.description || '暂无描述' }}
+              </div>
             </div>
             <div class="button-row">
-              <span class="tag" v-if="persona.is_default">默认</span>
+              <span
+                v-if="persona.is_default"
+                class="tag"
+              >默认</span>
               <span class="tag">{{ persona.structure_preference }}</span>
-              <span class="tag" :class="persona.is_active ? 'tag-success' : 'tag-warning'">
+              <span
+                class="tag"
+                :class="persona.is_active ? 'tag-success' : 'tag-warning'"
+              >
                 {{ persona.is_active ? '启用中' : '已停用' }}
               </span>
             </div>
@@ -90,7 +131,12 @@
           </div>
 
           <div class="button-row">
-            <RouterLink class="btn ghost btn-small" :to="`/admin/personas/${persona.id}`">编辑</RouterLink>
+            <RouterLink
+              class="btn ghost btn-small"
+              :to="`/admin/personas/${persona.id}`"
+            >
+              编辑
+            </RouterLink>
             <button
               class="btn ghost btn-small"
               :disabled="isDeleting === persona.id || persona.is_default"
@@ -124,19 +170,23 @@ const activeCount = computed(() => personas.value.filter((item) => item.is_activ
 const defaultPersonaName = computed(() => personas.value.find((item) => item.is_default)?.name || '未设')
 
 function structureLabel(value) {
-  return {
-    short: '短篇',
-    medium: '中篇',
-    long: '长篇',
-  }[value] || '未设'
+  return (
+    {
+      short: '短篇',
+      medium: '中篇',
+      long: '长篇',
+    }[value] || '未设'
+  )
 }
 
 function intensityLabel(value) {
-  return {
-    calm: '克制',
-    moderate: '适中',
-    intense: '强烈',
-  }[value] || '未设'
+  return (
+    {
+      calm: '克制',
+      moderate: '适中',
+      intense: '强烈',
+    }[value] || '未设'
+  )
 }
 
 function lexiconCount(persona) {

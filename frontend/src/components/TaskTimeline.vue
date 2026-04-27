@@ -2,23 +2,39 @@
   <div class="panel panel-pad timeline-card">
     <div class="timeline-head">
       <div>
-        <div class="hero-kicker">Execution Ledger</div>
-        <div class="section-title">任务轨迹</div>
+        <div class="hero-kicker">
+          Execution Ledger
+        </div>
+        <div class="section-title">
+          任务轨迹
+        </div>
       </div>
-      <div class="muted">从排队到发布，按顺序保留每一段状态变化。</div>
+      <div class="muted">
+        从排队到发布，按顺序保留每一段状态变化。
+      </div>
     </div>
 
     <div class="list timeline-list">
-      <div v-for="step in steps" :key="step.name" class="timeline-step" :class="step.state">
+      <div
+        v-for="step in steps"
+        :key="step.name"
+        class="timeline-step"
+        :class="step.state"
+      >
         <div class="timeline-node">
           <span class="timeline-index">{{ step.index }}</span>
         </div>
         <div class="list-item timeline-card-body">
           <div class="timeline-heading">
             <strong>{{ step.label }}</strong>
-            <span class="tag" :class="step.tagClass">{{ step.stateLabel }}</span>
+            <span
+              class="tag"
+              :class="step.tagClass"
+            >{{ step.stateLabel }}</span>
           </div>
-          <div class="muted">{{ step.description }}</div>
+          <div class="muted">
+            {{ step.description }}
+          </div>
         </div>
       </div>
     </div>
@@ -103,7 +119,7 @@ const steps = computed(() => {
 }
 
 .timeline-step::before {
-  content: "";
+  content: '';
   position: absolute;
   left: 18px;
   top: 38px;
@@ -152,9 +168,7 @@ const steps = computed(() => {
 
 .timeline-step.current .timeline-node {
   border-color: var(--line-strong);
-  background:
-    radial-gradient(circle, var(--accent-glow), transparent 68%),
-    var(--panel-strong);
+  background: radial-gradient(circle, var(--accent-glow), transparent 68%), var(--panel-strong);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 0 20px var(--accent-glow);

@@ -69,8 +69,8 @@ async def _provider_status(
         "missing": missing,
     }
     if not missing and probe_external:
-        status["reachability"] = await _probe_http_endpoint(base_url_value)
-        if status["reachability"]["status"] == "error":
+        status["reachability"] = await _probe_provider_endpoint(base_url_value, api_key_value)
+        if status["reachability"]["status"] in {"error", "warning"}:
             status["status"] = "warning"
     else:
         status["reachability"] = {"status": "skipped" if not probe_external else "not_configured"}
@@ -104,11 +104,45 @@ async def _probe_http_endpoint(base_url: str) -> dict[str, object]:
     try:
         async with httpx.AsyncClient(timeout=httpx.Timeout(3.0), follow_redirects=True) as client:
             response = await client.get(url)
-        if response.status_code >= 500:
+        if 200 <= response.status_code < 400:
+            return {"status": "ok", "http_status": response.status_code}
+        if response.status_code == 429:
+            return {"status": "warning", "http_status": response.status_code, "detail": "rate_limited"}
+        if response.status_code >= 400:
             return {"status": "error", "http_status": response.status_code}
-        return {"status": "ok", "http_status": response.status_code}
+        return {"status": "warning", "http_status": response.status_code}
     except httpx.RequestError as exc:
         return {"status": "error", "detail": exc.__class__.__name__}
+
+
+async def _probe_provider_endpoint(base_url: str, api_key: str) -> dict[str, object]:
+    url = f"{base_url.rstrip('/')}/models"
+    headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(3.0), follow_redirects=True) as client:
+            response = await client.get(url, headers=headers)
+        if 200 <= response.status_code < 300:
+            return {"status": "ok", "http_status": response.status_code, "endpoint": "/models"}
+        if response.status_code == 429:
+            return {
+                "status": "warning",
+                "http_status": response.status_code,
+                "endpoint": "/models",
+                "detail": "rate_limited",
+            }
+        detail_by_status = {
+            401: "auth_failed",
+            403: "auth_forbidden",
+            404: "models_endpoint_not_found",
+        }
+        return {
+            "status": "error",
+            "http_status": response.status_code,
+            "endpoint": "/models",
+            "detail": detail_by_status.get(response.status_code, "provider_probe_failed"),
+        }
+    except httpx.RequestError as exc:
+        return {"status": "error", "endpoint": "/models", "detail": exc.__class__.__name__}
 
 
 async def _database_check(db: AsyncSession) -> dict[str, object]:

@@ -59,7 +59,10 @@ describe('Memories and PersonaEdit views', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('第 1 / 2 页，共 25 条')
-    await wrapper.findAll('button').find((button) => button.text().includes('下一页')).trigger('click')
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('下一页'))
+      .trigger('click')
     await flushPromises()
 
     expect(api.get).toHaveBeenCalledWith('/memories', { params: { page: 2, page_size: 20 } })

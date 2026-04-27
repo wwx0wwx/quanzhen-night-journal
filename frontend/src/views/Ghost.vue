@@ -2,24 +2,51 @@
   <section class="stack">
     <div class="hero ghost-hero">
       <div>
-        <div class="hero-kicker">Archive Transfer</div>
+        <div class="hero-kicker">
+          Archive Transfer
+        </div>
         <h1>迁移与备份</h1>
         <p>管理 .ghost 导出、预览和导入，明确看到文件、冲突和恢复结果。这里更像档案转运台，而不是单纯的上传窗口。</p>
       </div>
       <div class="ghost-hero-actions">
-        <div class="muted">建议在较大导入前先做一次导出，保留当前状态的回退包。</div>
-        <button class="btn primary" type="button" :disabled="isExporting" @click="exportGhost">
+        <div class="muted">
+          建议在较大导入前先做一次导出，保留当前状态的回退包。
+        </div>
+        <button
+          class="btn primary"
+          type="button"
+          :disabled="isExporting"
+          @click="exportGhost"
+        >
           {{ isExporting ? '导出中…' : '导出 .ghost' }}
         </button>
-        <button class="btn ghost" type="button" :disabled="isBackingUp" @click="backupDatabase">
+        <button
+          class="btn ghost"
+          type="button"
+          :disabled="isBackingUp"
+          @click="backupDatabase"
+        >
           {{ isBackingUp ? '备份中…' : '备份数据库' }}
         </button>
       </div>
     </div>
 
-    <div class="stack" v-if="actionError || actionSuccess">
-      <div v-if="actionError" class="status-banner error">{{ actionError }}</div>
-      <div v-if="actionSuccess" class="status-banner success">{{ actionSuccess }}</div>
+    <div
+      v-if="actionError || actionSuccess"
+      class="stack"
+    >
+      <div
+        v-if="actionError"
+        class="status-banner error"
+      >
+        {{ actionError }}
+      </div>
+      <div
+        v-if="actionSuccess"
+        class="status-banner success"
+      >
+        {{ actionSuccess }}
+      </div>
     </div>
 
     <AppLoading
@@ -36,22 +63,46 @@
       @retry="loadExports"
     />
 
-    <div v-else class="grid two">
+    <div
+      v-else
+      class="grid two"
+    >
       <div class="panel panel-pad stack">
-        <div class="section-title">上传预览 / 导入</div>
+        <div class="section-title">
+          上传预览 / 导入
+        </div>
 
         <label class="field">
           <span>选择 .ghost 文件</span>
-          <input type="file" accept=".ghost" @change="onFileChange" />
+          <input
+            type="file"
+            accept=".ghost"
+            @change="onFileChange"
+          >
         </label>
 
-        <div v-if="selectedFileName" class="muted">当前文件：{{ selectedFileName }}</div>
+        <div
+          v-if="selectedFileName"
+          class="muted"
+        >
+          当前文件：{{ selectedFileName }}
+        </div>
 
         <div class="button-row">
-          <button class="btn ghost" type="button" :disabled="!selectedFile || isPreviewing" @click="previewGhost">
+          <button
+            class="btn ghost"
+            type="button"
+            :disabled="!selectedFile || isPreviewing"
+            @click="previewGhost"
+          >
             {{ isPreviewing ? '预览中…' : '预览' }}
           </button>
-          <button class="btn primary" type="button" :disabled="!selectedFile || isImporting" @click="importGhost">
+          <button
+            class="btn primary"
+            type="button"
+            :disabled="!selectedFile || isImporting"
+            @click="importGhost"
+          >
             {{ isImporting ? '导入中…' : '确认导入' }}
           </button>
         </div>
@@ -64,29 +115,41 @@
         />
 
         <template v-else>
-          <div class="status-banner info">预览文件：{{ preview.filename }}</div>
+          <div class="status-banner info">
+            预览文件：{{ preview.filename }}
+          </div>
 
           <div class="card-row">
             <div class="metric">
-              <div class="muted">人格</div>
+              <div class="muted">
+                人格
+              </div>
               <strong>{{ preview.manifest?.counts?.personas ?? 0 }}</strong>
             </div>
             <div class="metric">
-              <div class="muted">记忆</div>
+              <div class="muted">
+                记忆
+              </div>
               <strong>{{ preview.manifest?.counts?.memories ?? 0 }}</strong>
             </div>
             <div class="metric">
-              <div class="muted">文章</div>
+              <div class="muted">
+                文章
+              </div>
               <strong>{{ preview.manifest?.counts?.posts ?? 0 }}</strong>
             </div>
             <div class="metric">
-              <div class="muted">向量</div>
+              <div class="muted">
+                向量
+              </div>
               <strong>{{ vectorCount }}</strong>
             </div>
           </div>
 
           <div class="panel panel-pad ghost-preview-box">
-            <div class="section-title">Manifest</div>
+            <div class="section-title">
+              Manifest
+            </div>
             <dl class="meta-grid">
               <div>
                 <dt>版本</dt>
@@ -100,17 +163,28 @@
           </div>
 
           <div class="panel panel-pad ghost-preview-box">
-            <div class="section-title">冲突检查</div>
+            <div class="section-title">
+              冲突检查
+            </div>
             <AppEmpty
               v-if="!preview.conflicts?.length"
               inline
               title="没有发现冲突"
               description="当前包中的人格名和文章 slug 没有与现有数据重复。"
             />
-            <div v-else class="list">
-              <div v-for="item in preview.conflicts" :key="item" class="list-item">
+            <div
+              v-else
+              class="list"
+            >
+              <div
+                v-for="item in preview.conflicts"
+                :key="item"
+                class="list-item"
+              >
                 <strong>{{ item }}</strong>
-                <div class="muted">导入时会保留现有数据，不会强制覆盖。</div>
+                <div class="muted">
+                  导入时会保留现有数据，不会强制覆盖。
+                </div>
               </div>
             </div>
           </div>
@@ -120,10 +194,16 @@
       <div class="panel panel-pad stack">
         <div class="split">
           <div>
-            <div class="section-title">历史导出</div>
-            <div class="muted">保留最近生成的 .ghost 包，可直接下载验证。</div>
+            <div class="section-title">
+              历史导出
+            </div>
+            <div class="muted">
+              保留最近生成的 .ghost 包，可直接下载验证。
+            </div>
           </div>
-          <div class="muted">{{ exports.length }} 个文件</div>
+          <div class="muted">
+            {{ exports.length }} 个文件
+          </div>
         </div>
 
         <AppEmpty
@@ -133,16 +213,33 @@
           description="先执行一次导出，系统会在这里列出可下载的 .ghost 文件。"
         />
 
-        <div v-else class="list">
-          <div v-for="item in exports" :key="item.filename" class="list-item stack">
+        <div
+          v-else
+          class="list"
+        >
+          <div
+            v-for="item in exports"
+            :key="item.filename"
+            class="list-item stack"
+          >
             <div class="split">
-              <div class="stack" style="gap: 6px;">
+              <div
+                class="stack"
+                style="gap: 6px"
+              >
                 <strong>{{ item.filename }}</strong>
-                <div class="muted">{{ formatBytes(item.size) }}</div>
-                <div class="muted">{{ item.path }}</div>
+                <div class="muted">
+                  {{ formatBytes(item.size) }}
+                </div>
+                <div class="muted">
+                  {{ item.path }}
+                </div>
               </div>
               <div class="button-row">
-                <a class="btn ghost btn-small" :href="downloadHref(item.filename)">下载</a>
+                <a
+                  class="btn ghost btn-small"
+                  :href="downloadHref(item.filename)"
+                >下载</a>
                 <button
                   class="btn ghost btn-small"
                   type="button"
@@ -158,10 +255,16 @@
 
         <div class="split">
           <div>
-            <div class="section-title">数据库快照</div>
-            <div class="muted">用于快速回滚 SQLite 运行态，不替代 `.ghost` 逻辑导出。</div>
+            <div class="section-title">
+              数据库快照
+            </div>
+            <div class="muted">
+              用于快速回滚 SQLite 运行态，不替代 `.ghost` 逻辑导出。
+            </div>
           </div>
-          <div class="muted">{{ databaseBackups.length }} 个文件</div>
+          <div class="muted">
+            {{ databaseBackups.length }} 个文件
+          </div>
         </div>
 
         <AppEmpty
@@ -171,16 +274,33 @@
           description="执行一次“备份数据库”后，这里会出现可下载的 SQLite 快照。"
         />
 
-        <div v-else class="list">
-          <div v-for="item in databaseBackups" :key="item.filename" class="list-item stack">
+        <div
+          v-else
+          class="list"
+        >
+          <div
+            v-for="item in databaseBackups"
+            :key="item.filename"
+            class="list-item stack"
+          >
             <div class="split">
-              <div class="stack" style="gap: 6px;">
+              <div
+                class="stack"
+                style="gap: 6px"
+              >
                 <strong>{{ item.filename }}</strong>
-                <div class="muted">{{ formatBytes(item.size) }}</div>
-                <div class="muted">{{ item.path }}</div>
+                <div class="muted">
+                  {{ formatBytes(item.size) }}
+                </div>
+                <div class="muted">
+                  {{ item.path }}
+                </div>
               </div>
               <div class="button-row">
-                <a class="btn ghost btn-small" :href="downloadDatabaseBackupHref(item.filename)">下载</a>
+                <a
+                  class="btn ghost btn-small"
+                  :href="downloadDatabaseBackupHref(item.filename)"
+                >下载</a>
               </div>
             </div>
           </div>

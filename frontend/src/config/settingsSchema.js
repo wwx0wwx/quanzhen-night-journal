@@ -57,9 +57,10 @@ export const settingsSections = [
         type: 'number',
         placeholder: '5210',
         defaultValue: '5210',
+        readonly: true,
         help: [
-          '控制 Caddy 监听的管理面板端口，修改后自动重载。',
-          'Docker 部署需同步修改 docker-compose.yml 端口映射并重启容器。',
+          'Docker 部署下端口映射由 docker-compose.yml 控制，后台内不可直接修改。',
+          '如需变更，请先调整端口映射并重启容器，避免当前后台入口失效。',
         ],
         min: 1024,
         max: 65535,
@@ -84,10 +85,7 @@ export const settingsSections = [
         label: '访问密钥（API Key）',
         type: 'secret',
         placeholder: 'sk-...',
-        help: [
-          '填写模型服务分配给你的密钥。',
-          '保留 ****** 表示不修改当前密钥。',
-        ],
+        help: ['填写模型服务分配给你的密钥。', '保留 ****** 表示不修改当前密钥。'],
       },
       {
         key: 'llm.model_id',
@@ -115,10 +113,7 @@ export const settingsSections = [
         label: '访问密钥（API Key）',
         type: 'secret',
         placeholder: 'sk-...',
-        help: [
-          '填写向量模型服务的密钥。',
-          '保留 ****** 表示不修改当前密钥。',
-        ],
+        help: ['填写向量模型服务的密钥。', '保留 ****** 表示不修改当前密钥。'],
       },
       {
         key: 'embedding.model_id',
@@ -227,6 +222,19 @@ export const settingsSections = [
         min: 0,
         max: 1,
         step: 0.01,
+      },
+      {
+        key: 'qa.required_language',
+        label: '目标语言',
+        type: 'select',
+        placeholder: 'zh',
+        defaultValue: 'zh',
+        options: [
+          { value: 'zh', label: '中文' },
+          { value: 'en', label: '英文' },
+          { value: 'any', label: '不限制' },
+        ],
+        help: '生成正文若偏离目标语言，会进入高风险人工签发。',
       },
       {
         key: 'qa.forbidden_words',

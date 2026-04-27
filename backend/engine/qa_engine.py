@@ -23,6 +23,7 @@ class QAEngine:
         length_ok = await self._check_length(content)
         forbidden_ok = await self._check_forbidden(content)
         template_ok = await self._check_template_phrases(content)
+        language_ok = await self._check_language(content)
         duplicate_result = await self._check_duplicate(content, persona_id)
         duplicate_ok = duplicate_result["duplicate_ok"]
         integrity_ok, integrity_reason = self._check_content_integrity(content)
@@ -30,6 +31,7 @@ class QAEngine:
             length_ok,
             forbidden_ok,
             template_ok,
+            language_ok,
             duplicate_ok,
             integrity_ok,
             duplicate_result["duplicate_review_required"],
@@ -38,6 +40,7 @@ class QAEngine:
             "length_ok": length_ok,
             "forbidden_ok": forbidden_ok,
             "template_ok": template_ok,
+            "language_ok": language_ok,
             "duplicate_ok": duplicate_ok,
             "duplicate_score": duplicate_result["duplicate_score"],
             "duplicate_post_id": duplicate_result["duplicate_post_id"],
@@ -52,6 +55,7 @@ class QAEngine:
                     length_ok,
                     forbidden_ok,
                     template_ok,
+                    language_ok,
                     duplicate_ok,
                     integrity_ok,
                     not duplicate_result["duplicate_review_required"],
@@ -96,6 +100,19 @@ class QAEngine:
         phrases = json_loads(await self.config_store.get("qa.template_phrases", "[]", decrypt=False), [])
         hits = sum(1 for phrase in phrases if phrase and phrase in content)
         return hits <= 1
+
+    async def _check_language(self, content: str) -> bool:
+        required = (await self.config_store.get("qa.required_language", "zh") or "zh").strip().lower()
+        if required == "any":
+            return True
+
+        cjk_count = sum(1 for char in content if "\u4e00" <= char <= "\u9fff")
+        latin_count = sum(1 for char in content if ("a" <= char.lower() <= "z"))
+        if required == "zh":
+            return cjk_count >= 20 and cjk_count >= latin_count
+        if required == "en":
+            return latin_count >= 20 and latin_count >= cjk_count * 2
+        return True
 
     async def _check_duplicate(self, content: str, persona_id: int) -> dict:
         threshold = float(await self.config_store.get("qa.duplicate_threshold", "0.85") or 0.85)
@@ -176,11 +193,14 @@ class QAEngine:
         length_ok: bool,
         forbidden_ok: bool,
         template_ok: bool,
+        language_ok: bool,
         duplicate_ok: bool,
         integrity_ok: bool,
         duplicate_review_required: bool,
     ) -> str:
         if not integrity_ok:
+            return "high"
+        if not language_ok:
             return "high"
         if duplicate_review_required:
             return "high"

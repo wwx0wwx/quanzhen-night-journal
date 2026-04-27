@@ -2,15 +2,24 @@
   <header class="nav-wrap">
     <div class="nav-inner panel">
       <div class="nav-brand">
-        <div class="brand">{{ brandTitle }}</div>
+        <div class="brand">
+          {{ brandTitle }}
+        </div>
         <div class="brand-status">
-          <span class="brand-status-dot"></span>
+          <span class="brand-status-dot" />
           <span>{{ brandStatus }}</span>
         </div>
       </div>
 
-      <nav class="nav-primary" aria-label="后台主导航">
-        <RouterLink :to="overview.to" class="nav-primary-link" :class="{ active: isOverviewActive }">
+      <nav
+        class="nav-primary"
+        aria-label="后台主导航"
+      >
+        <RouterLink
+          :to="overview.to"
+          class="nav-primary-link"
+          :class="{ active: isOverviewActive }"
+        >
           {{ overview.label }}
         </RouterLink>
         <RouterLink
@@ -24,15 +33,24 @@
         </RouterLink>
       </nav>
 
-      <button class="btn ghost nav-toggle" type="button" @click="drawerOpen = !drawerOpen">
+      <button
+        class="btn ghost nav-toggle"
+        type="button"
+        @click="drawerOpen = !drawerOpen"
+      >
         {{ drawerOpen ? '收起导航' : '展开导航' }}
       </button>
 
       <ThemeToggle class="nav-theme-toggle" />
     </div>
 
-    <div v-if="showSubmenu" class="nav-submenu panel">
-      <div class="nav-submenu-title">{{ currentSection.label }}</div>
+    <div
+      v-if="showSubmenu"
+      class="nav-submenu panel"
+    >
+      <div class="nav-submenu-title">
+        {{ currentSection.label }}
+      </div>
       <div class="nav-submenu-links">
         <RouterLink
           v-for="item in currentSection.items"
@@ -54,12 +72,24 @@
     </div>
 
     <Transition name="drawer">
-      <div v-if="drawerOpen" class="nav-drawer panel">
-        <RouterLink :to="overview.to" class="nav-drawer-top-link" :class="{ active: isOverviewActive }" @click="drawerOpen = false">
+      <div
+        v-if="drawerOpen"
+        class="nav-drawer panel"
+      >
+        <RouterLink
+          :to="overview.to"
+          class="nav-drawer-top-link"
+          :class="{ active: isOverviewActive }"
+          @click="drawerOpen = false"
+        >
           {{ overview.label }}
         </RouterLink>
 
-        <div v-for="section in sections" :key="section.id" class="nav-drawer-group">
+        <div
+          v-for="section in sections"
+          :key="section.id"
+          class="nav-drawer-group"
+        >
           <RouterLink
             :to="section.to"
             class="nav-drawer-top-link"
@@ -170,9 +200,7 @@ function isSectionActive(section) {
 
 function renderStatusText(template) {
   const value = String(template || '').trim() || '{user} 正在守夜'
-  return value.includes('{user}')
-    ? value.replaceAll('{user}', auth.username || 'admin')
-    : value
+  return value.includes('{user}') ? value.replaceAll('{user}', auth.username || 'admin') : value
 }
 
 function applyBranding(detail = {}) {
@@ -210,9 +238,12 @@ async function handleLogout() {
   router.push('/admin/login')
 }
 
-watch(() => route.path, () => {
-  drawerOpen.value = false
-})
+watch(
+  () => route.path,
+  () => {
+    drawerOpen.value = false
+  },
+)
 
 onMounted(async () => {
   window.addEventListener('admin-config-updated', handleConfigUpdated)
@@ -301,7 +332,12 @@ onBeforeUnmount(() => {
   color: var(--secondary);
   background: var(--panel-soft);
   border: 1px solid var(--line);
-  transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
+  transition:
+    transform 0.22s ease,
+    border-color 0.22s ease,
+    background 0.22s ease,
+    color 0.22s ease,
+    box-shadow 0.22s ease;
 }
 
 .nav-primary-link:hover,
@@ -360,7 +396,9 @@ onBeforeUnmount(() => {
 
 .drawer-enter-active,
 .drawer-leave-active {
-  transition: opacity 0.24s ease, transform 0.24s ease;
+  transition:
+    opacity 0.24s ease,
+    transform 0.24s ease;
 }
 
 .drawer-enter-from,

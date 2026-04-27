@@ -2,7 +2,9 @@
   <section class="stack">
     <div class="hero about-hero">
       <div>
-        <div class="hero-kicker">About This Project</div>
+        <div class="hero-kicker">
+          About This Project
+        </div>
         <h1>关于本项目</h1>
         <p>一个围绕"人格、记忆、感知、事件、生成、发布"组织起来的 AI 人格博客引擎。</p>
       </div>
@@ -15,8 +17,8 @@
         从人格定义、记忆管理、环境感知、场景构建到文章生成与发布，构成一条完整的内容生产链。
       </p>
       <p>
-        每篇文章的生成过程会经过多重质量校验，包括长度检查、重复检测、禁用词过滤和模板化措辞识别。
-        通过 QA 的文章才会进入发布流程，最终由 Hugo 静态站点呈现给读者。
+        每篇文章的生成过程会经过多重质量校验，包括长度检查、重复检测、禁用词过滤和模板化措辞识别。 通过 QA
+        的文章才会进入发布流程，最终由 Hugo 静态站点呈现给读者。
       </p>
     </div>
 
@@ -24,35 +26,45 @@
       <h2>快速上手</h2>
       <div class="about-steps">
         <div class="about-step">
-          <div class="about-step-num">1</div>
+          <div class="about-step-num">
+            1
+          </div>
           <div>
             <strong>初始化系统</strong>
             <p>首次打开 <code>/admin/setup</code>，设置管理员密码、站点标题和模型配置。</p>
           </div>
         </div>
         <div class="about-step">
-          <div class="about-step-num">2</div>
+          <div class="about-step-num">
+            2
+          </div>
           <div>
             <strong>登录后台</strong>
             <p>使用刚才设置的密码登录 <code>/admin/login</code>。</p>
           </div>
         </div>
         <div class="about-step">
-          <div class="about-step-num">3</div>
+          <div class="about-step-num">
+            3
+          </div>
           <div>
             <strong>完善配置</strong>
             <p>在「系统设置」中确认大脑接入（LLM）、记忆检索（Embedding）和发文节奏已正确填写。</p>
           </div>
         </div>
         <div class="about-step">
-          <div class="about-step-num">4</div>
+          <div class="about-step-num">
+            4
+          </div>
           <div>
             <strong>调整人格</strong>
             <p>在「人格设定」中编辑默认人格的系统提示词、词典和场景，或创建全新人格。</p>
           </div>
         </div>
         <div class="about-step">
-          <div class="about-step-num">5</div>
+          <div class="about-step-num">
+            5
+          </div>
           <div>
             <strong>开始发文</strong>
             <p>在「文章管理」页点击「立即创作」手动触发，或等待系统按设定的节奏自动生成。</p>
@@ -93,7 +105,11 @@
 
     <div class="panel panel-pad about-section">
       <h2>常见问题</h2>
-      <details v-for="faq in faqs" :key="faq.q" class="about-faq">
+      <details
+        v-for="faq in faqs"
+        :key="faq.q"
+        class="about-faq"
+      >
         <summary>{{ faq.q }}</summary>
         <p>{{ faq.a }}</p>
       </details>
@@ -105,7 +121,11 @@
         <strong>{{ version }}</strong>
       </div>
       <div class="about-links">
-        <a href="https://github.com/wwx0wwx/quanzhen-night-journal" target="_blank" rel="noopener">项目主页</a>
+        <a
+          href="https://github.com/wwx0wwx/quanzhen-night-journal"
+          target="_blank"
+          rel="noopener"
+        >项目主页</a>
       </div>
     </div>
   </section>

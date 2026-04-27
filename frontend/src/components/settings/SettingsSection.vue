@@ -1,13 +1,27 @@
 <template>
-  <details v-if="section.collapsible" class="panel panel-pad settings-section" :open="section.openByDefault">
+  <details
+    v-if="section.collapsible"
+    class="panel panel-pad settings-section"
+    :open="section.openByDefault"
+  >
     <summary class="settings-section-summary">
       <div>
-        <div class="settings-section-kicker">Advanced Section</div>
+        <div class="settings-section-kicker">
+          Advanced Section
+        </div>
         <h2>{{ section.title }}</h2>
-        <p v-if="section.description" class="muted">{{ section.description }}</p>
+        <p
+          v-if="section.description"
+          class="muted"
+        >
+          {{ section.description }}
+        </p>
       </div>
       <div class="button-row settings-section-actions">
-        <slot name="actions" :section="section"></slot>
+        <slot
+          name="actions"
+          :section="section"
+        />
         <span class="tag">高级</span>
       </div>
     </summary>
@@ -25,15 +39,28 @@
     </div>
   </details>
 
-  <div v-else class="panel panel-pad settings-section">
+  <div
+    v-else
+    class="panel panel-pad settings-section"
+  >
     <div class="settings-section-head">
       <div>
-        <div class="settings-section-kicker">Config Section</div>
+        <div class="settings-section-kicker">
+          Config Section
+        </div>
         <h2>{{ section.title }}</h2>
-        <p v-if="section.description" class="muted">{{ section.description }}</p>
+        <p
+          v-if="section.description"
+          class="muted"
+        >
+          {{ section.description }}
+        </p>
       </div>
       <div class="button-row settings-section-actions">
-        <slot name="actions" :section="section"></slot>
+        <slot
+          name="actions"
+          :section="section"
+        />
       </div>
     </div>
     <div class="form-grid settings-form-grid">

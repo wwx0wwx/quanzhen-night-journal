@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.adapters.embedding_adapter import EmbeddingAdapter
 from backend.adapters.llm_adapter import LLMAdapter
 from backend.api.deps import get_config_store, get_site_runtime_manager
+from backend.config import get_settings
 from backend.database import get_session
 from backend.engine.config_store import SECRET_KEYS, ConfigStore
 from backend.engine.site_runtime import SiteRuntimeManager
@@ -48,6 +49,11 @@ async def update_config(
     _user=Depends(get_current_user),
 ) -> object:
     changed_keys = {item.key for item in payload.items}
+    if "panel.port" in changed_keys and get_settings().is_production:
+        raise HTTPException(
+            status_code=400,
+            detail="panel.port is controlled by docker-compose port mapping in production",
+        )
     await config_store.bulk_update([item.model_dump(exclude_unset=True) for item in payload.items])
     if changed_keys.intersection({"schedule.days_per_cycle", "schedule.posts_per_cycle"}):
         await config_store.set("schedule.cycle_anchor_date", date.today().isoformat(), category="schedule")

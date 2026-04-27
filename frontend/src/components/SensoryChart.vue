@@ -1,10 +1,22 @@
 <template>
   <div class="panel panel-pad">
-    <div class="section-title">感知曲线</div>
+    <div class="section-title">
+      感知曲线
+    </div>
     <div class="chart">
-      <div v-for="item in items" :key="item.sampled_at" class="chart-col">
-        <div class="bar cpu" :style="{ height: `${item.cpu_percent || 0}%` }"></div>
-        <div class="bar mem" :style="{ height: `${item.memory_percent || 0}%` }"></div>
+      <div
+        v-for="item in items"
+        :key="item.sampled_at"
+        class="chart-col"
+      >
+        <div
+          class="bar cpu"
+          :style="{ height: `${item.cpu_percent || 0}%` }"
+        />
+        <div
+          class="bar mem"
+          :style="{ height: `${item.memory_percent || 0}%` }"
+        />
         <small>{{ item.sampled_at.slice(11, 16) }}</small>
       </div>
     </div>

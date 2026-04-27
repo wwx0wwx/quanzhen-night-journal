@@ -24,7 +24,15 @@ describe('Dashboard view', () => {
 
   it('renders failure reasons and publish decision hints', async () => {
     api.get.mockResolvedValue({
-      recent_posts: [{ id: 1, title: '全真夜记：雨点与屏息', slug: '1-quanzhen-night-note', summary: '窗外起风。', status: 'published' }],
+      recent_posts: [
+        {
+          id: 1,
+          title: '全真夜记：雨点与屏息',
+          slug: '1-quanzhen-night-note',
+          summary: '窗外起风。',
+          status: 'published',
+        },
+      ],
       recent_tasks: [
         {
           id: 7,

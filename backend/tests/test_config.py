@@ -87,6 +87,40 @@ def test_schedule_config_update_does_not_fail_with_scheduler_lock(authed_client)
     assert response.json()["data"]["updated"] == 6
 
 
+def test_config_update_rejects_invalid_domain_and_numeric_values(authed_client):
+    bad_domain = authed_client.put(
+        "/api/config",
+        json={"items": [{"key": "site.domain", "value": "https://iuaa.de/admin", "category": "site"}]},
+    )
+    assert bad_domain.status_code == 422
+
+    bad_port = authed_client.put(
+        "/api/config",
+        json={"items": [{"key": "panel.port", "value": "80", "category": "panel"}]},
+    )
+    assert bad_port.status_code == 422
+
+    bad_threshold = authed_client.put(
+        "/api/config",
+        json={"items": [{"key": "qa.duplicate_threshold", "value": "1.5", "category": "qa"}]},
+    )
+    assert bad_threshold.status_code == 422
+
+
+def test_config_update_rejects_invalid_json_arrays_and_language(authed_client):
+    bad_json = authed_client.put(
+        "/api/config",
+        json={"items": [{"key": "qa.forbidden_words", "value": '{"not":"array"}', "category": "qa"}]},
+    )
+    assert bad_json.status_code == 422
+
+    bad_language = authed_client.put(
+        "/api/config",
+        json={"items": [{"key": "qa.required_language", "value": "fr", "category": "qa"}]},
+    )
+    assert bad_language.status_code == 422
+
+
 def test_cloudflare_proxy_domain_can_be_allowed(monkeypatch, authed_client):
     async def _inner() -> None:
         session_factory = get_sessionmaker()
@@ -127,6 +161,30 @@ def test_domain_caddyfile_only_serves_blog_on_domain():
     assert "import qz_console" in rendered
     assert "iuaa.de {\n    import qz_blog\n}" in rendered
     assert "respond @blocked 404" in rendered
+
+
+def test_runtime_hugo_config_and_support_pages_hide_utility_outputs():
+    settings = get_settings().model_copy(update={"acme_email": "ops@example.com"})
+    manager = SiteRuntimeManager(config_store=None, settings=settings)  # type: ignore[arg-type]
+
+    config = manager._render_hugo_config(
+        site_title="全真夜记",
+        site_subtitle="记录深夜写作。",
+        theme="PaperMod",
+        base_url="https://iuaa.de/",
+    )
+    assert 'mainSections = ["posts"]' in config
+    assert "[services.rss]" in config
+    assert 'Title = "全真夜记"' in config
+    assert "人格、记忆、感知和人工护栏" in config
+
+    offline = manager._render_offline_page()
+    search = manager._render_search_page()
+    archives = manager._render_archives_page()
+    assert "feedHidden: true" in offline
+    assert "sitemap:\n  disable: true" in offline
+    assert "searchHidden: true" in search
+    assert "feedHidden: true" in archives
 
 
 def test_production_requires_custom_jwt_secret():

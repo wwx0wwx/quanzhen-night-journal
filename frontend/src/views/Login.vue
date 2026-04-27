@@ -1,7 +1,9 @@
 <template>
   <section class="login-stage panel panel-pad">
     <div class="login-atmosphere">
-      <div class="hero-kicker">Silent Entry</div>
+      <div class="hero-kicker">
+        Silent Entry
+      </div>
       <h1>登录后台</h1>
       <p>穿过值守台的夜色后，才能继续配置、巡检与发文。这里不需要热闹，只需要稳定、安静和可控。</p>
       <div class="login-atmosphere-note">
@@ -10,10 +12,17 @@
       </div>
     </div>
 
-    <form class="stack login-form" @submit.prevent="submit">
+    <form
+      class="stack login-form"
+      @submit.prevent="submit"
+    >
       <label class="field">
         <span>用户名</span>
-        <input v-model="form.username" autocomplete="username" placeholder="默认管理员账号为 admin" />
+        <input
+          v-model="form.username"
+          autocomplete="username"
+          placeholder="默认管理员账号为 admin"
+        >
       </label>
 
       <label class="field">
@@ -23,16 +32,22 @@
           type="password"
           autocomplete="current-password"
           placeholder="请输入管理员密码"
-        />
+        >
       </label>
 
       <div class="button-row">
-        <button class="btn primary" type="submit" :disabled="isSubmitting">
+        <button
+          class="btn primary"
+          type="submit"
+          :disabled="isSubmitting"
+        >
           {{ isSubmitting ? '登录中…' : '登录' }}
         </button>
       </div>
 
-      <div class="muted">{{ message }}</div>
+      <div class="muted">
+        {{ message }}
+      </div>
     </form>
   </section>
 </template>
@@ -86,15 +101,14 @@ async function submit() {
 }
 
 .login-atmosphere::after {
-  content: "";
+  content: '';
   position: absolute;
   right: 8%;
   top: 14px;
   width: 180px;
   height: 180px;
   border-radius: 999px;
-  background:
-    radial-gradient(circle, var(--accent-glow), var(--panel-soft) 44%, transparent 68%);
+  background: radial-gradient(circle, var(--accent-glow), var(--panel-soft) 44%, transparent 68%);
   filter: blur(3px);
   opacity: 0.9;
 }

@@ -2,28 +2,60 @@
   <section class="stack">
     <div class="hero tasks-hero">
       <div>
-        <div class="hero-kicker">Execution Ledger</div>
+        <div class="hero-kicker">
+          Execution Ledger
+        </div>
         <h1>任务列表</h1>
         <p>所有写作任务的运行记录。从这里查看执行状态、排查异常、进入单条任务的 Trace 详情。</p>
       </div>
       <div class="button-row">
-        <button class="btn ghost" type="button" :disabled="isLoading" @click="load">刷新列表</button>
+        <button
+          class="btn ghost"
+          type="button"
+          :disabled="isLoading"
+          @click="load"
+        >
+          刷新列表
+        </button>
       </div>
     </div>
 
-    <form class="panel panel-pad toolbar tasks-toolbar" @submit.prevent="load">
+    <form
+      class="panel panel-pad toolbar tasks-toolbar"
+      @submit.prevent="load"
+    >
       <label class="field">
         <span>状态筛选</span>
-        <select v-model="status" :disabled="isLoading">
+        <select
+          v-model="status"
+          :disabled="isLoading"
+        >
           <option value="">全部</option>
-          <option v-for="item in TASK_STATUS_OPTIONS" :key="item" :value="item">
+          <option
+            v-for="item in TASK_STATUS_OPTIONS"
+            :key="item"
+            :value="item"
+          >
             {{ getStatusLabel('task', item) }}
           </option>
         </select>
       </label>
       <div class="button-row toolbar-actions">
-        <button class="btn primary" type="submit" :disabled="isLoading">应用筛选</button>
-        <button class="btn ghost" type="button" :disabled="isLoading" @click="resetFilters">清空</button>
+        <button
+          class="btn primary"
+          type="submit"
+          :disabled="isLoading"
+        >
+          应用筛选
+        </button>
+        <button
+          class="btn ghost"
+          type="button"
+          :disabled="isLoading"
+          @click="resetFilters"
+        >
+          清空
+        </button>
       </div>
     </form>
 
@@ -50,28 +82,53 @@
     <template v-else>
       <div class="panel panel-pad tasks-ledger-meta">
         <div>
-          <div class="hero-kicker">Ledger Count</div>
+          <div class="hero-kicker">
+            Ledger Count
+          </div>
           <strong>共 {{ total }} 条，第 {{ page }} / {{ totalPages }} 页，当前显示 {{ tasks.length }} 条。</strong>
         </div>
       </div>
 
       <div class="list">
-        <article v-for="task in tasks" :key="task.id" class="panel panel-pad stack task-card">
+        <article
+          v-for="task in tasks"
+          :key="task.id"
+          class="panel panel-pad stack task-card"
+        >
           <div class="split">
             <div class="stack task-card-main">
               <div class="button-row">
-                <span class="tag" :class="getStatusClass('task', task.status)">
+                <span
+                  class="tag"
+                  :class="getStatusClass('task', task.status)"
+                >
                   {{ getStatusLabel('task', task.status) }}
                 </span>
-                <span v-if="showPublishDecision(task)" class="tag" :class="getPublishDecisionClass(task)">
+                <span
+                  v-if="showPublishDecision(task)"
+                  class="tag"
+                  :class="getPublishDecisionClass(task)"
+                >
                   {{ getPublishDecisionLabel(task) }}
                 </span>
-                <span v-if="task.error_code" class="tag tag-danger">{{ describeErrorCode(task.error_code) || task.error_code }}</span>
+                <span
+                  v-if="task.error_code"
+                  class="tag tag-danger"
+                >{{
+                  describeErrorCode(task.error_code) || task.error_code
+                }}</span>
               </div>
 
-              <div class="stack" style="gap: 4px;">
-                <div class="task-card-kicker">任务 #{{ task.id }}</div>
-                <div class="muted">{{ getStatusDescription('task', task.status) }}</div>
+              <div
+                class="stack"
+                style="gap: 4px"
+              >
+                <div class="task-card-kicker">
+                  任务 #{{ task.id }}
+                </div>
+                <div class="muted">
+                  {{ getStatusDescription('task', task.status) }}
+                </div>
               </div>
 
               <dl class="meta-grid">
@@ -86,7 +143,12 @@
                 <div>
                   <dt>文章</dt>
                   <dd>
-                    <RouterLink v-if="task.post_id" :to="`/admin/posts/${task.post_id}`">#{{ task.post_id }}</RouterLink>
+                    <RouterLink
+                      v-if="task.post_id"
+                      :to="`/admin/posts/${task.post_id}`"
+                    >
+                      #{{ task.post_id }}
+                    </RouterLink>
                     <span v-else>-</span>
                   </dd>
                 </div>
@@ -104,23 +166,55 @@
                 </div>
               </dl>
 
-              <div v-if="task.error_message" class="status-banner error">{{ task.error_message }}</div>
+              <div
+                v-if="task.error_message"
+                class="status-banner error"
+              >
+                {{ task.error_message }}
+              </div>
             </div>
 
             <div class="button-row task-card-actions">
-              <div class="task-card-actions-label">操作</div>
-              <RouterLink class="btn ghost btn-small" :to="`/admin/tasks/${task.id}`">查看详情</RouterLink>
-              <RouterLink v-if="task.post_id" class="btn ghost btn-small" :to="`/admin/posts/${task.post_id}`">查看文章</RouterLink>
+              <div class="task-card-actions-label">
+                操作
+              </div>
+              <RouterLink
+                class="btn ghost btn-small"
+                :to="`/admin/tasks/${task.id}`"
+              >
+                查看详情
+              </RouterLink>
+              <RouterLink
+                v-if="task.post_id"
+                class="btn ghost btn-small"
+                :to="`/admin/posts/${task.post_id}`"
+              >
+                查看文章
+              </RouterLink>
             </div>
           </div>
         </article>
       </div>
 
       <div class="panel panel-pad split">
-        <div class="muted">第 {{ page }} / {{ totalPages }} 页，共 {{ total }} 条</div>
+        <div class="muted">
+          第 {{ page }} / {{ totalPages }} 页，共 {{ total }} 条
+        </div>
         <div class="button-row">
-          <button class="btn ghost btn-small" :disabled="page <= 1 || isLoading" @click="changePage(page - 1)">上一页</button>
-          <button class="btn ghost btn-small" :disabled="page >= totalPages || isLoading" @click="changePage(page + 1)">下一页</button>
+          <button
+            class="btn ghost btn-small"
+            :disabled="page <= 1 || isLoading"
+            @click="changePage(page - 1)"
+          >
+            上一页
+          </button>
+          <button
+            class="btn ghost btn-small"
+            :disabled="page >= totalPages || isLoading"
+            @click="changePage(page + 1)"
+          >
+            下一页
+          </button>
         </div>
       </div>
     </template>
@@ -140,9 +234,19 @@ import { getStatusClass, getStatusDescription, getStatusLabel } from '../utils/s
 import { formatDateTimeWithRelative, formatDurationMs } from '../utils/time'
 
 const TASK_STATUS_OPTIONS = [
-  'queued', 'preparing_context', 'generating', 'qa_checking',
-  'rewrite_pending', 'waiting_human_signoff', 'ready_to_publish',
-  'publishing', 'published', 'failed', 'circuit_open', 'aborted', 'draft_saved',
+  'queued',
+  'preparing_context',
+  'generating',
+  'qa_checking',
+  'rewrite_pending',
+  'waiting_human_signoff',
+  'ready_to_publish',
+  'publishing',
+  'published',
+  'failed',
+  'circuit_open',
+  'aborted',
+  'draft_saved',
 ]
 const TERMINAL_STATES = ['published', 'failed', 'circuit_open', 'aborted', 'draft_saved']
 
@@ -173,13 +277,15 @@ async function load() {
   isLoading.value = true
   loadError.value = ''
   try {
-    const data = await unwrap(api.get('/tasks', {
-      params: {
-        status: status.value || undefined,
-        page: page.value,
-        page_size: pageSize,
-      },
-    }))
+    const data = await unwrap(
+      api.get('/tasks', {
+        params: {
+          status: status.value || undefined,
+          page: page.value,
+          page_size: pageSize,
+        },
+      }),
+    )
     tasks.value = data.items || []
     total.value = data.total || 0
   } catch (error) {

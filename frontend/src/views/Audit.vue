@@ -17,12 +17,20 @@
     <template v-else>
       <div class="hero audit-hero">
         <div>
-          <div class="hero-kicker">Night Trace Archive</div>
+          <div class="hero-kicker">
+            Night Trace Archive
+          </div>
           <h1>系统日志</h1>
           <p>把登录、初始化、发布、异常这些痕迹按时间归档。这里不只是日志表，更像夜巡留下的事件卷宗。</p>
         </div>
         <div class="button-row">
-          <button class="btn ghost" :disabled="isLoading" @click="exportCurrent">导出当前结果</button>
+          <button
+            class="btn ghost"
+            :disabled="isLoading"
+            @click="exportCurrent"
+          >
+            导出当前结果
+          </button>
         </div>
       </div>
 
@@ -38,11 +46,26 @@
         </label>
         <label class="field">
           <span>事件关键词</span>
-          <input v-model="filters.action" placeholder="例如 登录、初始化、发布" />
+          <input
+            v-model="filters.action"
+            placeholder="例如 登录、初始化、发布"
+          >
         </label>
         <div class="button-row">
-          <button class="btn primary" :disabled="isLoading" @click="applyFilters">筛选</button>
-          <button class="btn ghost" :disabled="isLoading" @click="resetFilters">重置</button>
+          <button
+            class="btn primary"
+            :disabled="isLoading"
+            @click="applyFilters"
+          >
+            筛选
+          </button>
+          <button
+            class="btn ghost"
+            :disabled="isLoading"
+            @click="resetFilters"
+          >
+            重置
+          </button>
         </div>
       </div>
 
@@ -52,7 +75,10 @@
         description="当前筛选条件下没有可展示的审计日志。"
       />
 
-      <div v-else class="list audit-ledger">
+      <div
+        v-else
+        class="list audit-ledger"
+      >
         <div class="panel panel-pad audit-table-head">
           <div>事件</div>
           <div>事件映射</div>
@@ -60,30 +86,74 @@
           <div>来源 IP</div>
         </div>
 
-        <div v-for="item in items" :key="item.id" class="list-item panel stack audit-item">
+        <div
+          v-for="item in items"
+          :key="item.id"
+          class="list-item panel stack audit-item"
+        >
           <div class="audit-row">
-            <div class="audit-cell stack" style="gap: 6px;">
+            <div
+              class="audit-cell stack"
+              style="gap: 6px"
+            >
               <strong>{{ item.display_action || item.action }}</strong>
-              <div class="muted audit-subline">{{ item.timestamp }}</div>
-              <div v-if="showMeta(item)" class="button-row audit-tags">
-                <span v-if="showActor(item.actor)" class="tag">{{ item.actor }}</span>
-                <span v-if="showSeverity(item.severity)" class="tag" :class="severityClass(item.severity)">{{ item.severity }}</span>
+              <div class="muted audit-subline">
+                {{ item.timestamp }}
+              </div>
+              <div
+                v-if="showMeta(item)"
+                class="button-row audit-tags"
+              >
+                <span
+                  v-if="showActor(item.actor)"
+                  class="tag"
+                >{{ item.actor }}</span>
+                <span
+                  v-if="showSeverity(item.severity)"
+                  class="tag"
+                  :class="severityClass(item.severity)"
+                >{{
+                  item.severity
+                }}</span>
               </div>
             </div>
-            <div class="audit-cell processed-event">{{ item.event_mapping || '-' }}</div>
-            <div class="audit-cell">{{ item.display_target || '-' }}</div>
-            <div class="audit-cell">{{ item.ip_address || '-' }}</div>
+            <div class="audit-cell processed-event">
+              {{ item.event_mapping || '-' }}
+            </div>
+            <div class="audit-cell">
+              {{ item.display_target || '-' }}
+            </div>
+            <div class="audit-cell">
+              {{ item.ip_address || '-' }}
+            </div>
           </div>
 
-          <pre v-if="hasDetail(item.detail)" class="code-block">{{ prettyDetail(item.detail) }}</pre>
+          <pre
+            v-if="hasDetail(item.detail)"
+            class="code-block"
+          >{{ prettyDetail(item.detail) }}</pre>
         </div>
       </div>
 
       <div class="panel panel-pad split">
-        <div class="muted">第 {{ page }} / {{ totalPages }} 页，共 {{ total }} 条</div>
+        <div class="muted">
+          第 {{ page }} / {{ totalPages }} 页，共 {{ total }} 条
+        </div>
         <div class="button-row">
-          <button class="btn ghost btn-small" :disabled="page <= 1 || isLoading" @click="changePage(page - 1)">上一页</button>
-          <button class="btn ghost btn-small" :disabled="page >= totalPages || isLoading" @click="changePage(page + 1)">下一页</button>
+          <button
+            class="btn ghost btn-small"
+            :disabled="page <= 1 || isLoading"
+            @click="changePage(page - 1)"
+          >
+            上一页
+          </button>
+          <button
+            class="btn ghost btn-small"
+            :disabled="page >= totalPages || isLoading"
+            @click="changePage(page + 1)"
+          >
+            下一页
+          </button>
         </div>
       </div>
     </template>

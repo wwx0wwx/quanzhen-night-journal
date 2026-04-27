@@ -17,9 +17,13 @@
     <template v-else>
       <div class="hero memories-hero">
         <div>
-          <div class="hero-kicker">Memory Ledger</div>
+          <div class="hero-kicker">
+            Memory Ledger
+          </div>
           <h1>记忆碎片（素材）</h1>
-          <p>按人格设定维护长期设定、检索结果和手动补充的关键素材。先确认该写作人格记得什么，再决定应该继续补写哪一层。</p>
+          <p>
+            按人格设定维护长期设定、检索结果和手动补充的关键素材。先确认该写作人格记得什么，再决定应该继续补写哪一层。
+          </p>
         </div>
         <div class="memories-hero-aside">
           <div class="button-row">
@@ -27,27 +31,47 @@
             <span class="tag">总计 {{ total }} 条</span>
             <span class="tag">当前 {{ memories.length }} 条</span>
           </div>
-          <div class="muted">搜索负责唤回旧记忆，补录负责把新的冷线索收入档案。</div>
+          <div class="muted">
+            搜索负责唤回旧记忆，补录负责把新的冷线索收入档案。
+          </div>
         </div>
       </div>
 
-      <div v-if="message" class="status-banner" :class="messageType">{{ message }}</div>
+      <div
+        v-if="message"
+        class="status-banner"
+        :class="messageType"
+      >
+        {{ message }}
+      </div>
 
       <div class="card-row">
         <div class="metric">
-          <div class="muted">当前检索人格</div>
+          <div class="muted">
+            当前检索人格
+          </div>
           <strong>{{ currentPersonaName }}</strong>
-          <div class="muted">检索时会优先使用该人格对应的长期设定与近期线索。</div>
+          <div class="muted">
+            检索时会优先使用该人格对应的长期设定与近期线索。
+          </div>
         </div>
         <div class="metric">
-          <div class="muted">最近命中</div>
+          <div class="muted">
+            最近命中
+          </div>
           <strong>{{ hits.length }}</strong>
-          <div class="muted">{{ hits.length ? '已返回相关素材，可直接比对摘要与全文。' : '当前还没有检索结果。' }}</div>
+          <div class="muted">
+            {{ hits.length ? '已返回相关素材，可直接比对摘要与全文。' : '当前还没有检索结果。' }}
+          </div>
         </div>
         <div class="metric">
-          <div class="muted">当前页码</div>
+          <div class="muted">
+            当前页码
+          </div>
           <strong>{{ page }} / {{ totalPages }}</strong>
-          <div class="muted">分页浏览历史素材，避免一次性加载全部长列表。</div>
+          <div class="muted">
+            分页浏览历史素材，避免一次性加载全部长列表。
+          </div>
         </div>
       </div>
 
@@ -55,36 +79,62 @@
         <div class="panel panel-pad stack memory-search-card">
           <div class="memory-card-head">
             <div>
-              <div class="hero-kicker">Recall Desk</div>
-              <div class="section-title">快速搜索</div>
-              <p class="muted">输入场景、意象或动作词，检索当前人格下最接近的记忆条目。</p>
+              <div class="hero-kicker">
+                Recall Desk
+              </div>
+              <div class="section-title">
+                快速搜索
+              </div>
+              <p class="muted">
+                输入场景、意象或动作词，检索当前人格下最接近的记忆条目。
+              </p>
             </div>
-            <div class="memory-card-glyph" aria-hidden="true">
-              <span></span>
-              <span></span>
+            <div
+              class="memory-card-glyph"
+              aria-hidden="true"
+            >
+              <span />
+              <span />
             </div>
           </div>
           <div class="form-grid">
             <label class="field">
               <span>人格设定（写作风格）</span>
               <select v-model.number="search.persona_id">
-                <option v-for="persona in personas" :key="persona.id" :value="persona.id">{{ persona.name }}</option>
+                <option
+                  v-for="persona in personas"
+                  :key="persona.id"
+                  :value="persona.id"
+                >{{ persona.name }}</option>
               </select>
             </label>
             <label class="field">
               <span>搜索语句</span>
-              <input v-model="search.query" placeholder="例如：雨夜、机房、门口的风" />
+              <input
+                v-model="search.query"
+                placeholder="例如：雨夜、机房、门口的风"
+              >
             </label>
             <label class="field">
               <span>记忆层级</span>
               <select v-model="search.level">
                 <option value="">全部层级</option>
-                <option v-for="item in levelOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
+                <option
+                  v-for="item in levelOptions"
+                  :key="item.value"
+                  :value="item.value"
+                >{{ item.label }}</option>
               </select>
             </label>
           </div>
           <div class="button-row">
-            <button class="btn primary" type="button" @click="runSearch">检索</button>
+            <button
+              class="btn primary"
+              type="button"
+              @click="runSearch"
+            >
+              检索
+            </button>
           </div>
           <AppEmpty
             v-if="!hits.length"
@@ -92,8 +142,15 @@
             title="还没有检索结果"
             description="输入一个关键词后，系统会从当前风格的记忆中找相关素材。"
           />
-          <div v-else class="list">
-            <div v-for="item in hits" :key="item.id" class="list-item stack memory-hit">
+          <div
+            v-else
+            class="list"
+          >
+            <div
+              v-for="item in hits"
+              :key="item.id"
+              class="list-item stack memory-hit"
+            >
               <div class="split memories-hit-head">
                 <div class="button-row">
                   <span class="tag">{{ levelLabel(item.level) }}</span>
@@ -102,8 +159,12 @@
                 <span class="memory-score">综合分 {{ formatScore(item.weighted_score) }}</span>
               </div>
               <strong>{{ item.summary || item.content }}</strong>
-              <div class="muted">相似度 {{ formatScore(item.similarity) }}，越高说明与当前搜索语句越接近。</div>
-              <div class="muted">{{ item.content }}</div>
+              <div class="muted">
+                相似度 {{ formatScore(item.similarity) }}，越高说明与当前搜索语句越接近。
+              </div>
+              <div class="muted">
+                {{ item.content }}
+              </div>
             </div>
           </div>
         </div>
@@ -111,46 +172,92 @@
         <div class="panel panel-pad stack memory-create-card">
           <div class="memory-card-head">
             <div>
-              <div class="hero-kicker">Manual Entry</div>
-              <div class="section-title">新增长期设定</div>
-              <p class="muted">把新确认的事实、意象或长期线索直接补录进记忆层级，避免后续写作时漂移。</p>
+              <div class="hero-kicker">
+                Manual Entry
+              </div>
+              <div class="section-title">
+                新增长期设定
+              </div>
+              <p class="muted">
+                把新确认的事实、意象或长期线索直接补录进记忆层级，避免后续写作时漂移。
+              </p>
             </div>
-            <div class="memory-card-glyph memory-card-glyph-right" aria-hidden="true">
-              <span></span>
-              <span></span>
+            <div
+              class="memory-card-glyph memory-card-glyph-right"
+              aria-hidden="true"
+            >
+              <span />
+              <span />
             </div>
           </div>
           <label class="field">
             <span>人格设定（写作风格）</span>
             <select v-model.number="form.persona_id">
-              <option v-for="persona in personas" :key="persona.id" :value="persona.id">{{ persona.name }}</option>
+              <option
+                v-for="persona in personas"
+                :key="persona.id"
+                :value="persona.id"
+              >{{ persona.name }}</option>
             </select>
           </label>
           <label class="field">
             <span>层级</span>
             <select v-model="form.level">
-              <option v-for="item in levelOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
+              <option
+                v-for="item in levelOptions"
+                :key="item.value"
+                :value="item.value"
+              >{{ item.label }}</option>
             </select>
           </label>
           <label class="field">
             <span>内容</span>
-            <textarea v-model="form.content" placeholder="输入这条素材或长期设定的完整内容。"></textarea>
+            <textarea
+              v-model="form.content"
+              placeholder="输入这条素材或长期设定的完整内容。"
+            />
           </label>
           <label class="field">
             <span>标签（用顿号或逗号分隔）</span>
-            <input v-model="tagsText" placeholder="例如：雨夜、门口、机房" />
+            <input
+              v-model="tagsText"
+              placeholder="例如：雨夜、门口、机房"
+            >
           </label>
-          <button class="btn primary" type="button" @click="createMemory">保存素材</button>
+          <button
+            class="btn primary"
+            type="button"
+            @click="createMemory"
+          >
+            保存素材
+          </button>
         </div>
       </div>
 
-      <MemoryTree :memories="memories" :personas="personas" />
+      <MemoryTree
+        :memories="memories"
+        :personas="personas"
+      />
 
       <div class="panel panel-pad split">
-        <div class="muted">第 {{ page }} / {{ totalPages }} 页，共 {{ total }} 条</div>
+        <div class="muted">
+          第 {{ page }} / {{ totalPages }} 页，共 {{ total }} 条
+        </div>
         <div class="button-row">
-          <button class="btn ghost btn-small" :disabled="page <= 1 || isLoading" @click="changePage(page - 1)">上一页</button>
-          <button class="btn ghost btn-small" :disabled="page >= totalPages || isLoading" @click="changePage(page + 1)">下一页</button>
+          <button
+            class="btn ghost btn-small"
+            :disabled="page <= 1 || isLoading"
+            @click="changePage(page - 1)"
+          >
+            上一页
+          </button>
+          <button
+            class="btn ghost btn-small"
+            :disabled="page >= totalPages || isLoading"
+            @click="changePage(page + 1)"
+          >
+            下一页
+          </button>
         </div>
       </div>
     </template>
@@ -250,12 +357,14 @@ async function runSearch() {
   }
   message.value = ''
   try {
-    hits.value = await unwrap(api.post('/memories/search', {
-      query: search.query,
-      persona_id: search.persona_id,
-      top_k: search.top_k,
-      level_filter: search.level ? [search.level] : null,
-    }))
+    hits.value = await unwrap(
+      api.post('/memories/search', {
+        query: search.query,
+        persona_id: search.persona_id,
+        top_k: search.top_k,
+        level_filter: search.level ? [search.level] : null,
+      }),
+    )
     if (!hits.value.length) {
       messageType.value = 'info'
       message.value = '没有找到相关素材，可以换个关键词或先补充几条长期设定。'

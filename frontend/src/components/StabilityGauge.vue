@@ -1,10 +1,17 @@
 <template>
   <div class="metric gauge">
-    <div class="ring" :style="{ background: `conic-gradient(var(--accent) ${score * 3.6}deg, var(--gauge-track) 0)` }">
-      <div class="core">{{ score }}</div>
+    <div
+      class="ring"
+      :style="{ background: `conic-gradient(var(--accent) ${score * 3.6}deg, var(--gauge-track) 0)` }"
+    >
+      <div class="core">
+        {{ score }}
+      </div>
     </div>
     <div>
-      <div class="muted">{{ label }}</div>
+      <div class="muted">
+        {{ label }}
+      </div>
       <div>{{ hint }}</div>
     </div>
   </div>

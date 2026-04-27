@@ -17,30 +17,67 @@
     <template v-else>
       <div class="hero settings-hero">
         <div>
-          <div class="hero-kicker">Configuration Ledger</div>
+          <div class="hero-kicker">
+            Configuration Ledger
+          </div>
           <h1>系统设置</h1>
           <p>把站点、面板、大脑接入与发文节奏统一收束在这本配置簿里。优先确保结论清晰，其次才是字段本身。</p>
         </div>
         <div class="settings-toolbar">
           <div class="button-row">
-            <button class="btn primary" :disabled="isBusy || !isDirty" @click="save">
+            <button
+              class="btn primary"
+              :disabled="isBusy || !isDirty"
+              @click="save"
+            >
               {{ isSaving ? '保存中...' : '保存配置' }}
             </button>
           </div>
           <div class="button-row">
-            <span class="tag" :class="isDirty ? 'tag-warning' : 'tag-success'">
+            <span
+              class="tag"
+              :class="isDirty ? 'tag-warning' : 'tag-success'"
+            >
               {{ isDirty ? '有未保存修改' : '当前已同步' }}
             </span>
           </div>
         </div>
       </div>
 
-      <div class="stack" v-if="saveError || saveSuccess || testError || testSuccess || isDirty">
-        <div v-if="saveError" class="status-banner error">{{ saveError }}</div>
-        <div v-if="testError" class="status-banner error">{{ testError }}</div>
-        <div v-if="saveSuccess" class="status-banner success">{{ saveSuccess }}</div>
-        <div v-if="testSuccess" class="status-banner success">{{ testSuccess }}</div>
-        <div v-if="isDirty" class="status-banner warning">当前表单有未保存修改，离开页面前请确认是否需要保存。</div>
+      <div
+        v-if="saveError || saveSuccess || testError || testSuccess || isDirty"
+        class="stack"
+      >
+        <div
+          v-if="saveError"
+          class="status-banner error"
+        >
+          {{ saveError }}
+        </div>
+        <div
+          v-if="testError"
+          class="status-banner error"
+        >
+          {{ testError }}
+        </div>
+        <div
+          v-if="saveSuccess"
+          class="status-banner success"
+        >
+          {{ saveSuccess }}
+        </div>
+        <div
+          v-if="testSuccess"
+          class="status-banner success"
+        >
+          {{ testSuccess }}
+        </div>
+        <div
+          v-if="isDirty"
+          class="status-banner warning"
+        >
+          当前表单有未保存修改，离开页面前请确认是否需要保存。
+        </div>
       </div>
 
       <AppEmpty
@@ -54,33 +91,54 @@
           <div class="settings-section-head">
             <div>
               <h2>当前发文结论</h2>
-              <p class="muted">根据当前表单内容判断系统是否具备发文能力。</p>
+              <p class="muted">
+                根据当前表单内容判断系统是否具备发文能力。
+              </p>
             </div>
             <div class="button-row">
-              <span class="tag" :class="configConclusion.className">{{ configConclusion.label }}</span>
+              <span
+                class="tag"
+                :class="configConclusion.className"
+              >{{ configConclusion.label }}</span>
             </div>
           </div>
 
           <div class="card-row">
             <div class="metric">
-              <div class="muted">当前状态</div>
+              <div class="muted">
+                当前状态
+              </div>
               <strong>{{ configConclusion.label }}</strong>
-              <div class="muted">{{ configConclusion.description }}</div>
+              <div class="muted">
+                {{ configConclusion.description }}
+              </div>
             </div>
             <div class="metric">
-              <div class="muted">大脑接入</div>
+              <div class="muted">
+                大脑接入
+              </div>
               <strong>{{ llmReady ? '已配置' : '未配置' }}</strong>
-              <div class="muted">{{ llmReady ? '可用于生成正文。' : '缺少后无法生成文章。' }}</div>
+              <div class="muted">
+                {{ llmReady ? '可用于生成正文。' : '缺少后无法生成文章。' }}
+              </div>
             </div>
             <div class="metric">
-              <div class="muted">记忆检索</div>
+              <div class="muted">
+                记忆检索
+              </div>
               <strong>{{ embeddingReady ? '已配置' : '未配置' }}</strong>
-              <div class="muted">{{ embeddingReady ? '检索与去重可正常工作。' : '未配置会导致检索、去重与记忆能力退化。' }}</div>
+              <div class="muted">
+                {{ embeddingReady ? '检索与去重可正常工作。' : '未配置会导致检索、去重与记忆能力退化。' }}
+              </div>
             </div>
             <div class="metric">
-              <div class="muted">自动发文</div>
+              <div class="muted">
+                自动发文
+              </div>
               <strong>{{ automationReady ? '已开启' : '未开启' }}</strong>
-              <div class="muted">{{ automationReady ? '可按计划自动触发。' : '当前更适合手动发文。' }}</div>
+              <div class="muted">
+                {{ automationReady ? '可按计划自动触发。' : '当前更适合手动发文。' }}
+              </div>
             </div>
           </div>
         </div>
@@ -93,9 +151,9 @@
           :values="formValues"
           @update="updateField"
         >
-          <template #actions="{ section }">
+          <template #actions="{ section: currentSection }">
             <button
-              v-if="section.id === 'llm'"
+              v-if="currentSection.id === 'llm'"
               class="btn ghost btn-small"
               :disabled="isBusy"
               type="button"
@@ -104,7 +162,7 @@
               {{ isTestingLLM ? '测试中...' : '测试大脑接入' }}
             </button>
             <button
-              v-if="section.id === 'embedding'"
+              v-if="currentSection.id === 'embedding'"
               class="btn ghost btn-small"
               :disabled="isBusy"
               type="button"
@@ -114,7 +172,6 @@
             </button>
           </template>
         </SettingsSection>
-
       </template>
     </template>
   </section>
@@ -150,12 +207,15 @@ const hasLoaded = ref(false)
 const isDirty = computed(() => hasLoaded.value && createSnapshot() !== initialSnapshot.value)
 const isBusy = computed(() => isSaving.value || isTestingLLM.value || isTestingEmbedding.value)
 const llmReady = computed(() => hasValue('llm.base_url') && hasValue('llm.model_id') && hasSecretValue('llm.api_key'))
-const embeddingReady = computed(() => hasValue('embedding.base_url') && hasValue('embedding.model_id') && hasSecretValue('embedding.api_key'))
-const automationReady = computed(() => (
-  Number(formValues['schedule.days_per_cycle'] || 0) > 0 &&
-  Number(formValues['schedule.posts_per_cycle'] || 0) > 0 &&
-  isClockValue(formValues['schedule.publish_time'])
-))
+const embeddingReady = computed(
+  () => hasValue('embedding.base_url') && hasValue('embedding.model_id') && hasSecretValue('embedding.api_key'),
+)
+const automationReady = computed(
+  () =>
+    Number(formValues['schedule.days_per_cycle'] || 0) > 0 &&
+    Number(formValues['schedule.posts_per_cycle'] || 0) > 0 &&
+    isClockValue(formValues['schedule.publish_time']),
+)
 const configConclusion = computed(() => {
   if (!hasValue('site.title') || !llmReady.value) {
     return {
@@ -222,7 +282,9 @@ function normalizeValue(field, rawValue) {
     return field.defaultValue
   }
   if (field.type === 'boolean') {
-    const value = String(rawValue ?? '').trim().toLowerCase()
+    const value = String(rawValue ?? '')
+      .trim()
+      .toLowerCase()
     return ['1', 'true', 'yes', 'on'].includes(value)
   }
   return rawValue ?? ''
@@ -275,13 +337,15 @@ function resetTransientMessages() {
 
 function broadcastPanelConfig() {
   if (typeof window === 'undefined') return
-  window.dispatchEvent(new CustomEvent('admin-config-updated', {
-    detail: {
-      'site.title': serializeValue({ type: 'text' }, formValues['site.title']),
-      'panel.title': serializeValue({ type: 'text' }, formValues['panel.title']),
-      'panel.status_text': serializeValue({ type: 'text' }, formValues['panel.status_text']),
-    },
-  }))
+  window.dispatchEvent(
+    new CustomEvent('admin-config-updated', {
+      detail: {
+        'site.title': serializeValue({ type: 'text' }, formValues['site.title']),
+        'panel.title': serializeValue({ type: 'text' }, formValues['panel.title']),
+        'panel.status_text': serializeValue({ type: 'text' }, formValues['panel.status_text']),
+      },
+    }),
+  )
 }
 
 function updateField(key, value) {

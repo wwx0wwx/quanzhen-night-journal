@@ -92,6 +92,8 @@ npm run dev
 
 ```bash
 uv run pytest backend/tests
+cd frontend && npm run typecheck
+cd frontend && npm run lint
 cd frontend && npm test
 cd frontend && npm run build
 ```
@@ -143,6 +145,10 @@ docker compose up -d --build
 
 - 系统会在运行时生成 Hugo 配置与 Caddy 配置，并在站点信息变更后自动刷新。
 - 域名入口只服务博客静态页；管理后台与 API 明确保留在 `http://<服务器IP>:5210/admin/` 与 `http://<服务器IP>:5210/api/*`。
+- Docker 部署下后台端口由 `docker-compose.yml` 端口映射控制，生产环境不支持在后台直接改动 `panel.port`。
+- 健康检查的外部探测会访问 OpenAI-compatible `/models` 端点；401、403、404 不会被视为可用，只会让系统进入 degraded 状态。
+- 默认质量策略会检查目标语言。`qa.required_language=zh` 时，英文漂移内容会进入人工签发。
+- Caddy admin reload 端口 `2019` 只在 Docker 内部网络开放，`docker-compose.yml` 不发布到宿主机；不要额外映射该端口到公网。
 - 域名默认要求 **DNS 直接解析到 `PUBLIC_SERVER_IP`**；如果域名走 Cloudflare 代理，请同时设置 `ALLOW_CLOUDFLARE_PROXY_DOMAIN=true`。
 - Cloudflare 代理模式下，系统会按代理域名生成 HTTPS 站点；但证书签发成功不等于公网一定可用，Cloudflare 仍需要能够回源访问服务器的 `80/443`。
 - 目录监控更适合监听宿主机投喂到挂载目录的文件；做自动化投喂时，建议等待服务健康检查通过后再写入文件。
@@ -167,6 +173,7 @@ docker compose up -d --build
 
 - 后端：`pytest backend/tests`
 - 前端测试：`cd frontend && npm test`
-- 前端：`cd frontend && npm run build`
+- 前端类型与风格：`cd frontend && npm run typecheck && npm run lint`
+- 前端构建：`cd frontend && npm run build`
 - 烟雾验证：`QZ_PASSWORD='<admin-password>' python3 scripts/smoke_test.py`
 - 容器：`docker compose up -d --build`

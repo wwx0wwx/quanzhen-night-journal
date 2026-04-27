@@ -115,7 +115,10 @@ describe('Posts and Ghost views', () => {
     await buttons.find((button) => button.text().includes('解除休眠')).trigger('click')
     await flushPromises()
 
-    expect(api.post).toHaveBeenNthCalledWith(1, '/tasks/trigger', { trigger_source: 'manual', semantic_hint: '请开始今晚的写作' })
+    expect(api.post).toHaveBeenNthCalledWith(1, '/tasks/trigger', {
+      trigger_source: 'manual',
+      semantic_hint: '请开始今晚的写作',
+    })
     expect(api.post).toHaveBeenNthCalledWith(2, '/cost/hibernate')
     expect(api.post).toHaveBeenNthCalledWith(3, '/cost/wake-up')
   })

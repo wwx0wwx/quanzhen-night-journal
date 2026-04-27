@@ -64,7 +64,7 @@ export function cronToHuman(expr) {
   const parts = expr.trim().split(/\s+/)
   if (parts.length !== 5) return expr
 
-  const [minute, hour, dom, _month, dow] = parts
+  const [minute, hour, dom, , dow] = parts
   const time = formatTime(minute, hour)
 
   if (minute === '*' && hour === '*' && dom === '*' && dow === '*') {

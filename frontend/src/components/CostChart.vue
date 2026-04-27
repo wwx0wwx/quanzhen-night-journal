@@ -1,12 +1,24 @@
 <template>
   <div class="metric">
-    <div class="muted">{{ title }}</div>
-    <div v-if="subtitle" class="cost-subtitle">{{ subtitle }}</div>
+    <div class="muted">
+      {{ title }}
+    </div>
+    <div
+      v-if="subtitle"
+      class="cost-subtitle"
+    >
+      {{ subtitle }}
+    </div>
     <strong>${{ cost.toFixed(4) }}</strong>
     <div class="bar">
-      <div class="bar-fill" :style="{ width: `${Math.min(100, progress)}%` }"></div>
+      <div
+        class="bar-fill"
+        :style="{ width: `${Math.min(100, progress)}%` }"
+      />
     </div>
-    <div class="muted">预算使用 {{ progress.toFixed(1) }}%</div>
+    <div class="muted">
+      预算使用 {{ progress.toFixed(1) }}%
+    </div>
   </div>
 </template>
 

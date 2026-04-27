@@ -68,6 +68,7 @@ def task_to_dict(task: GenerationTask, post: Post | None = None) -> dict:
         "duplicate_post_id": qa_result.get("duplicate_post_id"),
         "duplicate_method": qa_result.get("duplicate_method"),
         "duplicate_review_required": qa_result.get("duplicate_review_required", False),
+        "language_ok": qa_result.get("language_ok"),
         **build_publish_decision(
             qa_result=qa_result,
             review_info=review_info,
@@ -103,6 +104,7 @@ def post_to_dict(post: Post, task: GenerationTask | None = None) -> dict:
         "duplicate_post_id": qa_result.get("duplicate_post_id"),
         "duplicate_method": qa_result.get("duplicate_method"),
         "duplicate_review_required": qa_result.get("duplicate_review_required", False),
+        "language_ok": qa_result.get("language_ok"),
         **build_publish_decision(
             qa_result=qa_result,
             review_info=review_info,

@@ -1,17 +1,54 @@
 <template>
-  <div class="app-state app-state-error" :class="{ panel: !inline, 'panel-pad': !inline, 'app-state-inline': inline }">
-    <div class="app-state-mark" aria-hidden="true">
-      <svg viewBox="0 0 64 64" class="app-state-icon">
-        <path d="M32 12 11 49h42L32 12Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2.8" />
-        <path d="M32 25v12" stroke="currentColor" stroke-linecap="round" stroke-width="3.2" />
-        <circle cx="32" cy="43.2" r="1.9" fill="currentColor" />
+  <div
+    class="app-state app-state-error"
+    :class="{ panel: !inline, 'panel-pad': !inline, 'app-state-inline': inline }"
+  >
+    <div
+      class="app-state-mark"
+      aria-hidden="true"
+    >
+      <svg
+        viewBox="0 0 64 64"
+        class="app-state-icon"
+      >
+        <path
+          d="M32 12 11 49h42L32 12Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-linejoin="round"
+          stroke-width="2.8"
+        />
+        <path
+          d="M32 25v12"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-width="3.2"
+        />
+        <circle
+          cx="32"
+          cy="43.2"
+          r="1.9"
+          fill="currentColor"
+        />
       </svg>
     </div>
-    <div class="app-state-kicker">Interruption Trace</div>
+    <div class="app-state-kicker">
+      Interruption Trace
+    </div>
     <strong class="app-state-title">{{ title }}</strong>
-    <div class="muted app-state-body">{{ message }}</div>
-    <div class="button-row" v-if="actionLabel">
-      <button class="btn ghost" type="button" :disabled="disabled" @click="$emit('retry')">
+    <div class="muted app-state-body">
+      {{ message }}
+    </div>
+    <div
+      v-if="actionLabel"
+      class="button-row"
+    >
+      <button
+        class="btn ghost"
+        type="button"
+        :disabled="disabled"
+        @click="$emit('retry')"
+      >
         {{ actionLabel }}
       </button>
     </div>
@@ -52,7 +89,7 @@ defineEmits(['retry'])
 }
 
 .app-state-error::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -68,9 +105,7 @@ defineEmits(['retry'])
   height: 86px;
   border-radius: 999px;
   border: 1px solid rgba(255, 155, 176, 0.22);
-  background:
-    radial-gradient(circle, rgba(255, 175, 193, 0.1), transparent 58%),
-    rgba(18, 11, 17, 0.76);
+  background: radial-gradient(circle, rgba(255, 175, 193, 0.1), transparent 58%), rgba(18, 11, 17, 0.76);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 22px 52px rgba(0, 0, 0, 0.3);

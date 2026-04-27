@@ -2,7 +2,9 @@
   <section class="stack">
     <div class="hero posts-hero">
       <div>
-        <div class="hero-kicker">Manuscript Registry</div>
+        <div class="hero-kicker">
+          Manuscript Registry
+        </div>
         <h1>文章管理</h1>
         <p>这里像夜间卷宗台一样整理稿件、生成任务与发布动作，先判断每篇稿件的状态，再决定是否继续推进。</p>
       </div>
@@ -16,36 +18,76 @@
         >
           {{ isTriggering ? '创作中…' : '立即创作' }}
         </button>
-        <button class="btn ghost" type="button" :disabled="isLoading" @click="load">刷新列表</button>
-        <RouterLink class="btn primary" to="/admin/posts/new" data-tooltip="手动新建一篇文章草稿">
+        <button
+          class="btn ghost"
+          type="button"
+          :disabled="isLoading"
+          @click="load"
+        >
+          刷新列表
+        </button>
+        <RouterLink
+          class="btn primary"
+          to="/admin/posts/new"
+          data-tooltip="手动新建一篇文章草稿"
+        >
           新建文章
         </RouterLink>
-        <button class="btn ghost" type="button" :disabled="actionBusy" data-tooltip="暂停自动创作，不再触发定时任务" @click="hibernate">
+        <button
+          class="btn ghost"
+          type="button"
+          :disabled="actionBusy"
+          data-tooltip="暂停自动创作，不再触发定时任务"
+          @click="hibernate"
+        >
           {{ isHibernating ? '处理中…' : '立即休眠' }}
         </button>
-        <button class="btn ghost" type="button" :disabled="actionBusy" data-tooltip="恢复自动创作调度" @click="wakeUp">
+        <button
+          class="btn ghost"
+          type="button"
+          :disabled="actionBusy"
+          data-tooltip="恢复自动创作调度"
+          @click="wakeUp"
+        >
           {{ isWakingUp ? '处理中…' : '解除休眠' }}
         </button>
       </div>
     </div>
 
-    <form class="panel panel-pad toolbar posts-toolbar" @submit.prevent="load">
+    <form
+      class="panel panel-pad toolbar posts-toolbar"
+      @submit.prevent="load"
+    >
       <label class="field">
         <span>状态筛选</span>
-        <select v-model="status" :disabled="isLoading">
+        <select
+          v-model="status"
+          :disabled="isLoading"
+        >
           <option value="">全部</option>
-          <option v-for="item in POST_STATUS_OPTIONS" :key="item" :value="item">
+          <option
+            v-for="item in POST_STATUS_OPTIONS"
+            :key="item"
+            :value="item"
+          >
             {{ getStatusLabel('post', item) }}
           </option>
         </select>
       </label>
       <label class="field">
         <span>搜索</span>
-        <input v-model.trim="keyword" :disabled="isLoading" placeholder="标题、slug、摘要" />
+        <input
+          v-model.trim="keyword"
+          :disabled="isLoading"
+          placeholder="标题、slug、摘要"
+        >
       </label>
       <label class="field">
         <span>排序</span>
-        <select v-model="sort" :disabled="isLoading">
+        <select
+          v-model="sort"
+          :disabled="isLoading"
+        >
           <option value="updated_desc">最近更新优先</option>
           <option value="published_desc">最近发布优先</option>
           <option value="created_desc">最近创建优先</option>
@@ -53,14 +95,40 @@
         </select>
       </label>
       <div class="button-row toolbar-actions">
-        <button class="btn primary" type="submit" :disabled="isLoading">应用筛选</button>
-        <button class="btn ghost" type="button" :disabled="isLoading" @click="resetFilters">清空</button>
+        <button
+          class="btn primary"
+          type="submit"
+          :disabled="isLoading"
+        >
+          应用筛选
+        </button>
+        <button
+          class="btn ghost"
+          type="button"
+          :disabled="isLoading"
+          @click="resetFilters"
+        >
+          清空
+        </button>
       </div>
     </form>
 
-    <div class="stack" v-if="actionError || actionSuccess">
-      <div v-if="actionError" class="status-banner error">{{ actionError }}</div>
-      <div v-if="actionSuccess" class="status-banner success">{{ actionSuccess }}</div>
+    <div
+      v-if="actionError || actionSuccess"
+      class="stack"
+    >
+      <div
+        v-if="actionError"
+        class="status-banner error"
+      >
+        {{ actionError }}
+      </div>
+      <div
+        v-if="actionSuccess"
+        class="status-banner success"
+      >
+        {{ actionSuccess }}
+      </div>
     </div>
 
     <AppLoading
@@ -88,36 +156,74 @@
     <template v-else>
       <div class="panel panel-pad posts-ledger-meta">
         <div>
-          <div class="hero-kicker">Registry Count</div>
+          <div class="hero-kicker">
+            Registry Count
+          </div>
           <strong>共 {{ total }} 篇，第 {{ page }} / {{ totalPages }} 页，当前显示 {{ posts.length }} 篇。</strong>
         </div>
-        <div class="muted">主操作优先处理“待审核 / 可发布 / 失败待排查”的稿件，其余状态可延后整理。</div>
+        <div class="muted">
+          主操作优先处理“待审核 / 可发布 / 失败待排查”的稿件，其余状态可延后整理。
+        </div>
       </div>
 
       <div class="list">
-        <article v-for="post in posts" :key="post.id" class="panel panel-pad stack post-card">
+        <article
+          v-for="post in posts"
+          :key="post.id"
+          class="panel panel-pad stack post-card"
+        >
           <div class="split">
             <div class="stack post-card-main">
               <div class="button-row">
-                <span class="tag" :class="getStatusClass('post', post.status)">
+                <span
+                  class="tag"
+                  :class="getStatusClass('post', post.status)"
+                >
                   {{ getStatusLabel('post', post.status) }}
                 </span>
-                <span v-if="post.task_id" class="tag" :class="getPublishDecisionClass(post)">
+                <span
+                  v-if="post.task_id"
+                  class="tag"
+                  :class="getPublishDecisionClass(post)"
+                >
                   {{ getPublishDecisionLabel(post) }}
                 </span>
-                <span v-if="post.review_reason" class="tag tag-warning">{{ getReviewReasonLabel(post.review_reason) }}</span>
-                <span v-if="post.task_error_code" class="tag tag-danger">{{ describeErrorCode(post.task_error_code) }}</span>
-                <span v-if="post.qa_risk_level && post.qa_risk_level !== 'unknown'" class="tag">
+                <span
+                  v-if="post.review_reason"
+                  class="tag tag-warning"
+                >{{
+                  getReviewReasonLabel(post.review_reason)
+                }}</span>
+                <span
+                  v-if="post.task_error_code"
+                  class="tag tag-danger"
+                >{{
+                  describeErrorCode(post.task_error_code)
+                }}</span>
+                <span
+                  v-if="post.qa_risk_level && post.qa_risk_level !== 'unknown'"
+                  class="tag"
+                >
                   {{ post.qa_risk_level }}
                 </span>
               </div>
 
-              <div class="stack post-card-heading" style="gap: 8px;">
-                <div class="post-card-kicker">卷宗 #{{ post.id }}</div>
-                <RouterLink class="post-title-link" :to="`/admin/posts/${post.id}`">
+              <div
+                class="stack post-card-heading"
+                style="gap: 8px"
+              >
+                <div class="post-card-kicker">
+                  卷宗 #{{ post.id }}
+                </div>
+                <RouterLink
+                  class="post-title-link"
+                  :to="`/admin/posts/${post.id}`"
+                >
                   {{ post.title || `未命名文章 #${post.id}` }}
                 </RouterLink>
-                <div class="muted">Slug: {{ post.slug || '-' }}</div>
+                <div class="muted">
+                  Slug: {{ post.slug || '-' }}
+                </div>
               </div>
 
               <div class="post-summary">
@@ -136,7 +242,12 @@
                 <div>
                   <dt>任务</dt>
                   <dd>
-                    <RouterLink v-if="post.task_id" :to="`/admin/tasks/${post.task_id}`">#{{ post.task_id }}</RouterLink>
+                    <RouterLink
+                      v-if="post.task_id"
+                      :to="`/admin/tasks/${post.task_id}`"
+                    >
+                      #{{ post.task_id }}
+                    </RouterLink>
                     <span v-else>-</span>
                   </dd>
                 </div>
@@ -158,23 +269,43 @@
                 </div>
               </dl>
 
-              <div v-if="post.task_id" class="muted">
+              <div
+                v-if="post.task_id"
+                class="muted"
+              >
                 发布判定：{{ getPublishDecisionDescription(post) }}
               </div>
 
-              <div v-if="post.human_approved && !post.human_approval_recorded" class="status-banner warning">
+              <div
+                v-if="post.human_approved && !post.human_approval_recorded"
+                class="status-banner warning"
+              >
                 这篇已发布稿件的人工签发路径来自历史记录推断，建议复核一次。
               </div>
 
-              <div v-if="post.task_error_message" class="status-banner error">
+              <div
+                v-if="post.task_error_message"
+                class="status-banner error"
+              >
                 {{ post.task_error_message }}
               </div>
             </div>
 
             <div class="button-row post-card-actions">
-              <div class="post-card-actions-label">处置动作</div>
-              <RouterLink class="btn ghost btn-small" :to="`/admin/posts/${post.id}`">编辑</RouterLink>
-              <RouterLink v-if="post.task_id" class="btn ghost btn-small" :to="`/admin/tasks/${post.task_id}`">
+              <div class="post-card-actions-label">
+                处置动作
+              </div>
+              <RouterLink
+                class="btn ghost btn-small"
+                :to="`/admin/posts/${post.id}`"
+              >
+                编辑
+              </RouterLink>
+              <RouterLink
+                v-if="post.task_id"
+                class="btn ghost btn-small"
+                :to="`/admin/tasks/${post.task_id}`"
+              >
                 查看任务
               </RouterLink>
               <button
@@ -213,10 +344,24 @@
       </div>
 
       <div class="panel panel-pad split">
-        <div class="muted">第 {{ page }} / {{ totalPages }} 页，共 {{ total }} 篇</div>
+        <div class="muted">
+          第 {{ page }} / {{ totalPages }} 页，共 {{ total }} 篇
+        </div>
         <div class="button-row">
-          <button class="btn ghost btn-small" :disabled="page <= 1 || isLoading" @click="changePage(page - 1)">上一页</button>
-          <button class="btn ghost btn-small" :disabled="page >= totalPages || isLoading" @click="changePage(page + 1)">下一页</button>
+          <button
+            class="btn ghost btn-small"
+            :disabled="page <= 1 || isLoading"
+            @click="changePage(page - 1)"
+          >
+            上一页
+          </button>
+          <button
+            class="btn ghost btn-small"
+            :disabled="page >= totalPages || isLoading"
+            @click="changePage(page + 1)"
+          >
+            下一页
+          </button>
         </div>
       </div>
     </template>
@@ -232,7 +377,11 @@ import AppEmpty from '../components/AppEmpty.vue'
 import AppError from '../components/AppError.vue'
 import AppLoading from '../components/AppLoading.vue'
 import { describeError, describeErrorCode } from '../utils/errors'
-import { getPublishDecisionClass, getPublishDecisionDescription, getPublishDecisionLabel } from '../utils/publishDecision'
+import {
+  getPublishDecisionClass,
+  getPublishDecisionDescription,
+  getPublishDecisionLabel,
+} from '../utils/publishDecision'
 import { POST_STATUS_OPTIONS, getReviewReasonLabel, getStatusClass, getStatusLabel } from '../utils/statusMeta'
 import { formatDateTimeWithRelative, formatDurationMs } from '../utils/time'
 
@@ -254,7 +403,9 @@ const isTriggering = ref(false)
 const isHibernating = ref(false)
 const isWakingUp = ref(false)
 
-const actionBusy = computed(() => !!activeActionKey.value || isTriggering.value || isHibernating.value || isWakingUp.value)
+const actionBusy = computed(
+  () => !!activeActionKey.value || isTriggering.value || isHibernating.value || isWakingUp.value,
+)
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
 
 function personaName(personaId) {
@@ -298,15 +449,17 @@ async function load() {
 
   try {
     const [postData, personaData] = await Promise.all([
-      unwrap(api.get('/posts', {
-        params: {
-          status: status.value || undefined,
-          q: keyword.value || undefined,
-          sort: sort.value,
-          page: page.value,
-          page_size: pageSize,
-        },
-      })),
+      unwrap(
+        api.get('/posts', {
+          params: {
+            status: status.value || undefined,
+            q: keyword.value || undefined,
+            sort: sort.value,
+            page: page.value,
+            page_size: pageSize,
+          },
+        }),
+      ),
       personas.value.length ? Promise.resolve(personas.value) : unwrap(api.get('/personas')),
     ])
     posts.value = postData.items || []
@@ -352,7 +505,9 @@ async function triggerTask() {
   actionSuccess.value = ''
   isTriggering.value = true
   try {
-    const result = await unwrap(api.post('/tasks/trigger', { trigger_source: 'manual', semantic_hint: '请开始今晚的写作' }))
+    const result = await unwrap(
+      api.post('/tasks/trigger', { trigger_source: 'manual', semantic_hint: '请开始今晚的写作' }),
+    )
     actionSuccess.value = `写作任务 #${result.id} 已开始。`
     await load()
   } catch (error) {

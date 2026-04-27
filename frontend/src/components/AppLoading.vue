@@ -1,12 +1,22 @@
 <template>
-  <div class="app-state" :class="{ panel: !inline, 'panel-pad': !inline, 'app-state-inline': inline }">
-    <div class="loading-mark" aria-hidden="true">
-      <div class="state-spinner"></div>
-      <div class="loading-ring"></div>
+  <div
+    class="app-state"
+    :class="{ panel: !inline, 'panel-pad': !inline, 'app-state-inline': inline }"
+  >
+    <div
+      class="loading-mark"
+      aria-hidden="true"
+    >
+      <div class="state-spinner" />
+      <div class="loading-ring" />
     </div>
-    <div class="app-state-kicker">Synchronizing</div>
+    <div class="app-state-kicker">
+      Synchronizing
+    </div>
     <strong class="app-state-title">{{ title }}</strong>
-    <div class="muted app-state-body">{{ description }}</div>
+    <div class="muted app-state-body">
+      {{ description }}
+    </div>
   </div>
 </template>
 
@@ -36,9 +46,7 @@ defineProps({
   height: 88px;
   border-radius: 999px;
   border: 1px solid var(--line-strong);
-  background:
-    radial-gradient(circle, var(--accent-glow), transparent 54%),
-    var(--panel);
+  background: radial-gradient(circle, var(--accent-glow), transparent 54%), var(--panel);
   box-shadow: var(--shadow-soft);
 }
 

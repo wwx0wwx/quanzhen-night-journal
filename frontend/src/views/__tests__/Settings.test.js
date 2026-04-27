@@ -25,6 +25,7 @@ function makeConfig() {
     'site.domain': { value: 'iuaa.de', category: 'site', encrypted: false },
     'panel.title': { value: '', category: 'panel', encrypted: false },
     'panel.status_text': { value: '{user} 正在守夜', category: 'panel', encrypted: false },
+    'panel.port': { value: '5210', category: 'panel', encrypted: false },
     'llm.base_url': { value: 'https://688.qzz.io/v1', category: 'llm', encrypted: false },
     'llm.api_key': { value: '******', category: 'llm', encrypted: true },
     'llm.model_id': { value: 'Qwen--3.5-max', category: 'llm', encrypted: false },
@@ -43,6 +44,7 @@ function makeConfig() {
     'qa.min_length': { value: '200', category: 'qa', encrypted: false },
     'qa.max_length': { value: '5000', category: 'qa', encrypted: false },
     'qa.duplicate_threshold': { value: '0.85', category: 'qa', encrypted: false },
+    'qa.required_language': { value: 'zh', category: 'qa', encrypted: false },
     'qa.forbidden_words': { value: '[]', category: 'qa', encrypted: false },
     'qa.template_phrases': { value: '[]', category: 'qa', encrypted: false },
     'webhook.auth_mode': { value: 'bearer', category: 'webhook', encrypted: false },
@@ -98,8 +100,16 @@ describe('Settings view', () => {
     expect(wrapper.text()).toContain('面板设置')
     expect(wrapper.text()).toContain('大脑接入（LLM）')
     expect(wrapper.text()).toContain('记忆检索（Embedding）')
+    expect(wrapper.text()).toContain('目标语言')
     expect(wrapper.text()).toContain('测试大脑接入')
     expect(wrapper.text()).toContain('测试记忆检索')
+    expect(
+      wrapper
+        .findAll('.field')
+        .find((item) => item.text().includes('面板端口'))
+        .find('input')
+        .attributes('readonly'),
+    ).toBeDefined()
 
     const fields = wrapper.findAll('.field')
     const dailyField = fields.find((item) => item.text().includes('每日预算上限（USD）'))
@@ -120,19 +130,15 @@ describe('Settings view', () => {
   })
 
   it('tests llm and embedding in place with existing endpoints', async () => {
-    api.get
-      .mockResolvedValueOnce(makeConfig())
-      .mockResolvedValueOnce({
-        domain: 'iuaa.de',
-        enabled: true,
-        status: 'enabled',
-        reason: 'ok',
-        checked_at: '2026-04-12T00:00:00+00:00',
-        base_url: 'https://iuaa.de/',
-      })
-    api.post
-      .mockResolvedValueOnce({ reply: 'pong' })
-      .mockResolvedValueOnce({ dimensions: 1536 })
+    api.get.mockResolvedValueOnce(makeConfig()).mockResolvedValueOnce({
+      domain: 'iuaa.de',
+      enabled: true,
+      status: 'enabled',
+      reason: 'ok',
+      checked_at: '2026-04-12T00:00:00+00:00',
+      base_url: 'https://iuaa.de/',
+    })
+    api.post.mockResolvedValueOnce({ reply: 'pong' }).mockResolvedValueOnce({ dimensions: 1536 })
 
     const wrapper = mount(Settings)
     await flushPromises()

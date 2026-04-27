@@ -2,19 +2,36 @@
   <section class="panel panel-pad stamp-card">
     <div class="stamp-head">
       <div>
-        <div class="hero-kicker">Verification Seal</div>
-        <div class="section-title">数字印记</div>
-        <p class="muted">用于追溯当前稿件的生成结果、签发状态与版本痕迹。</p>
+        <div class="hero-kicker">
+          Verification Seal
+        </div>
+        <div class="section-title">
+          数字印记
+        </div>
+        <p class="muted">
+          用于追溯当前稿件的生成结果、签发状态与版本痕迹。
+        </p>
       </div>
-      <div class="stamp-glyph" aria-hidden="true">
-        <span></span>
-        <span></span>
-        <span></span>
+      <div
+        class="stamp-glyph"
+        aria-hidden="true"
+      >
+        <span />
+        <span />
+        <span />
       </div>
     </div>
 
-    <pre v-if="stamp" class="stamp-code">{{ stamp }}</pre>
-    <div v-else class="stamp-empty muted">当前还没有可用印记，待文章保存或任务落档后会自动生成。</div>
+    <pre
+      v-if="stamp"
+      class="stamp-code"
+    >{{ stamp }}</pre>
+    <div
+      v-else
+      class="stamp-empty muted"
+    >
+      当前还没有可用印记，待文章保存或任务落档后会自动生成。
+    </div>
   </section>
 </template>
 

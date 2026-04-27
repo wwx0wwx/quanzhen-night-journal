@@ -17,27 +17,40 @@
     <template v-else>
       <div class="hero dashboard-hero">
         <div>
-          <div class="hero-kicker">Night Watch Console</div>
+          <div class="hero-kicker">
+            Night Watch Console
+          </div>
           <h1>运营总览</h1>
           <p>把今夜的站点、任务、风险与生成状态收束在同一处，先看夜况是否安稳，再决定是否继续发文。</p>
         </div>
         <div class="dashboard-hero-aside">
-          <span class="tag" :class="configConclusionTagClass">{{ systemState.label }}</span>
-          <div class="muted">建议动作：{{ nextStep.title }}</div>
+          <span
+            class="tag"
+            :class="configConclusionTagClass"
+          >{{ systemState.label }}</span>
+          <div class="muted">
+            建议动作：{{ nextStep.title }}
+          </div>
         </div>
       </div>
 
       <div class="panel panel-pad stack dashboard-overview-card">
         <div class="dashboard-overview-grid">
           <div class="dashboard-overview-main">
-            <div class="dashboard-overview-label">今夜状态</div>
+            <div class="dashboard-overview-label">
+              今夜状态
+            </div>
             <h2>{{ systemState.label }}</h2>
             <p>{{ systemState.description }}</p>
           </div>
           <div class="dashboard-overview-side">
-            <div class="dashboard-overview-label">下一步</div>
+            <div class="dashboard-overview-label">
+              下一步
+            </div>
             <strong>{{ nextStep.title }}</strong>
-            <div class="muted">{{ nextStep.description }}</div>
+            <div class="muted">
+              {{ nextStep.description }}
+            </div>
           </div>
         </div>
       </div>
@@ -46,10 +59,15 @@
         <div class="settings-section-head">
           <div>
             <h2>域名配置诊断</h2>
-            <p class="muted">检查域名绑定与 DNS 配置是否就绪，不代表公网可达性。实际访问状态请以浏览器验证为准。</p>
+            <p class="muted">
+              检查域名绑定与 DNS 配置是否就绪，不代表公网可达性。实际访问状态请以浏览器验证为准。
+            </p>
           </div>
           <div class="button-row">
-            <span class="tag" :class="data.domain_status.enabled ? 'tag-success' : 'tag-warning'">
+            <span
+              class="tag"
+              :class="data.domain_status.enabled ? 'tag-success' : 'tag-warning'"
+            >
               {{ data.domain_status.enabled ? '配置就绪' : '博客未公开' }}
             </span>
             <span class="tag">{{ data.domain_status.status || 'unknown' }}</span>
@@ -58,24 +76,40 @@
 
         <div class="card-row">
           <div class="metric">
-            <div class="muted">绑定域名</div>
+            <div class="muted">
+              绑定域名
+            </div>
             <strong>{{ data.domain_status.domain || '未配置' }}</strong>
-            <div class="muted">当前配置的域名。</div>
+            <div class="muted">
+              当前配置的域名。
+            </div>
           </div>
           <div class="metric">
-            <div class="muted">Hugo 基准地址</div>
+            <div class="muted">
+              Hugo 基准地址
+            </div>
             <strong>{{ data.domain_status.base_url || '/' }}</strong>
-            <div class="muted">Hugo 构建使用的 base_url。</div>
+            <div class="muted">
+              Hugo 构建使用的 base_url。
+            </div>
           </div>
           <div class="metric">
-            <div class="muted">最近检查</div>
+            <div class="muted">
+              最近检查
+            </div>
             <strong>{{ formatCheckedAt(data.domain_status.checked_at) }}</strong>
-            <div class="muted">域名配置诊断刷新时间。</div>
+            <div class="muted">
+              域名配置诊断刷新时间。
+            </div>
           </div>
           <div class="metric">
-            <div class="muted">当日点击</div>
+            <div class="muted">
+              当日点击
+            </div>
             <strong>{{ Number(data.click_stats.today_page_views || 0) }}</strong>
-            <div class="muted">今日累计页面访问。</div>
+            <div class="muted">
+              今日累计页面访问。
+            </div>
           </div>
         </div>
 
@@ -93,28 +127,58 @@
           >
             {{ blogProbe.busy ? '检测中…' : '检测公网可达性' }}
           </button>
-          <span v-else class="muted">未启用域名，无需检测公网可达性。</span>
-          <span v-if="blogProbe.done" class="tag" :class="blogProbe.reachable ? 'tag-success' : 'tag-danger'">
+          <span
+            v-else
+            class="muted"
+          >未启用域名，无需检测公网可达性。</span>
+          <span
+            v-if="blogProbe.done"
+            class="tag"
+            :class="blogProbe.reachable ? 'tag-success' : 'tag-danger'"
+          >
             {{ blogProbe.reachable ? '可达' : '不可达' }}
           </span>
         </div>
-        <div v-if="blogProbe.done" class="status-banner" :class="blogProbe.reachable ? 'success' : 'error'">
+        <div
+          v-if="blogProbe.done"
+          class="status-banner"
+          :class="blogProbe.reachable ? 'success' : 'error'"
+        >
           {{ blogProbe.reason }}
         </div>
       </div>
 
-      <div class="stack" v-if="configWarnings.length">
-        <div v-for="item in configWarnings" :key="item" class="status-banner warning">{{ item }}</div>
+      <div
+        v-if="configWarnings.length"
+        class="stack"
+      >
+        <div
+          v-for="item in configWarnings"
+          :key="item"
+          class="status-banner warning"
+        >
+          {{ item }}
+        </div>
       </div>
 
       <div class="card-row">
         <div class="metric dashboard-state-metric">
-          <div class="muted">当前系统状态</div>
+          <div class="muted">
+            当前系统状态
+          </div>
           <strong>{{ systemState.label }}</strong>
-          <div class="muted">{{ systemState.description }}</div>
+          <div class="muted">
+            {{ systemState.description }}
+          </div>
         </div>
-        <StabilityGauge label="人格稳定度" :score="Number(data.persona_stability || 0)" />
-        <StabilityGauge label="记忆一致性" :score="Number(data.memory_coherence || 0)" />
+        <StabilityGauge
+          label="人格稳定度"
+          :score="Number(data.persona_stability || 0)"
+        />
+        <StabilityGauge
+          label="记忆一致性"
+          :score="Number(data.memory_coherence || 0)"
+        />
         <CostChart
           title="今日精力消耗"
           subtitle="模型调用费用"
@@ -122,33 +186,57 @@
           :limit="Number(data.cost?.limit || 1)"
         />
         <div class="metric dashboard-state-metric">
-          <div class="muted">推荐下一步</div>
+          <div class="muted">
+            推荐下一步
+          </div>
           <strong>{{ nextStep.title }}</strong>
-          <div class="muted">{{ nextStep.description }}</div>
+          <div class="muted">
+            {{ nextStep.description }}
+          </div>
         </div>
       </div>
 
       <div class="card-row">
         <div class="metric">
-          <div class="muted">待处理风险</div>
+          <div class="muted">
+            待处理风险
+          </div>
           <strong>{{ pendingRiskCount }}</strong>
         </div>
         <div class="metric">
-          <div class="muted">失败任务</div>
+          <div class="muted">
+            失败任务
+          </div>
           <strong>{{ unackedFailed }}</strong>
-          <div v-if="Number(data.risk_overview.failed_acknowledged || 0) > 0" class="muted">含 {{ data.risk_overview.failed_acknowledged }} 已知悉</div>
+          <div
+            v-if="Number(data.risk_overview.failed_acknowledged || 0) > 0"
+            class="muted"
+          >
+            含 {{ data.risk_overview.failed_acknowledged }} 已知悉
+          </div>
         </div>
         <div class="metric">
-          <div class="muted">QA 熔断</div>
+          <div class="muted">
+            QA 熔断
+          </div>
           <strong>{{ unackedCircuitOpen }}</strong>
-          <div v-if="Number(data.risk_overview.circuit_open_acknowledged || 0) > 0" class="muted">含 {{ data.risk_overview.circuit_open_acknowledged }} 已知悉</div>
+          <div
+            v-if="Number(data.risk_overview.circuit_open_acknowledged || 0) > 0"
+            class="muted"
+          >
+            含 {{ data.risk_overview.circuit_open_acknowledged }} 已知悉
+          </div>
         </div>
         <div class="metric">
-          <div class="muted">待人工签发</div>
+          <div class="muted">
+            待人工签发
+          </div>
           <strong>{{ data.risk_overview.waiting_human_signoff }}</strong>
         </div>
         <div class="metric">
-          <div class="muted">最近任务数</div>
+          <div class="muted">
+            最近任务数
+          </div>
           <strong>{{ data.recent_tasks.length }}</strong>
         </div>
       </div>
@@ -156,7 +244,9 @@
       <div class="grid two dashboard-columns">
         <div class="panel panel-pad stack">
           <div class="split">
-            <div class="section-title">近期风险提醒</div>
+            <div class="section-title">
+              近期风险提醒
+            </div>
             <button
               v-if="hasFailedAttention"
               class="btn ghost btn-small"
@@ -175,14 +265,20 @@
             description="最近任务里没有失败、熔断或待人工签发的记录。"
           />
 
-          <div v-else class="list">
+          <div
+            v-else
+            class="list"
+          >
             <div
               v-for="item in attentionCards"
               :key="`${item.kind}-${item.id}`"
               class="list-item stack"
             >
               <div class="button-row">
-                <span class="tag" :class="item.severity === 'error' ? 'tag-danger' : 'tag-warning'">
+                <span
+                  class="tag"
+                  :class="item.severity === 'error' ? 'tag-danger' : 'tag-warning'"
+                >
                   {{ item.severity === 'error' ? '风险' : '提醒' }}
                 </span>
                 <span class="tag">{{ attentionLabel(item.label) }}</span>
@@ -190,17 +286,38 @@
               <RouterLink :to="item.kind === 'task' ? `/admin/tasks/${item.id}` : '/admin/settings'">
                 <strong>{{ item.title }}</strong>
               </RouterLink>
-              <div class="muted">{{ item.message }}</div>
-              <div v-if="item.kind === 'task' && item.severity === 'error'" class="button-row">
-                <button class="btn ghost btn-small" :disabled="dismissBusy" data-tooltip="标记为已知悉，不再提示" @click="dismissTask(item.id)">忽略</button>
-                <button class="btn ghost btn-small" :disabled="dismissBusy" data-tooltip="用同一人格重新触发写作任务" @click="retryTask(item.personaId)">重试</button>
+              <div class="muted">
+                {{ item.message }}
+              </div>
+              <div
+                v-if="item.kind === 'task' && item.severity === 'error'"
+                class="button-row"
+              >
+                <button
+                  class="btn ghost btn-small"
+                  :disabled="dismissBusy"
+                  data-tooltip="标记为已知悉，不再提示"
+                  @click="dismissTask(item.id)"
+                >
+                  忽略
+                </button>
+                <button
+                  class="btn ghost btn-small"
+                  :disabled="dismissBusy"
+                  data-tooltip="用同一人格重新触发写作任务"
+                  @click="retryTask(item.personaId)"
+                >
+                  重试
+                </button>
               </div>
             </div>
           </div>
         </div>
 
         <div class="panel panel-pad stack">
-          <div class="section-title">最近任务</div>
+          <div class="section-title">
+            最近任务
+          </div>
 
           <AppEmpty
             v-if="!data.recent_tasks.length"
@@ -209,7 +326,10 @@
             description="触发一次生成后，这里会显示最近的任务状态和失败原因。"
           />
 
-          <div v-else class="list">
+          <div
+            v-else
+            class="list"
+          >
             <RouterLink
               v-for="task in data.recent_tasks"
               :key="task.id"
@@ -218,17 +338,43 @@
             >
               <div class="split">
                 <strong>任务 #{{ task.id }}</strong>
-                <span class="tag" :class="getStatusClass('task', task.status)">{{ getStatusLabel('task', task.status) }}</span>
+                <span
+                  class="tag"
+                  :class="getStatusClass('task', task.status)"
+                >{{
+                  getStatusLabel('task', task.status)
+                }}</span>
               </div>
-              <div class="muted">{{ formatDateTimeWithRelative(task.started_at) }}</div>
+              <div class="muted">
+                {{ formatDateTimeWithRelative(task.started_at) }}
+              </div>
               <div class="muted">
                 {{ taskPrimaryMessage(task) }}
               </div>
               <div class="button-row">
-                <span v-if="showTaskPublishDecision(task)" class="tag" :class="getPublishDecisionClass(task)">{{ getPublishDecisionLabel(task) }}</span>
-                <span v-if="task.error_code" class="tag tag-danger">{{ describeErrorCode(task.error_code) || task.error_code }}</span>
-                <span v-if="task.qa_risk_level && task.qa_risk_level !== 'unknown'" class="tag">{{ task.qa_risk_level }}</span>
-                <span v-if="task.queue_wait_ms" class="tag">{{ formatDurationMs(task.queue_wait_ms) }}</span>
+                <span
+                  v-if="showTaskPublishDecision(task)"
+                  class="tag"
+                  :class="getPublishDecisionClass(task)"
+                >{{
+                  getPublishDecisionLabel(task)
+                }}</span>
+                <span
+                  v-if="task.error_code"
+                  class="tag tag-danger"
+                >{{
+                  describeErrorCode(task.error_code) || task.error_code
+                }}</span>
+                <span
+                  v-if="task.qa_risk_level && task.qa_risk_level !== 'unknown'"
+                  class="tag"
+                >{{
+                  task.qa_risk_level
+                }}</span>
+                <span
+                  v-if="task.queue_wait_ms"
+                  class="tag"
+                >{{ formatDurationMs(task.queue_wait_ms) }}</span>
               </div>
             </RouterLink>
           </div>
@@ -236,7 +382,9 @@
       </div>
 
       <div class="panel panel-pad stack">
-        <div class="section-title">最近文章</div>
+        <div class="section-title">
+          最近文章
+        </div>
 
         <AppEmpty
           v-if="!data.recent_posts.length"
@@ -245,7 +393,10 @@
           description="去文章页手动发文或新建文章后，这里会显示最近内容。"
         />
 
-        <div v-else class="list">
+        <div
+          v-else
+          class="list"
+        >
           <RouterLink
             v-for="post in data.recent_posts"
             :key="post.id"
@@ -254,11 +405,22 @@
           >
             <div class="split">
               <strong>{{ post.title }}</strong>
-              <span class="tag" :class="getStatusClass('post', post.status)">{{ getStatusLabel('post', post.status) }}</span>
+              <span
+                class="tag"
+                :class="getStatusClass('post', post.status)"
+              >{{
+                getStatusLabel('post', post.status)
+              }}</span>
             </div>
-            <div class="muted">Slug: {{ post.slug }}</div>
-            <div class="muted">{{ post.summary || '暂无摘要' }}</div>
-            <div class="muted">{{ formatDateTimeWithRelative(post.updated_at || post.published_at || post.created_at) }}</div>
+            <div class="muted">
+              Slug: {{ post.slug }}
+            </div>
+            <div class="muted">
+              {{ post.summary || '暂无摘要' }}
+            </div>
+            <div class="muted">
+              {{ formatDateTimeWithRelative(post.updated_at || post.published_at || post.created_at) }}
+            </div>
           </RouterLink>
         </div>
       </div>
@@ -276,7 +438,11 @@ import AppLoading from '../components/AppLoading.vue'
 import CostChart from '../components/CostChart.vue'
 import StabilityGauge from '../components/StabilityGauge.vue'
 import { describeError, describeErrorCode } from '../utils/errors'
-import { getPublishDecisionClass, getPublishDecisionDescription, getPublishDecisionLabel } from '../utils/publishDecision'
+import {
+  getPublishDecisionClass,
+  getPublishDecisionDescription,
+  getPublishDecisionLabel,
+} from '../utils/publishDecision'
 import { getStatusClass, getStatusDescription, getStatusLabel } from '../utils/statusMeta'
 import { formatDateTimeWithRelative, formatDateTime, formatDurationMs } from '../utils/time'
 
@@ -296,7 +462,13 @@ function createDashboardState() {
     },
     persona_stability: 0,
     memory_coherence: 0,
-    risk_overview: { failed: 0, circuit_open: 0, waiting_human_signoff: 0, failed_acknowledged: 0, circuit_open_acknowledged: 0 },
+    risk_overview: {
+      failed: 0,
+      circuit_open: 0,
+      waiting_human_signoff: 0,
+      failed_acknowledged: 0,
+      circuit_open_acknowledged: 0,
+    },
     attention_items: [],
     config_status: {
       system_initialized: false,
@@ -324,7 +496,11 @@ const unackedCircuitOpen = computed(
 )
 const configConclusionTagClass = computed(() => {
   if (!data.config_status.system_initialized || !data.config_status.llm_ready) return 'tag-danger'
-  if (unackedFailed.value > 0 || unackedCircuitOpen.value > 0 || Number(data.risk_overview.waiting_human_signoff || 0) > 0) {
+  if (
+    unackedFailed.value > 0 ||
+    unackedCircuitOpen.value > 0 ||
+    Number(data.risk_overview.waiting_human_signoff || 0) > 0
+  ) {
     return 'tag-warning'
   }
   return 'tag-success'
@@ -415,10 +591,6 @@ const attentionCards = computed(() => {
 
 const hasFailedAttention = computed(() => attentionCards.value.some((c) => c.kind === 'task' && c.severity === 'error'))
 
-function taskTagClass(status) {
-  return getStatusClass('task', status)
-}
-
 function taskSummary(status) {
   return getStatusDescription('task', status)
 }
@@ -457,7 +629,9 @@ async function dismissTask(taskId) {
   try {
     await unwrap(api.post(`/tasks/${taskId}/dismiss`))
     await load(false)
-  } catch { /* ignore */ } finally {
+  } catch {
+    /* ignore */
+  } finally {
     dismissBusy.value = false
   }
 }
@@ -468,7 +642,9 @@ async function dismissAll() {
   try {
     await unwrap(api.post('/tasks/dismiss-all'))
     await load(false)
-  } catch { /* ignore */ } finally {
+  } catch {
+    /* ignore */
+  } finally {
     dismissBusy.value = false
   }
 }
@@ -480,7 +656,9 @@ async function retryTask(personaId) {
     const payload = personaId ? { persona_id: personaId } : {}
     await unwrap(api.post('/tasks/trigger', payload))
     await load(false)
-  } catch { /* ignore */ } finally {
+  } catch {
+    /* ignore */
+  } finally {
     dismissBusy.value = false
   }
 }
@@ -558,7 +736,7 @@ onMounted(load)
 
 .dashboard-overview-main::before,
 .dashboard-overview-side::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;

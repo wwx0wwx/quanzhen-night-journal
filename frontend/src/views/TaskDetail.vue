@@ -17,37 +17,87 @@
     <template v-else>
       <div class="hero task-hero">
         <div>
-          <div class="hero-kicker">Execution Trace</div>
+          <div class="hero-kicker">
+            Execution Trace
+          </div>
           <h1>任务 #{{ route.params.id }}</h1>
           <p>这里查看一次写作任务从触发到结束的全部轨迹。先判断是否稳，再决定是人工签发还是直接中止。</p>
         </div>
         <div class="button-row">
-          <button v-if="task.status === 'waiting_human_signoff'" class="btn primary" :disabled="actionBusy" data-tooltip="确认高风险内容安全后放行发布" @click="approve">
+          <button
+            v-if="task.status === 'waiting_human_signoff'"
+            class="btn primary"
+            :disabled="actionBusy"
+            data-tooltip="确认高风险内容安全后放行发布"
+            @click="approve"
+          >
             {{ activeAction === 'approve' ? '处理中…' : '人工签发并发布' }}
           </button>
-          <button v-if="canAbort" class="btn ghost" :disabled="actionBusy" data-tooltip="强制中止当前任务，需重新触发才能继续" @click="abort">
+          <button
+            v-if="canAbort"
+            class="btn ghost"
+            :disabled="actionBusy"
+            data-tooltip="强制中止当前任务，需重新触发才能继续"
+            @click="abort"
+          >
             {{ activeAction === 'abort' ? '处理中…' : '终止任务' }}
           </button>
-          <button v-if="isFailedOrCircuitOpen" class="btn ghost" :disabled="actionBusy" data-tooltip="标记为已知悉，总览页将不再提示此任务" @click="dismiss">
+          <button
+            v-if="isFailedOrCircuitOpen"
+            class="btn ghost"
+            :disabled="actionBusy"
+            data-tooltip="标记为已知悉，总览页将不再提示此任务"
+            @click="dismiss"
+          >
             {{ activeAction === 'dismiss' ? '处理中…' : '忽略此错误' }}
           </button>
-          <button v-if="isFailedOrCircuitOpen" class="btn ghost" :disabled="actionBusy" data-tooltip="用同一人格重新发起一次写作任务" @click="retry">
+          <button
+            v-if="isFailedOrCircuitOpen"
+            class="btn ghost"
+            :disabled="actionBusy"
+            data-tooltip="用同一人格重新发起一次写作任务"
+            @click="retry"
+          >
             {{ activeAction === 'retry' ? '处理中…' : '重新触发' }}
           </button>
         </div>
       </div>
 
-      <div v-if="message" class="status-banner" :class="messageType">{{ message }}</div>
+      <div
+        v-if="message"
+        class="status-banner"
+        :class="messageType"
+      >
+        {{ message }}
+      </div>
 
       <div class="grid two">
         <TaskTimeline :status="task.status || 'queued'" />
 
         <div class="panel panel-pad stack task-summary-card">
-          <div class="section-title">任务摘要</div>
+          <div class="section-title">
+            任务摘要
+          </div>
           <div class="button-row">
-            <span class="tag" :class="getStatusClass('task', task.status)">{{ getStatusLabel('task', task.status) }}</span>
-            <span v-if="showPublishDecision" class="tag" :class="getPublishDecisionClass(task)">{{ getPublishDecisionLabel(task) }}</span>
-            <span v-if="task.error_code" class="tag tag-danger">{{ describeErrorCode(task.error_code) || task.error_code }}</span>
+            <span
+              class="tag"
+              :class="getStatusClass('task', task.status)"
+            >{{
+              getStatusLabel('task', task.status)
+            }}</span>
+            <span
+              v-if="showPublishDecision"
+              class="tag"
+              :class="getPublishDecisionClass(task)"
+            >{{
+              getPublishDecisionLabel(task)
+            }}</span>
+            <span
+              v-if="task.error_code"
+              class="tag tag-danger"
+            >{{
+              describeErrorCode(task.error_code) || task.error_code
+            }}</span>
           </div>
           <dl class="meta-grid">
             <div>
@@ -55,13 +105,18 @@
               <dd>{{ task.trigger_source || 'manual' }}</dd>
             </div>
             <div>
-                  <dt>人格设定</dt>
+              <dt>人格设定</dt>
               <dd>{{ task.persona_id ? `#${task.persona_id}` : '-' }}</dd>
             </div>
             <div>
               <dt>关联文章</dt>
               <dd>
-                <RouterLink v-if="task.post_id" :to="`/admin/posts/${task.post_id}`">#{{ task.post_id }}</RouterLink>
+                <RouterLink
+                  v-if="task.post_id"
+                  :to="`/admin/posts/${task.post_id}`"
+                >
+                  #{{ task.post_id }}
+                </RouterLink>
                 <span v-else>-</span>
               </dd>
             </div>
@@ -78,11 +133,16 @@
               <dd>{{ formatDurationMs(task.queue_wait_ms) }}</dd>
             </div>
           </dl>
-          <div class="muted">{{ taskPrimaryMessage }}</div>
+          <div class="muted">
+            {{ taskPrimaryMessage }}
+          </div>
         </div>
       </div>
 
-      <div v-if="task.error_message" class="status-banner error">
+      <div
+        v-if="task.error_message"
+        class="status-banner error"
+      >
         {{ task.error_message }}
       </div>
 
@@ -106,7 +166,11 @@ import AppError from '../components/AppError.vue'
 import AppLoading from '../components/AppLoading.vue'
 import TaskTimeline from '../components/TaskTimeline.vue'
 import { describeError, describeErrorCode } from '../utils/errors'
-import { getPublishDecisionClass, getPublishDecisionDescription, getPublishDecisionLabel } from '../utils/publishDecision'
+import {
+  getPublishDecisionClass,
+  getPublishDecisionDescription,
+  getPublishDecisionLabel,
+} from '../utils/publishDecision'
 import { getStatusClass, getStatusDescription, getStatusLabel } from '../utils/statusMeta'
 import { formatDateTimeWithRelative, formatDurationMs } from '../utils/time'
 

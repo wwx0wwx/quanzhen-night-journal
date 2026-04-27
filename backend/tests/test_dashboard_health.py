@@ -81,7 +81,7 @@ def test_system_health_marks_provider_probe_5xx_as_warning(monkeypatch, authed_c
         async def __aexit__(self, exc_type, exc, tb):  # noqa: ANN001
             return False
 
-        async def get(self, url):  # noqa: ANN001
+        async def get(self, url, **_kwargs):  # noqa: ANN001, ANN003
             request = httpx.Request("GET", url)
             return httpx.Response(503, request=request)
 
@@ -104,4 +104,51 @@ def test_system_health_marks_provider_probe_5xx_as_warning(monkeypatch, authed_c
     data = response.json()["data"]
     assert data["status"] == "degraded"
     assert data["checks"]["llm"]["status"] == "warning"
-    assert data["checks"]["llm"]["reachability"] == {"status": "error", "http_status": 503}
+    assert data["checks"]["llm"]["reachability"] == {
+        "status": "error",
+        "http_status": 503,
+        "endpoint": "/models",
+        "detail": "provider_probe_failed",
+    }
+
+
+def test_system_health_marks_provider_probe_auth_failure_as_warning(monkeypatch, authed_client):
+    class FakeClient:
+        def __init__(self, *args, **kwargs):  # noqa: ANN002, ANN003
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):  # noqa: ANN001
+            return False
+
+        async def get(self, url, **_kwargs):  # noqa: ANN001, ANN003
+            request = httpx.Request("GET", url)
+            return httpx.Response(401, request=request)
+
+    monkeypatch.setattr(httpx, "AsyncClient", FakeClient)
+
+    update = authed_client.put(
+        "/api/config",
+        json={
+            "items": [
+                {"key": "llm.base_url", "value": "https://api.example.com/v1", "category": "llm"},
+                {"key": "llm.api_key", "value": "bad-llm-key", "category": "llm"},
+                {"key": "llm.model_id", "value": "qwen-max", "category": "llm"},
+            ]
+        },
+    )
+    assert update.status_code == 200
+
+    response = authed_client.get("/api/health/system?probe_external=true")
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "degraded"
+    assert data["checks"]["llm"]["status"] == "warning"
+    assert data["checks"]["llm"]["reachability"] == {
+        "status": "error",
+        "http_status": 401,
+        "endpoint": "/models",
+        "detail": "auth_failed",
+    }

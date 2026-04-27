@@ -2,26 +2,48 @@
   <div class="panel panel-pad memory-tree-card">
     <div class="memory-tree-head">
       <div>
-        <div class="hero-kicker">Layered Ledger</div>
-        <div class="section-title">记忆分层</div>
+        <div class="hero-kicker">
+          Layered Ledger
+        </div>
+        <div class="section-title">
+          记忆分层
+        </div>
       </div>
-      <div class="muted">系统会按 L0 至 L3 展开最近归档的素材，方便快速确认哪一层还缺内容。</div>
+      <div class="muted">
+        系统会按 L0 至 L3 展开最近归档的素材，方便快速确认哪一层还缺内容。
+      </div>
     </div>
 
-    <div v-if="!groups.length" class="memory-tree-empty muted">当前还没有可展示的记忆条目。</div>
+    <div
+      v-if="!groups.length"
+      class="memory-tree-empty muted"
+    >
+      当前还没有可展示的记忆条目。
+    </div>
 
-    <div v-else class="memory-tree-grid">
-      <section v-for="group in groups" :key="group.level" class="memory-level-card">
+    <div
+      v-else
+      class="memory-tree-grid"
+    >
+      <section
+        v-for="group in groups"
+        :key="group.level"
+        class="memory-level-card"
+      >
         <div class="memory-level-head">
           <div class="button-row">
             <span class="tag">{{ levelLabel(group.level) }}</span>
             <span class="muted">{{ group.items.length }} 条</span>
           </div>
-          <div class="memory-level-rule"></div>
+          <div class="memory-level-rule" />
         </div>
 
         <div class="list memory-level-list">
-          <article v-for="item in group.items" :key="item.id" class="list-item memory-entry">
+          <article
+            v-for="item in group.items"
+            :key="item.id"
+            class="list-item memory-entry"
+          >
             <div class="memory-entry-head">
               <strong>{{ item.summary || item.content }}</strong>
               <span class="memory-entry-id">#{{ item.id }}</span>
@@ -60,10 +82,14 @@ function personaName(personaId) {
   return props.personas.find((item) => item.id === personaId)?.name || `#${personaId}`
 }
 
-const groups = computed(() => ['L0', 'L1', 'L2', 'L3'].map((level) => ({
-  level,
-  items: props.memories.filter((item) => item.level === level).slice(0, 4),
-})).filter((group) => group.items.length))
+const groups = computed(() =>
+  ['L0', 'L1', 'L2', 'L3']
+    .map((level) => ({
+      level,
+      items: props.memories.filter((item) => item.level === level).slice(0, 4),
+    }))
+    .filter((group) => group.items.length),
+)
 </script>
 
 <style scoped>

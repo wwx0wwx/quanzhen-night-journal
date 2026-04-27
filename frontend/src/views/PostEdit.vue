@@ -17,59 +17,109 @@
     <template v-else>
       <div class="hero editor-hero">
         <div>
-          <div class="hero-kicker">Manuscript Workbench</div>
+          <div class="hero-kicker">
+            Manuscript Workbench
+          </div>
           <h1>{{ isNew ? '新建文章' : `编辑文章 #${route.params.id}` }}</h1>
           <p>正文、元信息、版本和发布动作都在这张工作台上完成。保持语言冷静、结构清晰，再决定是否送它进入前台。</p>
         </div>
         <div class="button-row">
-          <button class="btn primary" :disabled="actionBusy" data-tooltip="仅保存当前内容为草稿，不改变发布状态" @click="save">
+          <button
+            class="btn primary"
+            :disabled="actionBusy"
+            data-tooltip="仅保存当前内容为草稿，不改变发布状态"
+            @click="save"
+          >
             {{ isSaving ? '保存中…' : '保存' }}
           </button>
-          <button v-if="!isNew" class="btn ghost" :disabled="actionBusy" data-tooltip="将文章直接发布到博客站点" @click="runWorkflowAction('publish')">
+          <button
+            v-if="!isNew"
+            class="btn ghost"
+            :disabled="actionBusy"
+            data-tooltip="将文章直接发布到博客站点"
+            @click="runWorkflowAction('publish')"
+          >
             {{ activeAction === 'publish' ? '发布中…' : '发布' }}
           </button>
-          <button v-if="!isNew" class="btn ghost" :disabled="actionBusy" data-tooltip="标记内容已审核，但暂不发布" @click="runWorkflowAction('approve')">
+          <button
+            v-if="!isNew"
+            class="btn ghost"
+            :disabled="actionBusy"
+            data-tooltip="标记内容已审核，但暂不发布"
+            @click="runWorkflowAction('approve')"
+          >
             {{ activeAction === 'approve' ? '处理中…' : '审核通过' }}
           </button>
-          <button v-if="!isNew" class="btn ghost" :disabled="actionBusy" data-tooltip="将文章从博客站点移除并归档" @click="runWorkflowAction('archive')">
+          <button
+            v-if="!isNew"
+            class="btn ghost"
+            :disabled="actionBusy"
+            data-tooltip="将文章从博客站点移除并归档"
+            @click="runWorkflowAction('archive')"
+          >
             {{ activeAction === 'archive' ? '处理中…' : '归档' }}
           </button>
         </div>
       </div>
 
-      <div v-if="message" class="status-banner" :class="messageType">{{ message }}</div>
+      <div
+        v-if="message"
+        class="status-banner"
+        :class="messageType"
+      >
+        {{ message }}
+      </div>
 
       <div class="grid two editor-layout">
         <div class="panel panel-pad stack editor-panel">
           <label class="field">
             <span>标题</span>
-            <input v-model="form.title" placeholder="给这篇文章一个清晰标题" />
+            <input
+              v-model="form.title"
+              placeholder="给这篇文章一个清晰标题"
+            >
           </label>
           <label class="field">
             <span>Slug</span>
-            <input v-model="form.slug" placeholder="留空时会自动生成" />
+            <input
+              v-model="form.slug"
+              placeholder="留空时会自动生成"
+            >
           </label>
           <label class="field">
             <span>摘要</span>
-            <textarea v-model="form.summary" placeholder="为空时系统会根据正文自动提取。"></textarea>
+            <textarea
+              v-model="form.summary"
+              placeholder="为空时系统会根据正文自动提取。"
+            />
           </label>
           <label class="field">
             <span>状态</span>
             <select v-model="form.status">
-              <option v-for="item in POST_STATUS_OPTIONS" :key="item" :value="item">
+              <option
+                v-for="item in POST_STATUS_OPTIONS"
+                :key="item"
+                :value="item"
+              >
                 {{ getStatusLabel('post', item) }}
               </option>
             </select>
           </label>
           <label class="field">
             <span>正文 Markdown</span>
-            <textarea v-model="form.content_markdown" class="editor-textarea" placeholder="在这里编辑正文 Markdown。"></textarea>
+            <textarea
+              v-model="form.content_markdown"
+              class="editor-textarea"
+              placeholder="在这里编辑正文 Markdown。"
+            />
           </label>
         </div>
 
         <div class="stack">
           <div class="panel panel-pad stack editor-info-card">
-            <div class="section-title">文章信息</div>
+            <div class="section-title">
+              文章信息
+            </div>
             <dl class="meta-grid">
               <div>
                 <dt>当前状态</dt>
@@ -95,18 +145,40 @@
           </div>
 
           <div class="panel panel-pad stack editor-preview-card">
-            <div class="section-title">Markdown 预览</div>
-            <div v-if="form.summary" class="status-banner info">{{ form.summary }}</div>
-            <article class="preview-content" v-html="previewHtml"></article>
+            <div class="section-title">
+              Markdown 预览
+            </div>
+            <div
+              v-if="form.summary"
+              class="status-banner info"
+            >
+              {{ form.summary }}
+            </div>
+            <article
+              class="preview-content"
+              v-html="previewHtml"
+            />
           </div>
 
-          <div v-if="!isNew" class="panel panel-pad stack">
+          <div
+            v-if="!isNew"
+            class="panel panel-pad stack"
+          >
             <div class="split">
               <div>
-                <div class="section-title">修订历史</div>
-                <div class="muted">可查看旧版本内容，并按需回滚。</div>
+                <div class="section-title">
+                  修订历史
+                </div>
+                <div class="muted">
+                  可查看旧版本内容，并按需回滚。
+                </div>
               </div>
-              <button class="btn ghost btn-small" type="button" :disabled="isRevisionsLoading" @click="loadRevisions">
+              <button
+                class="btn ghost btn-small"
+                type="button"
+                :disabled="isRevisionsLoading"
+                @click="loadRevisions"
+              >
                 {{ isRevisionsLoading ? '刷新中…' : '刷新' }}
               </button>
             </div>
@@ -118,7 +190,10 @@
               description="首次修改后，这里会记录历史版本。"
             />
 
-            <div v-else class="list revision-list">
+            <div
+              v-else
+              class="list revision-list"
+            >
               <div
                 v-for="revision in revisions"
                 :key="revision.id"
@@ -126,14 +201,32 @@
                 :class="{ active: selectedRevisionId === revision.id }"
               >
                 <div class="split">
-                  <div class="stack" style="gap: 6px;">
+                  <div
+                    class="stack"
+                    style="gap: 6px"
+                  >
                     <strong>版本 #{{ revision.revision }}</strong>
-                    <div class="muted">{{ formatDateTimeWithRelative(revision.created_at) }}</div>
-                    <div class="muted">{{ revision.change_reason || '未记录原因' }}</div>
+                    <div class="muted">
+                      {{ formatDateTimeWithRelative(revision.created_at) }}
+                    </div>
+                    <div class="muted">
+                      {{ revision.change_reason || '未记录原因' }}
+                    </div>
                   </div>
                   <div class="button-row">
-                    <button class="btn ghost btn-small" type="button" @click="selectedRevisionId = revision.id">查看内容</button>
-                    <button class="btn ghost btn-small" type="button" :disabled="activeAction === `revert:${revision.revision}`" @click="revertRevision(revision)">
+                    <button
+                      class="btn ghost btn-small"
+                      type="button"
+                      @click="selectedRevisionId = revision.id"
+                    >
+                      查看内容
+                    </button>
+                    <button
+                      class="btn ghost btn-small"
+                      type="button"
+                      :disabled="activeAction === `revert:${revision.revision}`"
+                      @click="revertRevision(revision)"
+                    >
                       {{ activeAction === `revert:${revision.revision}` ? '回滚中…' : '回滚到此版' }}
                     </button>
                   </div>
@@ -141,8 +234,13 @@
               </div>
             </div>
 
-            <div v-if="selectedRevision" class="stack">
-              <div class="section-title">版本 #{{ selectedRevision.revision }} 内容</div>
+            <div
+              v-if="selectedRevision"
+              class="stack"
+            >
+              <div class="section-title">
+                版本 #{{ selectedRevision.revision }} 内容
+              </div>
               <pre>{{ selectedRevision.content_markdown }}</pre>
             </div>
           </div>
@@ -330,7 +428,13 @@ async function revertRevision(revision) {
 onMounted(async () => {
   await load()
   await nextTick()
-  watch(form, () => { formDirty.value = true }, { deep: true })
+  watch(
+    form,
+    () => {
+      formDirty.value = true
+    },
+    { deep: true },
+  )
 })
 
 onBeforeRouteLeave(() => {

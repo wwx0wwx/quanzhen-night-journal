@@ -70,6 +70,7 @@ INSERT OR IGNORE INTO system_config (key, value, category) VALUES
     ('qa.min_length',             '200',           'qa'),
     ('qa.max_length',             '5000',          'qa'),
     ('qa.duplicate_threshold',    '0.85',          'qa'),
+    ('qa.required_language',      'zh',            'qa'),
     ('qa.forbidden_words',        '[]',            'qa'),
     ('qa.template_phrases',       '["首先","其次","总之","综上所述","值得注意的是"]', 'qa'),
     ('anti_perfection.enabled',          '1',      'anti_perfection'),

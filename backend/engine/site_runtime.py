@@ -276,13 +276,20 @@ class SiteRuntimeManager:
         base_url: str,
     ) -> str:
         description = site_subtitle.strip() or "记录深夜写作、自动生成与人工修订后的夜记。"
+        home_intro = (
+            f"{description} 这里不是批量生成内容，而是由人格、记忆、感知和人工护栏共同约束的持续写作。"
+        )
         return (
             f"baseURL = {self._toml_string(base_url)}\n"
             'languageCode = "zh-cn"\n'
             'defaultContentLanguage = "zh"\n'
             f"title = {self._toml_string(site_title)}\n"
             f"theme = {self._toml_string(theme)}\n"
-            "hasCJKLanguage = true\n\n"
+            "hasCJKLanguage = true\n"
+            'mainSections = ["posts"]\n\n'
+            "[services]\n"
+            "[services.rss]\n"
+            "limit = 20\n\n"
             "[params]\n"
             "ShowReadingTime = true\n"
             "ShowShareButtons = false\n"
@@ -296,8 +303,8 @@ class SiteRuntimeManager:
             "[params.label]\n"
             f"text = {self._toml_string(site_title)}\n\n"
             "[params.homeInfoParams]\n"
-            'Title = "这个博客是什么"\n'
-            f"Content = {self._toml_string(description)}\n\n"
+            f"Title = {self._toml_string(site_title)}\n"
+            f"Content = {self._toml_string(home_intro)}\n\n"
             "[markup]\n"
             "[markup.goldmark]\n"
             "[markup.goldmark.renderer]\n"
@@ -350,6 +357,8 @@ class SiteRuntimeManager:
             'layout: "archives"\n'
             'description: "按时间回看已经发布的夜记。"\n'
             'summary: "按时间回看已经发布的夜记。"\n'
+            "searchHidden: true\n"
+            "feedHidden: true\n"
             "---\n"
         )
 
@@ -361,6 +370,10 @@ class SiteRuntimeManager:
             'description: "搜索已经发布的文章、摘要和正文内容。"\n'
             'summary: "搜索已经发布的文章、摘要和正文内容。"\n'
             'placeholder: "输入标题、摘要或正文关键词后回车"\n'
+            "searchHidden: true\n"
+            "feedHidden: true\n"
+            "sitemap:\n"
+            "  disable: true\n"
             "---\n"
         )
 
@@ -370,6 +383,10 @@ class SiteRuntimeManager:
             'title: "离线"\n'
             'layout: "offline"\n'
             'description: "当前没有网络连接。"\n'
+            "searchHidden: true\n"
+            "feedHidden: true\n"
+            "sitemap:\n"
+            "  disable: true\n"
             "---\n\n"
             "你现在处于离线状态。请检查网络连接后刷新页面。\n"
         )

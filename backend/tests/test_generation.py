@@ -77,6 +77,44 @@ def test_high_risk_task_waits_for_human_signoff(monkeypatch, authed_client):
     assert post_data["publish_decision_path"] == "human_approved"
 
 
+def test_language_drift_requires_human_signoff(monkeypatch, authed_client):
+    async def english_chat(self, **_kwargs):  # noqa: ANN001
+        return (
+            "# The morning mist clings\n\n"
+            "The morning mist clings to the courtyard flags. "
+            "I stand beside the quiet gate and listen to the old stone breathe. " * 4,
+            {"prompt_tokens": 12, "completion_tokens": 90},
+            5,
+        )
+
+    monkeypatch.setattr(LLMAdapter, "chat", english_chat)
+
+    config = authed_client.put(
+        "/api/config",
+        json={
+            "items": [
+                {"key": "qa.min_length", "value": "1", "category": "qa"},
+                {"key": "qa.required_language", "value": "zh", "category": "qa"},
+            ]
+        },
+    )
+    assert config.status_code == 200
+
+    response = authed_client.post(
+        "/api/tasks/trigger",
+        json={"trigger_source": "manual", "semantic_hint": "write a Chinese note", "payload": {"kind": "manual"}},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "waiting_human_signoff"
+
+    detail = authed_client.get(f"/api/tasks/{data['id']}")
+    assert detail.status_code == 200
+    task_data = detail.json()["data"]
+    assert task_data["language_ok"] is False
+    assert task_data["qa_risk_level"] == "high"
+
+
 def test_approve_rejects_tasks_not_waiting_human_signoff(authed_client):
     response = authed_client.post(
         "/api/tasks/trigger",
