@@ -2,6 +2,23 @@
 
 本文件记录全真夜记各版本的主要变更。
 
+## [1.0.9] - 2026-04-28
+
+### Added
+- 发布健康检查与测试站可达性验证：补充博客入口、控制台入口、核心 API 的 smoke test 流程。
+- 质量策略新增 `qa.required_perspective=first_person`，后台设置页可配置叙事人称。
+- 生成追踪记录 LLM `finish_reason` 与请求输出上限，便于排查模型截断。
+
+### Fixed
+- 修复 AI 正文被 `max_tokens=1000` 截断仍被发布的问题；截断会自动重写，重试耗尽则失败。
+- 修复第二人称正文可被发布的问题；命中“你/您”等第二人称叙事会自动重写，重试耗尽则失败。
+- Hugo sidecar 构建启用 `--cleanDestinationDir`，删除文章后旧静态页面不再残留。
+- 修复无域名、Cloudflare 代理、博客入口探测和发布决策展示中的多处误导性状态。
+
+### Changed
+- 正文生成默认输出上限调整为 `llm.max_tokens=2400`。
+- 版本号统一升至 1.0.9（pyproject.toml、package.json、package-lock.json、backend/__init__.py、backend/config.py）。
+
 ## [1.0.8] - 2026-04-24
 
 ### Added
