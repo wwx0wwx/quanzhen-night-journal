@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.adapters.embedding_adapter import EmbeddingAdapter
 from backend.api.deps import get_config_store
 from backend.config import get_settings
 from backend.database import get_session
@@ -68,6 +69,11 @@ async def _provider_status(
         "configured": not missing,
         "missing": missing,
     }
+    if not missing and prefix == "embedding":
+        hint = EmbeddingAdapter().config_hint(base_url_value)
+        if hint:
+            status["status"] = "warning"
+            status["config_hint"] = hint
     if not missing and probe_external:
         status["reachability"] = await _probe_provider_endpoint(base_url_value, api_key_value)
         if status["reachability"]["status"] in {"error", "warning"}:

@@ -101,7 +101,10 @@ class Settings(BaseSettings):
 
     @property
     def schema_path(self) -> Path:
-        return self.root_dir / "doc" / "database_schema.sql"
+        packaged_path = self.root_dir / "doc" / "database_schema.sql"
+        if packaged_path.exists():
+            return packaged_path
+        return Path.cwd() / "doc" / "database_schema.sql"
 
     @property
     def hugo_content_path(self) -> Path:

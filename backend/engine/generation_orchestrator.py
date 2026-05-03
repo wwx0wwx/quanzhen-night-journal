@@ -213,12 +213,18 @@ class GenerationOrchestrator:
                         duplicate_review_required=qa_result.get("duplicate_review_required", False),
                         perspective_ok=bool(qa_result.get("perspective_ok", True)),
                         perspective_reason=qa_result.get("perspective_reason", ""),
+                        format_ok=bool(qa_result.get("format_ok", True)),
+                        format_reason=qa_result.get("format_reason", ""),
                         integrity_ok=bool(qa_result.get("integrity_ok", True)),
                         integrity_reason=qa_result.get("integrity_reason", ""),
                     )
                     await self.db.commit()
 
-                    if not qa_result.get("integrity_ok", True) or not qa_result.get("perspective_ok", True):
+                    if (
+                        not qa_result.get("integrity_ok", True)
+                        or not qa_result.get("perspective_ok", True)
+                        or not qa_result.get("format_ok", True)
+                    ):
                         reason, error_code = self._qa_rewrite_failure(qa_result)
                         if task.retry_count >= task.max_retries:
                             return await self._transition(
@@ -633,6 +639,9 @@ class GenerationOrchestrator:
         perspective_reason = qa_result.get("perspective_reason", "")
         if perspective_reason:
             failed.append(f"perspective:{perspective_reason}")
+        format_reason = qa_result.get("format_reason", "")
+        if format_reason:
+            failed.append(f"format:{format_reason}")
         issues = ", ".join(failed) if failed else "generic_quality"
         return (
             f"Previous draft:\n{content}\n\n"
@@ -640,7 +649,8 @@ class GenerationOrchestrator:
             "Rewrite the draft from scratch: keep the same persona, but shift to "
             "a new scene, new concrete action, and new narrative progression. "
             "Use strict first-person narration in the article body: write as 我/属下, "
-            "and do not address the reader, 王爷, or any narration target as 你/您/你们."
+            "and do not address the reader, 王爷, or any narration target as 你/您/你们. "
+            "The first non-empty line must be a Markdown H1 like '# 具体题目', followed by one blank line."
         )
 
     def _build_truncation_retry_prompt(self, prompt: str, content: str) -> str:
@@ -660,6 +670,8 @@ class GenerationOrchestrator:
             return qa_result.get("integrity_reason") or "invalid generated content", "invalid_model_output"
         if not qa_result.get("perspective_ok", True):
             return qa_result.get("perspective_reason") or "first person perspective required", "perspective_drift"
+        if not qa_result.get("format_ok", True):
+            return qa_result.get("format_reason") or "markdown h1 title required", "format_invalid"
         return "generated content needs rewrite", "qa_rewrite_required"
 
     def _append_trace(self, task: GenerationTask, stage: str, **detail: object) -> None:

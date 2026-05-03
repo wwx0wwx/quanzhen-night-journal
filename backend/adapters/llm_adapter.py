@@ -76,6 +76,7 @@ class LLMAdapter:
         prompt = messages[-1]["content"] if messages else ""
         topic = prompt.splitlines()[-1][:36] if prompt else "今夜"
         return (
+            f"# 机箱夜声\n\n"
             f"今夜的风从机器深处穿过，像一根未完全熄灭的线。"
             f"我把{topic}按回心口，不敢让它发出太大的声响。"
             f"许多事都还没有名字，于是只留下{seed}一样的余温。"

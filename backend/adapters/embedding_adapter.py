@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 
@@ -23,6 +24,7 @@ class EmbeddingAdapter:
         if not base_url or not api_key or not model_id:
             raise EmbeddingUnavailableError("embedding_not_configured")
 
+        base_url = self.normalize_base_url(base_url)
         payload = {"model": model_id, "input": texts}
         headers = {"Authorization": f"Bearer {api_key}"}
         try:
@@ -35,10 +37,31 @@ class EmbeddingAdapter:
                 response.raise_for_status()
                 data = response.json()
             return [item["embedding"] for item in data["data"]]
+        except httpx.HTTPStatusError as exc:
+            status_code = exc.response.status_code if exc.response is not None else "unknown"
+            raise EmbeddingUnavailableError(f"http_{status_code}") from exc
         except httpx.HTTPError as exc:
             raise EmbeddingUnavailableError(exc.__class__.__name__) from exc
         except (KeyError, TypeError, ValueError) as exc:
             raise EmbeddingUnavailableError("embedding_response_invalid") from exc
+
+    def normalize_base_url(self, base_url: str) -> str:
+        value = (base_url or "").strip().rstrip("/")
+        parsed = urlparse(value)
+        if parsed.netloc == "api.siliconflow.cn" and parsed.path in {"", "/"}:
+            return f"{value}/v1"
+        return value
+
+    def config_hint(self, base_url: str) -> dict[str, Any] | None:
+        value = (base_url or "").strip().rstrip("/")
+        parsed = urlparse(value)
+        if parsed.netloc == "api.siliconflow.cn" and parsed.path in {"", "/"}:
+            return {
+                "status": "warning",
+                "detail": "siliconflow_base_url_missing_v1",
+                "suggested_base_url": f"{value}/v1",
+            }
+        return None
 
     async def test_connection(self, *, base_url: str, api_key: str, model_id: str) -> dict[str, Any]:
         try:

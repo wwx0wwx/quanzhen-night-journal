@@ -356,6 +356,98 @@ def test_repeated_truncated_generation_fails_without_post(monkeypatch, authed_cl
     assert task_data["retry_count"] == 1
 
 
+def test_missing_markdown_h1_is_retried(monkeypatch, authed_client):
+    calls = 0
+
+    async def fake_embed(self, **_kwargs):  # noqa: ANN001
+        return [[1.0, 0.0]]
+
+    async def sometimes_missing_h1(self, **_kwargs):  # noqa: ANN001
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return (
+                "雨停在檐角\n\n我把灯罩擦干，听见王爷在屋里翻过一页卷宗。",
+                {"prompt_tokens": 12, "completion_tokens": 90, "finish_reason": "stop"},
+                5,
+            )
+        return (
+            "# 雨停在檐角\n\n我把灯罩擦干，听见王爷在屋里翻过一页卷宗。"
+            "风从门缝里进来，我便把竹帘压好，又退回阴影里。",
+            {"prompt_tokens": 12, "completion_tokens": 120, "finish_reason": "stop"},
+            5,
+        )
+
+    monkeypatch.setattr(EmbeddingAdapter, "embed", fake_embed)
+    monkeypatch.setattr(LLMAdapter, "chat", sometimes_missing_h1)
+
+    config = authed_client.put(
+        "/api/config",
+        json={"items": [{"key": "qa.min_length", "value": "1", "category": "qa"}]},
+    )
+    assert config.status_code == 200
+
+    response = authed_client.post(
+        "/api/tasks/trigger",
+        json={"trigger_source": "manual", "semantic_hint": "write valid markdown", "payload": {"kind": "manual"}},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "published"
+    assert calls == 2
+
+    detail = authed_client.get(f"/api/tasks/{data['id']}")
+    assert detail.status_code == 200
+    task_data = detail.json()["data"]
+    assert task_data["retry_count"] == 1
+    assert task_data["format_ok"] is True
+    assert any(
+        item["stage"] == "qa_completed" and item["detail"].get("format_reason") == "missing_markdown_h1"
+        for item in task_data["trace"]["trace_events"]
+    )
+
+
+def test_repeated_missing_markdown_h1_fails_without_post(monkeypatch, authed_client):
+    async def fake_embed(self, **_kwargs):  # noqa: ANN001
+        return [[1.0, 0.0]]
+
+    async def missing_h1(self, **_kwargs):  # noqa: ANN001
+        return (
+            "雨停在檐角\n\n我把灯罩擦干，听见王爷在屋里翻过一页卷宗。",
+            {"prompt_tokens": 12, "completion_tokens": 90, "finish_reason": "stop"},
+            5,
+        )
+
+    monkeypatch.setattr(EmbeddingAdapter, "embed", fake_embed)
+    monkeypatch.setattr(LLMAdapter, "chat", missing_h1)
+
+    config = authed_client.put(
+        "/api/config",
+        json={
+            "items": [
+                {"key": "qa.max_retries", "value": "1", "category": "qa"},
+                {"key": "qa.min_length", "value": "1", "category": "qa"},
+            ]
+        },
+    )
+    assert config.status_code == 200
+
+    response = authed_client.post(
+        "/api/tasks/trigger",
+        json={"trigger_source": "manual", "semantic_hint": "write valid markdown", "payload": {"kind": "manual"}},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "failed"
+
+    detail = authed_client.get(f"/api/tasks/{data['id']}")
+    assert detail.status_code == 200
+    task_data = detail.json()["data"]
+    assert task_data["post_id"] is None
+    assert task_data["error_code"] == "format_invalid"
+    assert task_data["format_ok"] is False
+
+
 @pytest.mark.parametrize(
     ("error_factory", "expected_code"),
     [

@@ -71,6 +71,8 @@ def task_to_dict(task: GenerationTask, post: Post | None = None) -> dict:
         "language_ok": qa_result.get("language_ok"),
         "perspective_ok": qa_result.get("perspective_ok"),
         "perspective_reason": qa_result.get("perspective_reason"),
+        "format_ok": qa_result.get("format_ok"),
+        "format_reason": qa_result.get("format_reason"),
         **build_publish_decision(
             qa_result=qa_result,
             review_info=review_info,
@@ -109,6 +111,8 @@ def post_to_dict(post: Post, task: GenerationTask | None = None) -> dict:
         "language_ok": qa_result.get("language_ok"),
         "perspective_ok": qa_result.get("perspective_ok"),
         "perspective_reason": qa_result.get("perspective_reason"),
+        "format_ok": qa_result.get("format_ok"),
+        "format_reason": qa_result.get("format_reason"),
         **build_publish_decision(
             qa_result=qa_result,
             review_info=review_info,

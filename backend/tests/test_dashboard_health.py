@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import httpx
 
+from backend.adapters.embedding_adapter import EmbeddingAdapter
 from backend.adapters.llm_adapter import LLMAdapter
 
 
@@ -68,6 +69,35 @@ def test_system_health_reports_ok_after_setup_and_provider_config(authed_client)
     assert data["checks"]["llm"]["configured"] is True
     assert data["checks"]["embedding"]["configured"] is True
     assert data["checks"]["scheduler"]["running"] is True
+
+
+def test_system_health_warns_on_siliconflow_embedding_url_without_v1(authed_client):
+    update = authed_client.put(
+        "/api/config",
+        json={
+            "items": [
+                {"key": "embedding.base_url", "value": "https://api.siliconflow.cn", "category": "embedding"},
+                {"key": "embedding.api_key", "value": "live-embedding-key", "category": "embedding"},
+                {"key": "embedding.model_id", "value": "Qwen/Qwen3-VL-Embedding-8B", "category": "embedding"},
+            ]
+        },
+    )
+    assert update.status_code == 200
+
+    response = authed_client.get("/api/health/system")
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "degraded"
+    assert data["checks"]["embedding"]["status"] == "warning"
+    assert data["checks"]["embedding"]["config_hint"]["detail"] == "siliconflow_base_url_missing_v1"
+    assert data["checks"]["embedding"]["config_hint"]["suggested_base_url"] == "https://api.siliconflow.cn/v1"
+
+
+def test_embedding_adapter_normalizes_siliconflow_base_url():
+    adapter = EmbeddingAdapter()
+    assert adapter.normalize_base_url("https://api.siliconflow.cn") == "https://api.siliconflow.cn/v1"
+    assert adapter.normalize_base_url("https://api.siliconflow.cn/") == "https://api.siliconflow.cn/v1"
+    assert adapter.normalize_base_url("https://api.siliconflow.cn/v1") == "https://api.siliconflow.cn/v1"
 
 
 def test_system_health_marks_provider_probe_5xx_as_warning(monkeypatch, authed_client):

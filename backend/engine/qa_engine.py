@@ -31,6 +31,7 @@ class QAEngine:
         template_ok = await self._check_template_phrases(content)
         language_ok = await self._check_language(content)
         perspective_ok, perspective_reason = await self._check_perspective(content)
+        format_ok, format_reason = await self._check_format(content)
         duplicate_result = await self._check_duplicate(content, persona_id)
         duplicate_ok = duplicate_result["duplicate_ok"]
         integrity_ok, integrity_reason = self._check_content_integrity(content)
@@ -40,6 +41,7 @@ class QAEngine:
             template_ok,
             language_ok,
             perspective_ok,
+            format_ok,
             duplicate_ok,
             integrity_ok,
             duplicate_result["duplicate_review_required"],
@@ -51,6 +53,8 @@ class QAEngine:
             "language_ok": language_ok,
             "perspective_ok": perspective_ok,
             "perspective_reason": perspective_reason,
+            "format_ok": format_ok,
+            "format_reason": format_reason,
             "duplicate_ok": duplicate_ok,
             "duplicate_score": duplicate_result["duplicate_score"],
             "duplicate_post_id": duplicate_result["duplicate_post_id"],
@@ -67,6 +71,7 @@ class QAEngine:
                     template_ok,
                     language_ok,
                     perspective_ok,
+                    format_ok,
                     duplicate_ok,
                     integrity_ok,
                     not duplicate_result["duplicate_review_required"],
@@ -139,6 +144,30 @@ class QAEngine:
         if first_person_count == 0 and not ENGLISH_FIRST_PERSON_RE.search(body):
             return False, "first_person_marker_missing"
 
+        return True, ""
+
+    async def _check_format(self, content: str) -> tuple[bool, str]:
+        invalid_titles = {"夜记", "无题", "未命名", "未命名夜记"}
+        site_title = (await self.config_store.get("site.title", "") or "").strip()
+        if site_title:
+            invalid_titles.add(site_title)
+
+        lines = content.splitlines()
+        first_index = next((index for index, line in enumerate(lines) if line.strip()), None)
+        if first_index is None:
+            return False, "empty_content"
+
+        first_line = lines[first_index].strip()
+        if not first_line.startswith("# ") or first_line.startswith("##"):
+            return False, "missing_markdown_h1"
+
+        title = first_line[2:].strip()
+        if not title:
+            return False, "empty_markdown_h1"
+        if title in invalid_titles:
+            return False, "generic_markdown_h1"
+        if first_index + 1 >= len(lines) or lines[first_index + 1].strip():
+            return False, "missing_blank_line_after_h1"
         return True, ""
 
     def _body_text(self, content: str) -> str:
@@ -231,6 +260,7 @@ class QAEngine:
         template_ok: bool,
         language_ok: bool,
         perspective_ok: bool,
+        format_ok: bool,
         duplicate_ok: bool,
         integrity_ok: bool,
         duplicate_review_required: bool,
@@ -241,6 +271,8 @@ class QAEngine:
             return "high"
         if not perspective_ok:
             return "high"
+        if not format_ok:
+            return "medium"
         if duplicate_review_required:
             return "high"
         if not forbidden_ok or not duplicate_ok:
