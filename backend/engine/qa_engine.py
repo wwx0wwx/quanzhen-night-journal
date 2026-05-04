@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.adapters.embedding_adapter import EmbeddingAdapter, EmbeddingUnavailableError
 from backend.engine.config_store import ConfigStore
 from backend.models import Post, PostVector
+from backend.utils.post_content import extract_title, normalize_title
 from backend.utils.serde import json_dumps, json_loads
 
 logger = logging.getLogger(__name__)
@@ -161,11 +162,13 @@ class QAEngine:
         if not first_line.startswith("# ") or first_line.startswith("##"):
             return False, "missing_markdown_h1"
 
-        title = first_line[2:].strip()
+        title = normalize_title(first_line, max_length=64)
         if not title:
             return False, "empty_markdown_h1"
         if title in invalid_titles:
-            return False, "generic_markdown_h1"
+            derived_title = extract_title(content, invalid_titles=invalid_titles)
+            if normalize_title(derived_title, max_length=64) in invalid_titles:
+                return False, "generic_markdown_h1"
         if first_index + 1 >= len(lines) or lines[first_index + 1].strip():
             return False, "missing_blank_line_after_h1"
         return True, ""
