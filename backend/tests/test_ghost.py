@@ -123,6 +123,13 @@ def test_database_backup_can_be_created_and_downloaded(authed_client):
     assert filename in unquote(download.headers.get("content-disposition", ""))
     assert download.content
 
+    deleted = authed_client.delete(f"/api/ghost/database-backups/{filename}")
+    assert deleted.status_code == 200
+    assert deleted.json()["data"]["deleted"] is True
+
+    missing = authed_client.get(f"/api/ghost/download-database-backup/{filename}")
+    assert missing.status_code == 404
+
 
 def test_ghost_upload_rejects_oversized_files(monkeypatch, authed_client):
     monkeypatch.setattr("backend.api.ghost.MAX_GHOST_UPLOAD_BYTES", 128)

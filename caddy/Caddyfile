@@ -27,6 +27,11 @@
 }
 
 (qz_blog) {
+    @telemetry path /api/telemetry/page-view
+    handle @telemetry {
+        reverse_proxy core:8000
+    }
+
     @blocked path /admin /admin/* /api /api/*
     respond @blocked 404
 

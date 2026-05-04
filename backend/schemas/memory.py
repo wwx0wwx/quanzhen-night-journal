@@ -25,6 +25,7 @@ class MemoryCreate(MemoryBase):
 
 
 class MemoryUpdate(BaseModel):
+    level: str | None = None
     content: str | None = None
     summary: str | None = None
     tags: list[str] | None = None

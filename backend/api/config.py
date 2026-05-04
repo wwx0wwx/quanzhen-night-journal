@@ -94,12 +94,15 @@ async def domain_status(
 @router.post("/reveal")
 async def reveal_secret(
     payload: RevealSecretRequest,
+    db: AsyncSession = Depends(get_session),
     config_store: ConfigStore = Depends(get_config_store),
     _user=Depends(get_current_user),
 ) -> object:
     if payload.key not in SECRET_KEYS:
         raise HTTPException(status_code=400, detail="only secret keys can be revealed")
     value = await config_store.get(payload.key, default="", decrypt=True)
+    await log_audit(db, "user", "config.reveal_secret", "config", payload.key)
+    await db.commit()
     return success({"key": payload.key, "value": value or ""})
 
 

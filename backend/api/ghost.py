@@ -154,6 +154,8 @@ async def download_ghost_export(
         raise HTTPException(status_code=404, detail="ghost_export_not_found")
     if not target.resolve().is_relative_to(manager.ghost_dir.resolve()):
         raise HTTPException(status_code=403, detail="path_traversal_denied")
+    await log_audit(db, "user", "ghost.download_export", "ghost", safe_name)
+    await db.commit()
     return FileResponse(path=target, filename=safe_name, media_type="application/octet-stream")
 
 
@@ -171,4 +173,22 @@ async def download_database_backup(
         raise HTTPException(status_code=404, detail="database_backup_not_found")
     if not target.resolve().is_relative_to(manager.backup_dir.resolve()):
         raise HTTPException(status_code=403, detail="path_traversal_denied")
+    await log_audit(db, "user", "ghost.download_database_backup", "backup", safe_name)
+    await db.commit()
     return FileResponse(path=target, filename=safe_name, media_type="application/octet-stream")
+
+
+@router.delete("/database-backups/{filename}")
+async def delete_database_backup(
+    filename: str,
+    db: AsyncSession = Depends(get_session),
+    config_store: ConfigStore = Depends(get_config_store),
+    _user=Depends(get_current_user),
+) -> object:
+    manager = _manager(db, config_store)
+    deleted = await manager.delete_database_backup(filename)
+    if deleted is None:
+        return error(1002, "数据库快照不存在", status_code=404)
+    await log_audit(db, "user", "ghost.delete_database_backup", "backup", deleted.name)
+    await db.commit()
+    return success({"deleted": True, "filename": deleted.name})

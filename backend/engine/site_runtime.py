@@ -256,6 +256,10 @@ class SiteRuntimeManager:
         )
         blog = (
             "(qz_blog) {\n"
+            "    @telemetry path /api/telemetry/page-view\n"
+            "    handle @telemetry {\n"
+            "        reverse_proxy core:8000\n"
+            "    }\n\n"
             "    @blocked path /admin /admin/* /api /api/*\n"
             "    respond @blocked 404\n\n"
             "    root * /srv/hugo\n"

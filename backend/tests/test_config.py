@@ -166,6 +166,7 @@ def test_domain_caddyfile_only_serves_blog_on_domain():
     assert "file_server" in rendered
     assert "import qz_console" in rendered
     assert "iuaa.de {\n    import qz_blog\n}" in rendered
+    assert "@telemetry path /api/telemetry/page-view" in rendered
     assert "respond @blocked 404" in rendered
 
 

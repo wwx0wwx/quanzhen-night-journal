@@ -54,9 +54,6 @@ def run() -> int:
     ping_status, ping_body = request(f"{ADMIN_BASE}/api/health/ping")
     assert_ok(ping_status == 200 and '"status":"ok"' in ping_body.replace(" ", ""), "health ping")
 
-    system_status, system_body = request(f"{ADMIN_BASE}/api/health/system")
-    assert_ok(system_status == 200 and '"checks"' in system_body, "system health")
-
     if SKIP_ADMIN_ENTRY:
         print("[SKIP] admin entry (QZ_SKIP_ADMIN_ENTRY=1)")
     else:
@@ -80,6 +77,9 @@ def run() -> int:
             payload={"username": USERNAME, "password": PASSWORD},
         )
         assert_ok(login_status == 200 and '"is_logged_in":true' in login_body.replace(" ", "").lower(), "auth login")
+
+        system_status, system_body = request(f"{ADMIN_BASE}/api/health/system")
+        assert_ok(system_status == 200 and '"checks"' in system_body, "system health")
 
         dashboard_status, dashboard_body = request(f"{ADMIN_BASE}/api/dashboard")
         assert_ok(dashboard_status == 200 and '"recent_tasks"' in dashboard_body, "dashboard api")

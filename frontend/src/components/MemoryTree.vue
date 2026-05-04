@@ -52,6 +52,15 @@
               <span>{{ personaName(item.persona_id) }}</span>
               <span v-if="item.tags?.length">{{ item.tags.join(' / ') }}</span>
             </div>
+            <div class="button-row">
+              <button
+                class="btn ghost btn-small"
+                type="button"
+                @click="$emit('select', item)"
+              >
+                治理
+              </button>
+            </div>
           </article>
         </div>
       </section>
@@ -66,6 +75,8 @@ const props = defineProps({
   memories: { type: Array, default: () => [] },
   personas: { type: Array, default: () => [] },
 })
+
+defineEmits(['select'])
 
 const levelMap = {
   L0: 'L0 核心设定',

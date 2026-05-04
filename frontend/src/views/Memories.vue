@@ -227,9 +227,10 @@
           <button
             class="btn primary"
             type="button"
+            :disabled="isCreating"
             @click="createMemory"
           >
-            保存素材
+            {{ isCreating ? '保存中…' : '保存素材' }}
           </button>
         </div>
       </div>
@@ -237,7 +238,186 @@
       <MemoryTree
         :memories="memories"
         :personas="personas"
+        @select="startEdit"
       />
+
+      <div class="grid two memories-governance-grid">
+        <div class="panel panel-pad stack">
+          <div class="split">
+            <div>
+              <div class="section-title">
+                当前页素材治理
+              </div>
+              <div class="muted">
+                对已归档素材执行编辑、复核、提升或删除。
+              </div>
+            </div>
+            <span class="tag">{{ memories.length }} 条</span>
+          </div>
+
+          <AppEmpty
+            v-if="!memories.length"
+            inline
+            title="当前页没有素材"
+            description="新增素材或切换分页后可在这里治理记忆。"
+          />
+
+          <div
+            v-else
+            class="list"
+          >
+            <div
+              v-for="item in memories"
+              :key="item.id"
+              class="list-item stack memory-row"
+              :class="{ active: editing.id === item.id }"
+            >
+              <div class="split">
+                <div
+                  class="stack"
+                  style="gap: 6px"
+                >
+                  <div class="button-row">
+                    <span class="tag">{{ levelLabel(item.level) }}</span>
+                    <span class="tag">{{ reviewStatusLabel(item.review_status) }}</span>
+                    <span
+                      v-if="item.is_core"
+                      class="tag tag-success"
+                    >核心</span>
+                  </div>
+                  <strong>{{ item.summary || item.content }}</strong>
+                  <div class="muted">
+                    {{ personaName(item.persona_id) }} · {{ item.source }} · 权重 {{ Number(item.weight || 0).toFixed(2) }}
+                  </div>
+                </div>
+                <div class="button-row memory-row-actions">
+                  <button
+                    class="btn ghost btn-small"
+                    type="button"
+                    @click="startEdit(item)"
+                  >
+                    编辑
+                  </button>
+                  <button
+                    class="btn ghost btn-small"
+                    type="button"
+                    :disabled="actionBusy"
+                    @click="markReviewed(item)"
+                  >
+                    复核
+                  </button>
+                  <button
+                    class="btn ghost btn-small"
+                    type="button"
+                    :disabled="actionBusy"
+                    @click="promoteMemory(item)"
+                  >
+                    提升
+                  </button>
+                  <button
+                    class="btn ghost btn-small"
+                    type="button"
+                    :disabled="actionBusy"
+                    @click="deleteMemory(item)"
+                  >
+                    删除
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel panel-pad stack">
+          <div class="section-title">
+            编辑素材
+          </div>
+          <AppEmpty
+            v-if="!editing.id"
+            inline
+            title="未选择素材"
+            description="从当前页或分层视图选择一条素材后，可在这里修改内容。"
+          />
+          <template v-else>
+            <div class="button-row">
+              <span class="tag">#{{ editing.id }}</span>
+              <span class="tag">{{ personaName(editing.persona_id) }}</span>
+            </div>
+            <label class="field">
+              <span>层级</span>
+              <select v-model="editing.level">
+                <option
+                  v-for="item in levelOptions"
+                  :key="item.value"
+                  :value="item.value"
+                >{{ item.label }}</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>内容</span>
+              <textarea v-model="editing.content" />
+            </label>
+            <label class="field">
+              <span>摘要</span>
+              <textarea v-model="editing.summary" />
+            </label>
+            <label class="field">
+              <span>标签</span>
+              <input v-model="editingTagsText">
+            </label>
+            <div class="form-grid">
+              <label class="field">
+                <span>权重</span>
+                <input
+                  v-model.number="editing.weight"
+                  min="0"
+                  step="0.1"
+                  type="number"
+                >
+              </label>
+              <label class="field">
+                <span>复核状态</span>
+                <select v-model="editing.review_status">
+                  <option value="unreviewed">
+                    未复核
+                  </option>
+                  <option value="reviewed">
+                    已复核
+                  </option>
+                  <option value="promoted">
+                    已提升
+                  </option>
+                </select>
+              </label>
+            </div>
+            <label class="toggle-control memory-core-toggle">
+              <input
+                v-model="editing.is_core"
+                type="checkbox"
+              >
+              <span>核心素材</span>
+            </label>
+            <div class="button-row">
+              <button
+                class="btn primary"
+                type="button"
+                :disabled="actionBusy"
+                @click="saveMemory"
+              >
+                {{ activeAction === 'save' ? '保存中…' : '保存修改' }}
+              </button>
+              <button
+                class="btn ghost"
+                type="button"
+                :disabled="actionBusy"
+                @click="clearEditing"
+              >
+                取消
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
 
       <div class="panel panel-pad split">
         <div class="muted">
@@ -285,9 +465,11 @@ const memories = ref([])
 const personas = ref([])
 const hits = ref([])
 const isLoading = ref(true)
+const isCreating = ref(false)
 const loadError = ref('')
 const message = ref('')
 const messageType = ref('info')
+const activeAction = ref('')
 const search = reactive({ query: '', persona_id: null, top_k: 5, level: '' })
 const page = ref(1)
 const pageSize = 20
@@ -305,8 +487,21 @@ const form = reactive({
   is_core: true,
 })
 const tagsText = ref('')
+const editing = reactive({
+  id: null,
+  persona_id: null,
+  level: 'L0',
+  content: '',
+  summary: '',
+  tags: [],
+  weight: 1,
+  review_status: 'unreviewed',
+  is_core: false,
+})
+const editingTagsText = ref('')
 const currentPersonaName = computed(() => personaName(search.persona_id) || '未选择')
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
+const actionBusy = computed(() => Boolean(activeAction.value))
 
 function levelLabel(level) {
   return levelOptions.find((item) => item.value === level)?.label || level
@@ -320,11 +515,53 @@ function formatScore(value) {
   return Number(value || 0).toFixed(2)
 }
 
+function reviewStatusLabel(status) {
+  return {
+    unreviewed: '未复核',
+    reviewed: '已复核',
+    promoted: '已提升',
+  }[status] || status
+}
+
 function normalizeTags() {
-  return tagsText.value
+  return parseTags(tagsText.value)
+}
+
+function parseTags(value) {
+  return String(value || '')
     .split(/[，,、]/)
     .map((item) => item.trim())
     .filter(Boolean)
+}
+
+function startEdit(memory) {
+  Object.assign(editing, {
+    id: memory.id,
+    persona_id: memory.persona_id,
+    level: memory.level,
+    content: memory.content || '',
+    summary: memory.summary || '',
+    tags: memory.tags || [],
+    weight: Number(memory.weight ?? 1),
+    review_status: memory.review_status || 'unreviewed',
+    is_core: Boolean(memory.is_core),
+  })
+  editingTagsText.value = (memory.tags || []).join('、')
+}
+
+function clearEditing() {
+  Object.assign(editing, {
+    id: null,
+    persona_id: null,
+    level: 'L0',
+    content: '',
+    summary: '',
+    tags: [],
+    weight: 1,
+    review_status: 'unreviewed',
+    is_core: false,
+  })
+  editingTagsText.value = ''
 }
 
 async function load() {
@@ -382,6 +619,7 @@ async function createMemory() {
     return
   }
   message.value = ''
+  isCreating.value = true
   try {
     form.summary = form.content.trim().slice(0, 120)
     form.tags = normalizeTags().length ? normalizeTags() : ['manual']
@@ -395,6 +633,96 @@ async function createMemory() {
   } catch (error) {
     messageType.value = 'error'
     message.value = describeError(error, '保存素材失败。')
+  } finally {
+    isCreating.value = false
+  }
+}
+
+async function saveMemory() {
+  if (!editing.id || activeAction.value) return
+  if (!editing.content.trim()) {
+    messageType.value = 'warning'
+    message.value = '素材内容不能为空。'
+    return
+  }
+  activeAction.value = 'save'
+  message.value = ''
+  try {
+    const updated = await unwrap(
+      api.put(`/memories/${editing.id}`, {
+        level: editing.level,
+        content: editing.content,
+        summary: editing.summary,
+        tags: parseTags(editingTagsText.value),
+        weight: editing.weight,
+        review_status: editing.review_status,
+        is_core: editing.is_core,
+      }),
+    )
+    messageType.value = 'success'
+    message.value = '素材已更新。'
+    startEdit(updated)
+    await load()
+  } catch (error) {
+    messageType.value = 'error'
+    message.value = describeError(error, '更新素材失败。')
+  } finally {
+    activeAction.value = ''
+  }
+}
+
+async function markReviewed(memory) {
+  if (activeAction.value) return
+  activeAction.value = `review:${memory.id}`
+  message.value = ''
+  try {
+    const updated = await unwrap(api.put(`/memories/${memory.id}`, { review_status: 'reviewed' }))
+    messageType.value = 'success'
+    message.value = '素材已标记为已复核。'
+    if (editing.id === memory.id) startEdit(updated)
+    await load()
+  } catch (error) {
+    messageType.value = 'error'
+    message.value = describeError(error, '复核素材失败。')
+  } finally {
+    activeAction.value = ''
+  }
+}
+
+async function promoteMemory(memory) {
+  if (activeAction.value) return
+  activeAction.value = `promote:${memory.id}`
+  message.value = ''
+  try {
+    const updated = await unwrap(api.post(`/memories/${memory.id}/promote`))
+    messageType.value = 'success'
+    message.value = '素材已提升。'
+    if (editing.id === memory.id) startEdit(updated)
+    await load()
+  } catch (error) {
+    messageType.value = 'error'
+    message.value = describeError(error, '提升素材失败。')
+  } finally {
+    activeAction.value = ''
+  }
+}
+
+async function deleteMemory(memory) {
+  if (activeAction.value) return
+  if (!window.confirm(`确认删除素材 #${memory.id} 吗？此操作不能撤销。`)) return
+  activeAction.value = `delete:${memory.id}`
+  message.value = ''
+  try {
+    await unwrap(api.delete(`/memories/${memory.id}`))
+    if (editing.id === memory.id) clearEditing()
+    messageType.value = 'success'
+    message.value = '素材已删除。'
+    await load()
+  } catch (error) {
+    messageType.value = 'error'
+    message.value = describeError(error, '删除素材失败。')
+  } finally {
+    activeAction.value = ''
   }
 }
 
@@ -425,6 +753,10 @@ onMounted(load)
 }
 
 .memories-grid {
+  align-items: start;
+}
+
+.memories-governance-grid {
   align-items: start;
 }
 
@@ -472,6 +804,22 @@ onMounted(load)
   gap: 12px;
 }
 
+.memory-row.active {
+  border-color: var(--accent-strong);
+  background: var(--accent-glow);
+}
+
+.memory-row-actions {
+  justify-content: flex-end;
+}
+
+.memory-core-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--secondary);
+}
+
 .memories-hit-head {
   align-items: center;
 }
@@ -494,8 +842,13 @@ onMounted(load)
 
 @media (max-width: 680px) {
   .memory-card-head,
-  .memories-hit-head {
+  .memories-hit-head,
+  .memory-row .split {
     flex-direction: column;
+  }
+
+  .memory-row-actions {
+    justify-content: flex-start;
   }
 }
 </style>

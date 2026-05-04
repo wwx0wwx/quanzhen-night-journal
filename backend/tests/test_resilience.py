@@ -11,8 +11,8 @@ from backend.models import Persona
 from backend.utils.time import utcnow_iso
 
 
-def test_health_root_returns_summary(client):
-    response = client.get("/api/health")
+def test_health_root_returns_summary(authed_client):
+    response = authed_client.get("/api/health")
 
     assert response.status_code == 200
     data = response.json()["data"]

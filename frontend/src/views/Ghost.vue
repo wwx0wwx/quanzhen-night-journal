@@ -301,6 +301,14 @@
                   class="btn ghost btn-small"
                   :href="downloadDatabaseBackupHref(item.filename)"
                 >下载</a>
+                <button
+                  class="btn ghost btn-small"
+                  type="button"
+                  :disabled="deletingDatabaseBackupFilename === item.filename"
+                  @click="deleteDatabaseBackup(item.filename)"
+                >
+                  {{ deletingDatabaseBackupFilename === item.filename ? '删除中…' : '删除' }}
+                </button>
               </div>
             </div>
           </div>
@@ -332,6 +340,7 @@ const isBackingUp = ref(false)
 const isPreviewing = ref(false)
 const isImporting = ref(false)
 const deletingExportFilename = ref('')
+const deletingDatabaseBackupFilename = ref('')
 const actionError = ref('')
 const actionSuccess = ref('')
 
@@ -443,6 +452,24 @@ async function deleteExport(filename) {
     actionError.value = describeError(error, '删除 Ghost 导出包失败，请稍后重试。')
   } finally {
     deletingExportFilename.value = ''
+  }
+}
+
+async function deleteDatabaseBackup(filename) {
+  if (deletingDatabaseBackupFilename.value) return
+  if (!window.confirm(`确认删除数据库快照 ${filename} 吗？删除后将不能再下载。`)) return
+
+  actionError.value = ''
+  actionSuccess.value = ''
+  deletingDatabaseBackupFilename.value = filename
+  try {
+    await unwrap(api.delete(`/ghost/database-backups/${encodeURIComponent(filename)}`))
+    actionSuccess.value = `已删除数据库快照：${filename}`
+    await loadExports()
+  } catch (error) {
+    actionError.value = describeError(error, '删除数据库快照失败，请稍后重试。')
+  } finally {
+    deletingDatabaseBackupFilename.value = ''
   }
 }
 

@@ -229,6 +229,14 @@ class GhostManager:
             for file in sorted(self.backup_dir.glob("*.sqlite3"), reverse=True)
         ]
 
+    async def delete_database_backup(self, filename: str) -> Path | None:
+        self.backup_dir.mkdir(parents=True, exist_ok=True)
+        target = self.backup_dir / Path(filename).name
+        if not target.exists() or not target.is_file():
+            return None
+        target.unlink()
+        return target
+
     @staticmethod
     def _copy_database_file(source_database: Path, target: Path) -> None:
         with sqlite3.connect(source_database) as source, sqlite3.connect(target) as destination:

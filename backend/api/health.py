@@ -14,6 +14,7 @@ from backend.config import get_settings
 from backend.database import get_session
 from backend.engine.config_store import ConfigStore
 from backend.publisher.hugo_publisher import HugoPublisher
+from backend.security.auth import get_current_user
 from backend.utils.response import success
 
 router = APIRouter()
@@ -25,6 +26,7 @@ async def health(
     probe_external: bool = False,
     db: AsyncSession = Depends(get_session),
     config_store: ConfigStore = Depends(get_config_store),
+    _user=Depends(get_current_user),
 ) -> object:
     checks = await _collect_checks(request, db, config_store, probe_external=probe_external)
     return success({"status": _severity_from_checks(checks), "checks": checks})
@@ -253,6 +255,7 @@ async def system_health(
     probe_external: bool = False,
     db: AsyncSession = Depends(get_session),
     config_store: ConfigStore = Depends(get_config_store),
+    _user=Depends(get_current_user),
 ) -> object:
     checks = await _collect_checks(request, db, config_store, probe_external=probe_external)
 

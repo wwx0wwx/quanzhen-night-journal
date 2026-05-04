@@ -33,7 +33,15 @@ def test_dashboard_surfaces_recent_failure_reason(monkeypatch, authed_client):
     assert any(item["label"] == "invalid_model_output" for item in data["attention_items"])
 
 
+def test_system_health_requires_authentication(client):
+    response = client.get("/api/health/system")
+    assert response.status_code == 401
+
+
 def test_system_health_reports_uninitialized_and_missing_providers(client):
+    login = client.post("/api/auth/login", json={"username": "admin", "password": "quanzhen"})
+    assert login.status_code == 200
+
     response = client.get("/api/health/system")
     assert response.status_code == 200
     data = response.json()["data"]

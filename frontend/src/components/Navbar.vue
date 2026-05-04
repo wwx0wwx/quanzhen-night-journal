@@ -159,6 +159,8 @@ const sections = [
     to: '/admin/ghost',
     items: [
       { label: '迁移与备份', to: '/admin/ghost' },
+      { label: '感知状态', to: '/admin/sensory' },
+      { label: '目录监控', to: '/admin/folder-monitors' },
       { label: '系统日志', to: '/admin/audit' },
     ],
   },
