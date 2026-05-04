@@ -206,6 +206,26 @@
           </div>
         </div>
 
+        <div class="retention-row">
+          <label class="field compact-field">
+            <span>保留份数</span>
+            <input
+              v-model.number="exportKeep"
+              min="1"
+              step="1"
+              type="number"
+            >
+          </label>
+          <button
+            class="btn ghost btn-small"
+            type="button"
+            :disabled="isPruningExports || exports.length <= exportKeep"
+            @click="pruneExports"
+          >
+            {{ isPruningExports ? '清理中…' : '清理旧导出' }}
+          </button>
+        </div>
+
         <AppEmpty
           v-if="!exports.length"
           inline
@@ -265,6 +285,26 @@
           <div class="muted">
             {{ databaseBackups.length }} 个文件
           </div>
+        </div>
+
+        <div class="retention-row">
+          <label class="field compact-field">
+            <span>保留份数</span>
+            <input
+              v-model.number="databaseBackupKeep"
+              min="1"
+              step="1"
+              type="number"
+            >
+          </label>
+          <button
+            class="btn ghost btn-small"
+            type="button"
+            :disabled="isPruningDatabaseBackups || databaseBackups.length <= databaseBackupKeep"
+            @click="pruneDatabaseBackups"
+          >
+            {{ isPruningDatabaseBackups ? '清理中…' : '清理旧快照' }}
+          </button>
         </div>
 
         <AppEmpty
@@ -341,8 +381,12 @@ const isPreviewing = ref(false)
 const isImporting = ref(false)
 const deletingExportFilename = ref('')
 const deletingDatabaseBackupFilename = ref('')
+const isPruningExports = ref(false)
+const isPruningDatabaseBackups = ref(false)
 const actionError = ref('')
 const actionSuccess = ref('')
+const exportKeep = ref(10)
+const databaseBackupKeep = ref(10)
 
 const vectorCount = computed(() => {
   if (!preview.value?.manifest?.counts) return 0
@@ -455,6 +499,24 @@ async function deleteExport(filename) {
   }
 }
 
+async function pruneExports() {
+  if (isPruningExports.value) return
+  if (!window.confirm(`确认只保留最近 ${exportKeep.value} 个 .ghost 包，并删除更早的导出吗？`)) return
+
+  actionError.value = ''
+  actionSuccess.value = ''
+  isPruningExports.value = true
+  try {
+    const result = await unwrap(api.post('/ghost/prune', null, { params: { keep: exportKeep.value } }))
+    actionSuccess.value = `已清理 ${result.deleted} 个旧导出包。`
+    await loadExports()
+  } catch (error) {
+    actionError.value = describeError(error, '清理旧 Ghost 导出包失败，请稍后重试。')
+  } finally {
+    isPruningExports.value = false
+  }
+}
+
 async function deleteDatabaseBackup(filename) {
   if (deletingDatabaseBackupFilename.value) return
   if (!window.confirm(`确认删除数据库快照 ${filename} 吗？删除后将不能再下载。`)) return
@@ -470,6 +532,26 @@ async function deleteDatabaseBackup(filename) {
     actionError.value = describeError(error, '删除数据库快照失败，请稍后重试。')
   } finally {
     deletingDatabaseBackupFilename.value = ''
+  }
+}
+
+async function pruneDatabaseBackups() {
+  if (isPruningDatabaseBackups.value) return
+  if (!window.confirm(`确认只保留最近 ${databaseBackupKeep.value} 个数据库快照，并删除更早的快照吗？`)) return
+
+  actionError.value = ''
+  actionSuccess.value = ''
+  isPruningDatabaseBackups.value = true
+  try {
+    const result = await unwrap(
+      api.post('/ghost/database-backups/prune', null, { params: { keep: databaseBackupKeep.value } }),
+    )
+    actionSuccess.value = `已清理 ${result.deleted} 个旧数据库快照。`
+    await loadExports()
+  } catch (error) {
+    actionError.value = describeError(error, '清理旧数据库快照失败，请稍后重试。')
+  } finally {
+    isPruningDatabaseBackups.value = false
   }
 }
 
@@ -526,6 +608,18 @@ onMounted(loadExports)
   justify-items: end;
   max-width: 320px;
   text-align: right;
+}
+
+.retention-row {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.compact-field {
+  min-width: 160px;
+  margin: 0;
 }
 
 @media (max-width: 900px) {

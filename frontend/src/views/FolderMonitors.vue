@@ -52,7 +52,7 @@
             <span>目录路径</span>
             <input
               v-model="form.path"
-              placeholder="/app/data/inbox"
+              placeholder="/app/inbox"
             >
           </label>
           <label class="field">
@@ -77,7 +77,7 @@
             运行说明
           </div>
           <div class="status-banner info">
-            目录需要存在于后端容器可访问的文件系统内。Docker 部署时通常应通过 volume 把宿主机投喂目录挂载进容器。
+            默认 Docker 部署已把仓库的 ./inbox 挂载到后端容器 /app/inbox，可直接监听这个目录做投喂测试。
           </div>
           <div class="card-row">
             <div class="metric">
@@ -179,7 +179,7 @@ const deletingId = ref(null)
 const loadError = ref('')
 const message = ref('')
 const messageType = ref('info')
-const form = reactive({ path: '' })
+const form = reactive({ path: '/app/inbox' })
 const fileTypesText = ref('md, txt')
 const activeCount = computed(() => monitors.value.filter((item) => item.is_active).length)
 
@@ -212,7 +212,7 @@ async function createMonitor() {
   message.value = ''
   try {
     await unwrap(api.post('/folder-monitors', { path: form.path.trim(), file_types: parseFileTypes() }))
-    form.path = ''
+    form.path = '/app/inbox'
     messageType.value = 'success'
     message.value = '监听目录已添加。'
     await load()

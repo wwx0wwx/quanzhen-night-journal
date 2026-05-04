@@ -46,7 +46,7 @@ class GhostManager:
 
     async def export(self, include_api_keys: bool = False) -> Path:
         self.ghost_dir.mkdir(parents=True, exist_ok=True)
-        filename = self.ghost_dir / f"quanzhen-{utcnow_iso().replace(':', '-')}.ghost"
+        filename = self._unique_path(self.ghost_dir / f"quanzhen-{utcnow_iso().replace(':', '-')}.ghost")
         personas = [self._persona_payload(item) for item in await self.db.scalars(select(Persona))]
         memories = [self._memory_payload(item) for item in await self.db.scalars(select(Memory))]
         posts = [self._post_payload(item) for item in await self.db.scalars(select(Post))]
@@ -216,9 +216,13 @@ class GhostManager:
         target.unlink()
         return target
 
+    async def prune_exports(self, keep: int) -> list[Path]:
+        self.ghost_dir.mkdir(parents=True, exist_ok=True)
+        return await self._prune_files(sorted(self.ghost_dir.glob("*.ghost"), reverse=True), keep)
+
     async def backup_database(self, source_database: Path) -> Path:
         self.backup_dir.mkdir(parents=True, exist_ok=True)
-        target = self.backup_dir / f"quanzhen-db-{utcnow_iso().replace(':', '-')}.sqlite3"
+        target = self._unique_path(self.backup_dir / f"quanzhen-db-{utcnow_iso().replace(':', '-')}.sqlite3")
         await asyncio.to_thread(self._copy_database_file, source_database, target)
         return target
 
@@ -237,10 +241,33 @@ class GhostManager:
         target.unlink()
         return target
 
+    async def prune_database_backups(self, keep: int) -> list[Path]:
+        self.backup_dir.mkdir(parents=True, exist_ok=True)
+        return await self._prune_files(sorted(self.backup_dir.glob("*.sqlite3"), reverse=True), keep)
+
     @staticmethod
     def _copy_database_file(source_database: Path, target: Path) -> None:
         with sqlite3.connect(source_database) as source, sqlite3.connect(target) as destination:
             source.backup(destination)
+
+    async def _prune_files(self, files: list[Path], keep: int) -> list[Path]:
+        keep = max(0, int(keep))
+        stale = files[keep:]
+        for file in stale:
+            if file.exists() and file.is_file():
+                file.unlink()
+        return stale
+
+    def _unique_path(self, path: Path) -> Path:
+        if not path.exists():
+            return path
+        stem = path.stem
+        suffix = path.suffix
+        for index in range(2, 1000):
+            candidate = path.with_name(f"{stem}-{index}{suffix}")
+            if not candidate.exists():
+                return candidate
+        raise RuntimeError("unique_backup_filename_exhausted")
 
     def _persona_payload(self, persona: Persona) -> dict:
         return {

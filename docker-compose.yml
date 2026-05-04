@@ -38,6 +38,7 @@ services:
       - ./presets:/seed/presets:ro
       - ./draft_review:/seed/draft_review:ro
       - ./automation:/seed/automation:ro
+      - ./inbox:/app/inbox
 
   hugo-builder:
     image: hugomods/hugo:exts-0.152.2

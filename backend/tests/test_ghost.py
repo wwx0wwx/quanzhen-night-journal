@@ -109,6 +109,23 @@ def test_ghost_export_can_be_deleted(authed_client):
     assert download.status_code == 404
 
 
+def test_ghost_exports_can_be_pruned(authed_client):
+    filenames = []
+    for _ in range(3):
+        exported = authed_client.post("/api/ghost/export", json={"include_api_keys": False})
+        assert exported.status_code == 200
+        filenames.append(exported.json()["data"]["filename"])
+
+    pruned = authed_client.post("/api/ghost/prune?keep=1")
+    assert pruned.status_code == 200
+    assert pruned.json()["data"]["deleted"] >= 2
+
+    listing = authed_client.get("/api/ghost/list")
+    assert listing.status_code == 200
+    remaining = {item["filename"] for item in listing.json()["data"]}
+    assert len(remaining.intersection(filenames)) == 1
+
+
 def test_database_backup_can_be_created_and_downloaded(authed_client):
     backup = authed_client.post("/api/ghost/backup-database")
     assert backup.status_code == 200
@@ -129,6 +146,23 @@ def test_database_backup_can_be_created_and_downloaded(authed_client):
 
     missing = authed_client.get(f"/api/ghost/download-database-backup/{filename}")
     assert missing.status_code == 404
+
+
+def test_database_backups_can_be_pruned(authed_client):
+    filenames = []
+    for _ in range(3):
+        backup = authed_client.post("/api/ghost/backup-database")
+        assert backup.status_code == 200
+        filenames.append(backup.json()["data"]["filename"])
+
+    pruned = authed_client.post("/api/ghost/database-backups/prune?keep=1")
+    assert pruned.status_code == 200
+    assert pruned.json()["data"]["deleted"] >= 2
+
+    listing = authed_client.get("/api/ghost/database-backups")
+    assert listing.status_code == 200
+    remaining = {item["filename"] for item in listing.json()["data"]}
+    assert len(remaining.intersection(filenames)) == 1
 
 
 def test_ghost_upload_rejects_oversized_files(monkeypatch, authed_client):

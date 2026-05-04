@@ -130,6 +130,26 @@ async def delete_ghost_export(
     return success({"deleted": True, "filename": deleted.name})
 
 
+@router.post("/prune")
+async def prune_ghost_exports(
+    keep: int = 10,
+    db: AsyncSession = Depends(get_session),
+    config_store: ConfigStore = Depends(get_config_store),
+    _user=Depends(get_current_user),
+) -> object:
+    manager = _manager(db, config_store)
+    deleted = await manager.prune_exports(keep)
+    await log_audit(
+        db,
+        "user",
+        "ghost.prune_exports",
+        "ghost",
+        detail={"keep": keep, "deleted": [item.name for item in deleted]},
+    )
+    await db.commit()
+    return success({"deleted": len(deleted), "filenames": [item.name for item in deleted], "keep": keep})
+
+
 @router.get("/database-backups")
 async def list_database_backups(
     db: AsyncSession = Depends(get_session),
@@ -192,3 +212,23 @@ async def delete_database_backup(
     await log_audit(db, "user", "ghost.delete_database_backup", "backup", deleted.name)
     await db.commit()
     return success({"deleted": True, "filename": deleted.name})
+
+
+@router.post("/database-backups/prune")
+async def prune_database_backups(
+    keep: int = 10,
+    db: AsyncSession = Depends(get_session),
+    config_store: ConfigStore = Depends(get_config_store),
+    _user=Depends(get_current_user),
+) -> object:
+    manager = _manager(db, config_store)
+    deleted = await manager.prune_database_backups(keep)
+    await log_audit(
+        db,
+        "user",
+        "ghost.prune_database_backups",
+        "backup",
+        detail={"keep": keep, "deleted": [item.name for item in deleted]},
+    )
+    await db.commit()
+    return success({"deleted": len(deleted), "filenames": [item.name for item in deleted], "keep": keep})

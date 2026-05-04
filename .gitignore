@@ -27,3 +27,5 @@ data/Caddyfile
 data/hugo.toml
 data/ghosts/
 data/quanzhen.db
+inbox/*
+!inbox/.gitkeep

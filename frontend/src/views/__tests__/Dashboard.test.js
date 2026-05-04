@@ -23,7 +23,7 @@ describe('Dashboard view', () => {
   })
 
   it('renders failure reasons and publish decision hints', async () => {
-    api.get.mockResolvedValue({
+    const dashboardPayload = {
       recent_posts: [
         {
           id: 1,
@@ -88,6 +88,24 @@ describe('Dashboard view', () => {
         embedding_ready: true,
         domain_enabled: true,
       },
+    }
+    api.get.mockImplementation((url) => {
+      if (url === '/health/system') {
+        return Promise.resolve({
+          status: 'degraded',
+          checks: {
+            api: { status: 'ok' },
+            database: { status: 'ok', encoding: 'UTF-8' },
+            scheduler: { status: 'ok', running: true, job_count: 5 },
+            hugo_build: { status: 'ok', built_at: '2026-04-12T04:20:00+00:00' },
+            llm: { status: 'warning', configured: false, missing: ['base_url'], reachability: { status: 'skipped' } },
+            embedding: { status: 'ok', configured: true, missing: [], reachability: { status: 'ok', http_status: 200 } },
+            domain: { status: 'ok', enabled: true, blog_reachability: { status: 'ok', http_status: 200 } },
+            disk: { status: 'ok', free_ratio: 0.8 },
+          },
+        })
+      }
+      return Promise.resolve(dashboardPayload)
     })
 
     const wrapper = mount(Dashboard, {
@@ -106,6 +124,9 @@ describe('Dashboard view', () => {
     expect(wrapper.text()).toContain('大脑接入')
     expect(wrapper.text()).toContain('今日精力消耗')
     expect(wrapper.text()).toContain('域名配置诊断')
+    expect(wrapper.text()).toContain('运行自检')
+    expect(wrapper.text()).toContain('部分降级')
+    expect(wrapper.text()).toContain('API 服务')
     expect(wrapper.text()).toContain('当日点击')
     expect(wrapper.text()).toContain('27')
     expect(wrapper.text()).not.toContain('立即发文')
@@ -113,7 +134,7 @@ describe('Dashboard view', () => {
   })
 
   it('renders empty states when there are no posts or tasks', async () => {
-    api.get.mockResolvedValue({
+    const dashboardPayload = {
       recent_posts: [],
       recent_tasks: [],
       cost: { cost: 0, limit: 1 },
@@ -136,6 +157,10 @@ describe('Dashboard view', () => {
         embedding_ready: true,
         domain_enabled: true,
       },
+    }
+    api.get.mockImplementation((url) => {
+      if (url === '/health/system') return Promise.resolve({ status: 'ok', checks: { api: { status: 'ok' } } })
+      return Promise.resolve(dashboardPayload)
     })
 
     const wrapper = mount(Dashboard, {

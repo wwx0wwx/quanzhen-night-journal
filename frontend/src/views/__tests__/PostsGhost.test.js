@@ -170,4 +170,34 @@ describe('Posts and Ghost views', () => {
     expect(api.delete).toHaveBeenCalledWith('/ghost/night.ghost')
     expect(wrapper.text()).toContain('已删除导出包：night.ghost')
   })
+
+  it('prunes old ghost exports from the retention control', async () => {
+    api.get
+      .mockResolvedValueOnce([
+        { filename: 'a.ghost', path: '/tmp/a.ghost', size: 128 },
+        { filename: 'b.ghost', path: '/tmp/b.ghost', size: 128 },
+        { filename: 'c.ghost', path: '/tmp/c.ghost', size: 128 },
+        { filename: 'd.ghost', path: '/tmp/d.ghost', size: 128 },
+        { filename: 'e.ghost', path: '/tmp/e.ghost', size: 128 },
+        { filename: 'f.ghost', path: '/tmp/f.ghost', size: 128 },
+        { filename: 'g.ghost', path: '/tmp/g.ghost', size: 128 },
+        { filename: 'h.ghost', path: '/tmp/h.ghost', size: 128 },
+        { filename: 'i.ghost', path: '/tmp/i.ghost', size: 128 },
+        { filename: 'j.ghost', path: '/tmp/j.ghost', size: 128 },
+        { filename: 'k.ghost', path: '/tmp/k.ghost', size: 128 },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+    api.post.mockResolvedValue({ deleted: 1 })
+
+    const wrapper = mount(Ghost)
+    await flushPromises()
+
+    await wrapper.findAll('button').find((button) => button.text().includes('清理旧导出')).trigger('click')
+    await flushPromises()
+
+    expect(api.post).toHaveBeenCalledWith('/ghost/prune', null, { params: { keep: 10 } })
+    expect(wrapper.text()).toContain('已清理 1 个旧导出包')
+  })
 })

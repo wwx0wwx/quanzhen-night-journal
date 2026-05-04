@@ -58,6 +58,56 @@
       <div class="panel panel-pad stack">
         <div class="settings-section-head">
           <div>
+            <h2>运行自检</h2>
+            <p class="muted">
+              这里合并展示真实运行态：服务、数据库、调度器、Hugo、模型连通性和公网入口。配置页只负责修改参数。
+            </p>
+          </div>
+          <div class="button-row">
+            <button
+              class="btn ghost btn-small"
+              type="button"
+              :disabled="healthProbe.busy"
+              @click="probeHealth"
+            >
+              {{ healthProbe.busy ? '自检中…' : '重新自检' }}
+            </button>
+            <span
+              class="tag"
+              :class="healthStatusClass"
+            >
+              {{ healthStatusLabel }}
+            </span>
+          </div>
+        </div>
+
+        <div class="card-row">
+          <div
+            v-for="item in healthCards"
+            :key="item.key"
+            class="metric"
+          >
+            <div class="muted">
+              {{ item.label }}
+            </div>
+            <strong>{{ item.statusLabel }}</strong>
+            <div class="muted">
+              {{ item.detail }}
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-if="healthProbe.error"
+          class="status-banner warning"
+        >
+          {{ healthProbe.error }}
+        </div>
+      </div>
+
+      <div class="panel panel-pad stack">
+        <div class="settings-section-head">
+          <div>
             <h2>域名配置诊断</h2>
             <p class="muted">
               检查域名绑定与 DNS 配置是否就绪，不代表公网可达性。实际访问状态请以浏览器验证为准。
@@ -480,11 +530,13 @@ function createDashboardState() {
 }
 
 const data = reactive(createDashboardState())
+const health = reactive({ status: 'unknown', checks: {} })
 const isLoading = ref(true)
 const loadError = ref('')
 const hasLoadedOnce = ref(false)
 const dismissBusy = ref(false)
 const blogProbe = reactive({ busy: false, done: false, reachable: false, reason: '' })
+const healthProbe = reactive({ busy: false, error: '' })
 const pendingRiskCount = computed(
   () => unackedFailed.value + unackedCircuitOpen.value + Number(data.risk_overview.waiting_human_signoff || 0),
 )
@@ -549,6 +601,78 @@ const configWarnings = computed(() => {
   if (!data.config_status.domain_enabled) warnings.push('未配置域名，博客公开入口未启用，仅后台管理可用。')
   return warnings
 })
+
+const healthStatusLabel = computed(() => {
+  if (health.status === 'ok') return '运行正常'
+  if (health.status === 'degraded') return '部分降级'
+  if (health.status === 'error') return '存在错误'
+  return '尚未自检'
+})
+
+const healthStatusClass = computed(() => {
+  if (health.status === 'ok') return 'tag-success'
+  if (health.status === 'error') return 'tag-danger'
+  return 'tag-warning'
+})
+
+const healthCards = computed(() => {
+  const checks = health.checks || {}
+  return [
+    buildHealthCard('api', 'API 服务', checks.api, '核心接口响应状态。'),
+    buildHealthCard('database', '数据库', checks.database, `编码 ${checks.database?.encoding || '-'}`),
+    buildHealthCard(
+      'scheduler',
+      '调度器',
+      checks.scheduler,
+      checks.scheduler ? `${checks.scheduler.running ? '运行中' : '未运行'} · ${checks.scheduler.job_count || 0} 个任务` : '-',
+    ),
+    buildHealthCard('hugo_build', 'Hugo 构建', checks.hugo_build, checks.hugo_build?.built_at || checks.hugo_build?.detail || '-'),
+    buildHealthCard('llm', '大脑接入', checks.llm, providerDetail(checks.llm)),
+    buildHealthCard('embedding', '记忆检索', checks.embedding, providerDetail(checks.embedding)),
+    buildHealthCard('domain', '公网入口', checks.domain, domainHealthDetail(checks.domain)),
+    buildHealthCard('disk', '磁盘', checks.disk, diskDetail(checks.disk)),
+  ]
+})
+
+function statusLabel(status) {
+  if (status === 'ok') return '正常'
+  if (status === 'warning') return '警告'
+  if (status === 'error') return '错误'
+  return '未知'
+}
+
+function buildHealthCard(key, label, check, fallbackDetail) {
+  return {
+    key,
+    label,
+    status: check?.status || 'unknown',
+    statusLabel: statusLabel(check?.status),
+    detail: fallbackDetail || '-',
+  }
+}
+
+function providerDetail(check) {
+  if (!check) return '-'
+  if (!check.configured) return `缺少 ${(check.missing || []).join(', ') || '配置'}`
+  const reachability = check.reachability || {}
+  if (reachability.status === 'ok') return `/models HTTP ${reachability.http_status}`
+  if (reachability.status === 'skipped') return '未执行外部探测'
+  return reachability.detail || '外部探测异常'
+}
+
+function domainHealthDetail(check) {
+  if (!check) return '-'
+  if (!check.enabled) return check.reason || '未启用域名'
+  const reachability = check.blog_reachability || {}
+  if (reachability.status === 'ok') return `公网 HTTP ${reachability.http_status}`
+  return check.reason || reachability.detail || '公网状态未知'
+}
+
+function diskDetail(check) {
+  if (!check) return '-'
+  const ratio = Number(check.free_ratio || 0) * 100
+  return `剩余 ${ratio.toFixed(1)}%`
+}
 
 const attentionCards = computed(() => {
   const taskIndex = Object.fromEntries(data.recent_tasks.map((t) => [t.id, t]))
@@ -681,13 +805,34 @@ async function probeBlog() {
   }
 }
 
+async function probeHealth() {
+  if (healthProbe.busy) return
+  healthProbe.busy = true
+  healthProbe.error = ''
+  try {
+    const result = await unwrap(api.get('/health/system', { params: { probe_external: true } }))
+    Object.assign(health, { status: 'unknown', checks: {} }, result)
+  } catch (error) {
+    healthProbe.error = describeError(error, '运行自检失败，请稍后重试。')
+  } finally {
+    healthProbe.busy = false
+  }
+}
+
 async function load(showLoading = !hasLoadedOnce.value) {
   if (showLoading) isLoading.value = true
   if (!hasLoadedOnce.value) loadError.value = ''
 
   try {
-    const result = await unwrap(api.get('/dashboard'))
+    const [result, healthResult] = await Promise.all([
+      unwrap(api.get('/dashboard')),
+      unwrap(api.get('/health/system', { params: { probe_external: true } })).catch((error) => {
+        healthProbe.error = describeError(error, '运行自检失败，请稍后重试。')
+        return { status: 'unknown', checks: {} }
+      }),
+    ])
     Object.assign(data, createDashboardState(), result)
+    Object.assign(health, { status: 'unknown', checks: {} }, healthResult)
     hasLoadedOnce.value = true
     loadError.value = ''
   } catch (error) {
