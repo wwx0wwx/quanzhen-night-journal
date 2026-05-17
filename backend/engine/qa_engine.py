@@ -73,7 +73,6 @@ class QAEngine:
                     language_ok,
                     perspective_ok,
                     format_ok,
-                    duplicate_ok,
                     integrity_ok,
                     not duplicate_result["duplicate_review_required"],
                 ]
@@ -184,6 +183,8 @@ class QAEngine:
 
     async def _check_duplicate(self, content: str, persona_id: int) -> dict:
         threshold = float(await self.config_store.get("qa.duplicate_threshold", "0.85") or 0.85)
+        block_threshold = float(await self.config_store.get("qa.duplicate_block_threshold", "0.92") or 0.92)
+        block_threshold = max(threshold, block_threshold)
         posts = await self.db.scalars(
             select(Post)
             .where(Post.persona_id == persona_id, Post.status == "published")
@@ -227,7 +228,7 @@ class QAEngine:
                 best_post_id,
                 "embedding",
                 "",
-                False,
+                best_score > block_threshold,
             )
         except (EmbeddingUnavailableError, ValueError, TypeError, KeyError) as exc:
             logger.warning("duplicate-check fallback engaged: %s", exc)
@@ -278,8 +279,10 @@ class QAEngine:
             return "medium"
         if duplicate_review_required:
             return "high"
-        if not forbidden_ok or not duplicate_ok:
+        if not forbidden_ok:
             return "high"
+        if not duplicate_ok:
+            return "medium"
         if not length_ok or not template_ok:
             return "medium"
         return "low"

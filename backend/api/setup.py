@@ -82,6 +82,8 @@ async def setup_complete(
         await config_store.set("schedule.cycle_anchor_date", date.today().isoformat(), category="schedule")
         await config_store.set("budget.daily_limit_usd", "99999", category="budget")
         await config_store.set("budget.monthly_limit_usd", "99999", category="budget")
+        await config_store.set("qa.duplicate_threshold", "0.75", category="qa")
+        await config_store.set("qa.duplicate_block_threshold", "0.92", category="qa")
         await config_store.set("panel.status_text", "{user} 正在守夜", category="panel")
         await config_store.set("system.initialized", "1", category="system")
 

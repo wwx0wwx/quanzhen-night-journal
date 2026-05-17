@@ -92,6 +92,7 @@ def _validate_config_value(key: str, value: str) -> None:
     elif key in {
         "budget.daily_limit_usd",
         "budget.monthly_limit_usd",
+        "qa.duplicate_block_threshold",
         "qa.duplicate_threshold",
         "sensory.cpu_high_threshold",
         "sensory.mem_high_threshold",
@@ -126,13 +127,14 @@ def _validate_config_value(key: str, value: str) -> None:
     if key == "llm.max_tokens":
         _validate_int_range(key, stripped, min_value=512, max_value=8000)
     bounded_percent_keys = {
+        "qa.duplicate_block_threshold",
         "qa.duplicate_threshold",
         "sensory.cpu_high_threshold",
         "sensory.mem_high_threshold",
         "sensory.io_high_threshold",
     }
     if key in bounded_percent_keys:
-        max_value = 1.0 if key == "qa.duplicate_threshold" else 100.0
+        max_value = 1.0 if key.startswith("qa.") else 100.0
         _validate_float_range(key, stripped, min_value=0.0, max_value=max_value)
 
 

@@ -646,3 +646,50 @@ def test_duplicate_check_filters_post_vectors_to_candidate_posts(monkeypatch, au
             assert "WHERE post_vectors.post_id IN" in vector_stmt
 
     asyncio.run(exercise())
+
+
+def test_embedding_duplicate_warning_does_not_block_auto_publish(monkeypatch, authed_client):
+    async def fake_embed(self, **_kwargs):  # noqa: ANN001
+        return [[1.0, 0.0]]
+
+    async def exercise() -> None:
+        session_factory = get_sessionmaker()
+        async with session_factory() as db:
+            config_store = ConfigStore(db)
+            await config_store.set("qa.min_length", "1", category="qa")
+            await config_store.set("qa.duplicate_threshold", "0.75", category="qa")
+            await config_store.set("qa.duplicate_block_threshold", "0.92", category="qa")
+            post = Post(
+                title="旧夜",
+                slug="old-night",
+                front_matter="{}",
+                content_markdown="# 旧夜\n\n我靠在廊柱边，看雪落在剑鞘上。",
+                summary="我靠在廊柱边，看雪落在剑鞘上。",
+                status="published",
+                persona_id=1,
+                task_id=None,
+                published_at="2026-04-18T21:02:29+00:00",
+                revision=1,
+                publish_target="hugo",
+                digital_stamp="{}",
+                review_info="{}",
+                created_at="2026-04-18T21:02:29+00:00",
+                updated_at="2026-04-18T21:02:29+00:00",
+            )
+            db.add(post)
+            await db.flush()
+            db.add(PostVector(post_id=post.id, embedding="[0.8, 0.6]"))
+            await db.commit()
+
+            monkeypatch.setattr(EmbeddingAdapter, "embed", fake_embed)
+            engine = QAEngine(db, config_store, EmbeddingAdapter())
+            content = "# 新夜\n\n我靠在廊柱边，看雪落在剑鞘上。" + " 夜色很深，我仍守着旧门。" * 4
+            result = await engine.check(content, persona_id=1)
+
+            assert result["duplicate_score"] == 0.8
+            assert result["duplicate_ok"] is False
+            assert result["duplicate_review_required"] is False
+            assert result["risk_level"] == "medium"
+            assert result["passed"] is True
+
+    asyncio.run(exercise())
