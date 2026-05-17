@@ -98,7 +98,7 @@ class PromptBuilder:
         return block
 
     def _build_persona_block(self, persona: Persona) -> str:
-        return (
+        lines = [
             f"人格名称：{persona.name}\n"
             f"核心身份：{persona.identity_setting}\n"
             f"世界观：{persona.worldview_setting}\n"
@@ -107,7 +107,13 @@ class PromptBuilder:
             f"表达强度：{persona.expression_intensity}\n"
             "务必维持同一人格连续存在的感觉。\n"
             "注意：上面的设定可能用第二人称描述人格，只能作为设定说明；正文必须改写成第一人称夜记。"
-        )
+        ]
+        taboos = [str(item).strip() for item in json_loads(persona.taboos, []) if str(item).strip()]
+        if taboos:
+            lines.append("硬性禁忌：")
+            lines.extend(f"- {item}" for item in taboos)
+            lines.append("以上禁忌必须遵守；如与其他设定冲突，以禁忌为准。")
+        return "\n".join(lines)
 
     def _build_event_block(self, event: Event) -> str:
         semantic = event.normalized_semantic or event.raw_payload

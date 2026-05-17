@@ -527,10 +527,9 @@ class GenerationOrchestrator:
         base_url = await self.config_store.get("llm.base_url", "")
         api_key = await self.config_store.get("llm.api_key", "")
         model_id = await self.config_store.get("llm.model_id", "")
-        temperature = 0.72
+        temperature = self._generation_temperature(persona, anti_perfection=anti_perfection)
         max_tokens = self._safe_int(await self.config_store.get("llm.max_tokens", "2400"), default=2400)
         if anti_perfection:
-            temperature = 1.05
             max_tokens = max(max_tokens, 2400)
         return await self.llm_adapter.chat(
             base_url=base_url or "",
@@ -550,6 +549,25 @@ class GenerationOrchestrator:
             temperature=temperature,
             max_tokens=max_tokens,
         )
+
+    def _generation_temperature(self, persona: Persona, *, anti_perfection: bool) -> float:
+        params = json_loads(persona.stability_params, {})
+        fallback_base = 0.72
+        fallback_range = [0.3, 1.2]
+        temp_range = params.get("temperature_range", fallback_range)
+        if not isinstance(temp_range, list | tuple) or len(temp_range) < 2:
+            temp_range = fallback_range
+
+        lower = self._safe_float(temp_range[0], default=fallback_range[0])
+        upper = self._safe_float(temp_range[-1], default=fallback_range[-1])
+        if lower > upper:
+            lower, upper = upper, lower
+
+        if anti_perfection:
+            return round(max(0.0, min(2.0, upper)), 3)
+
+        base = self._safe_float(params.get("temperature_base"), default=fallback_base)
+        return round(max(lower, min(upper, base)), 3)
 
     def _is_truncated_generation(self, content: str, usage: dict) -> bool:
         finish_reason = str(usage.get("finish_reason", "")).lower()
@@ -573,6 +591,12 @@ class GenerationOrchestrator:
         except (TypeError, ValueError):
             return default
         return parsed if parsed > 0 else default
+
+    def _safe_float(self, value: object, *, default: float) -> float:
+        try:
+            return float(value)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            return default
 
     async def _create_post(
         self,
