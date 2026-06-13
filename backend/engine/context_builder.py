@@ -8,11 +8,12 @@ from backend.engine.memory_engine import MemoryEngine
 from backend.engine.persona_engine import PersonaEngine
 from backend.engine.prompt_builder import GenerationContext, RecentPostContext
 from backend.models import Event, GenerationTask, Persona, Post, SensorySnapshot
+from backend.utils.content_signals import extract_ending, extract_motifs, extract_opening
 from backend.utils.serde import json_loads
 
 
 class ContextBuilder:
-    RECENT_POST_LIMIT = 4
+    RECENT_POST_LIMIT = 10
     RECENT_ARTICLE_MEMORY_EXCLUDE_COUNT = 2
     RECENT_ARTICLE_MEMORY_EXCLUDE_HOURS = 72
 
@@ -70,6 +71,9 @@ class ContextBuilder:
                     "title": item.title,
                     "summary": item.summary,
                     "published_at": item.published_at,
+                    "opening": item.opening,
+                    "ending": item.ending,
+                    "motifs": item.motifs,
                 }
                 for item in recent_posts
             ],
@@ -108,6 +112,9 @@ class ContextBuilder:
                 title=post.title,
                 summary=post.summary,
                 published_at=post.published_at,
+                opening=extract_opening(post.content_markdown, limit=120),
+                ending=extract_ending(post.content_markdown, limit=100),
+                motifs=extract_motifs(post.content_markdown, title=post.title, limit=10),
             )
             for post in rows
         ]

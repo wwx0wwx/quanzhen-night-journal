@@ -9,6 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.adapters.embedding_adapter import EmbeddingAdapter, EmbeddingUnavailableError
 from backend.engine.config_store import ConfigStore
 from backend.models import Post, PostVector
+from backend.utils.content_signals import body_text as article_body_text
+from backend.utils.content_signals import extract_ending, extract_motifs, extract_opening, shared_ngram
 from backend.utils.post_content import extract_title, normalize_title
 from backend.utils.serde import json_dumps, json_loads
 
@@ -18,6 +20,11 @@ FIRST_PERSON_MARKERS = ("我", "属下", "在下", "末将", "卑职", "小人",
 SECOND_PERSON_MARKERS = ("你", "您")
 ENGLISH_FIRST_PERSON_RE = re.compile(r"\b(i|me|my|mine|we|us|our|ours)\b", re.IGNORECASE)
 ENGLISH_SECOND_PERSON_RE = re.compile(r"\b(you|your|yours)\b", re.IGNORECASE)
+DIALOGUE_RE = re.compile(
+    r"“[^”]{0,600}”|「[^」]{0,600}」|『[^』]{0,600}』|‘[^’]{0,600}’|\"[^\"]{0,600}\"|'[^']{0,600}'",
+    re.DOTALL,
+)
+LOW_SIGNAL_MOTIFS = {"王爷", "姐姐", "深夜", "灯影", "风雨", "霜雪"}
 
 
 class QAEngine:
@@ -35,6 +42,8 @@ class QAEngine:
         format_ok, format_reason = await self._check_format(content)
         duplicate_result = await self._check_duplicate(content, persona_id)
         duplicate_ok = duplicate_result["duplicate_ok"]
+        novelty_result = await self._check_novelty(content, persona_id)
+        novelty_ok = novelty_result["novelty_ok"]
         integrity_ok, integrity_reason = self._check_content_integrity(content)
         risk_level = self._calculate_risk(
             length_ok,
@@ -44,6 +53,7 @@ class QAEngine:
             perspective_ok,
             format_ok,
             duplicate_ok,
+            novelty_ok,
             integrity_ok,
             duplicate_result["duplicate_review_required"],
         )
@@ -62,6 +72,11 @@ class QAEngine:
             "duplicate_method": duplicate_result["duplicate_method"],
             "duplicate_reason": duplicate_result["duplicate_reason"],
             "duplicate_review_required": duplicate_result["duplicate_review_required"],
+            "novelty_ok": novelty_ok,
+            "novelty_reason": novelty_result["novelty_reason"],
+            "novelty_post_id": novelty_result["novelty_post_id"],
+            "novelty_evidence": novelty_result["novelty_evidence"],
+            "novelty_method": novelty_result["novelty_method"],
             "integrity_ok": integrity_ok,
             "integrity_reason": integrity_reason,
             "risk_level": risk_level,
@@ -73,6 +88,7 @@ class QAEngine:
                     language_ok,
                     perspective_ok,
                     format_ok,
+                    novelty_ok,
                     integrity_ok,
                     not duplicate_result["duplicate_review_required"],
                 ]
@@ -135,7 +151,7 @@ class QAEngine:
         if required == "any":
             return True, ""
 
-        body = self._body_text(content)
+        body = self._strip_dialogue(self._body_text(content))
         second_person_count = sum(body.count(marker) for marker in SECOND_PERSON_MARKERS)
         if second_person_count or ENGLISH_SECOND_PERSON_RE.search(body):
             return False, "second_person_pronoun_detected"
@@ -173,13 +189,10 @@ class QAEngine:
         return True, ""
 
     def _body_text(self, content: str) -> str:
-        lines = content.splitlines()
-        if lines and lines[0].strip() == "---":
-            for index, line in enumerate(lines[1:], start=1):
-                if line.strip() == "---":
-                    lines = lines[index + 1 :]
-                    break
-        return "\n".join(line for line in lines if not line.lstrip().startswith("#"))
+        return article_body_text(content)
+
+    def _strip_dialogue(self, text: str) -> str:
+        return DIALOGUE_RE.sub("", text)
 
     async def _check_duplicate(self, content: str, persona_id: int) -> dict:
         threshold = float(await self.config_store.get("qa.duplicate_threshold", "0.85") or 0.85)
@@ -242,6 +255,75 @@ class QAEngine:
                 True,
             )
 
+    async def _check_novelty(self, content: str, persona_id: int) -> dict:
+        posts = await self.db.scalars(
+            select(Post)
+            .where(Post.persona_id == persona_id, Post.status == "published")
+            .order_by(Post.id.desc())
+            .limit(50)
+        )
+        published = list(posts)
+        if not published:
+            return self._novelty_result(True, "", None, "", "local")
+
+        title = normalize_title(extract_title(content, fallback=""), max_length=64)
+        if title:
+            for post in published:
+                if title == normalize_title(post.title, max_length=64):
+                    return self._novelty_result(False, "title_reused", post.id, title, "title")
+
+        opening = extract_opening(content, limit=180)
+        ending = extract_ending(content, limit=160)
+        body = article_body_text(content)[:4000]
+        signature = self._signature_motifs(extract_motifs(content, title=title, limit=20))
+
+        for post in published:
+            old_content = post.content_markdown or ""
+            old_opening = extract_opening(old_content, limit=200)
+            opening_overlap = shared_ngram(opening, old_opening, min_length=18, max_length=36)
+            if opening_overlap:
+                return self._novelty_result(
+                    False,
+                    "opening_reused",
+                    post.id,
+                    opening_overlap,
+                    "opening_ngram",
+                )
+
+            old_ending = extract_ending(old_content, limit=180)
+            ending_overlap = shared_ngram(ending, old_ending, min_length=18, max_length=32)
+            if ending_overlap:
+                return self._novelty_result(
+                    False,
+                    "ending_reused",
+                    post.id,
+                    ending_overlap,
+                    "ending_ngram",
+                )
+
+            body_overlap = shared_ngram(body, old_content[:4000], min_length=34, max_length=52)
+            if body_overlap:
+                return self._novelty_result(
+                    False,
+                    "long_phrase_reused",
+                    post.id,
+                    body_overlap,
+                    "body_ngram",
+                )
+
+            old_signature = self._signature_motifs(extract_motifs(old_content, title=post.title, limit=20))
+            shared_motifs = sorted(signature & old_signature)
+            if len(shared_motifs) >= 4:
+                return self._novelty_result(
+                    False,
+                    "scene_signature_reused",
+                    post.id,
+                    "、".join(shared_motifs),
+                    "motif_signature",
+                )
+
+        return self._novelty_result(True, "", None, "", "local")
+
     def _check_content_integrity(self, content: str) -> tuple[bool, str]:
         visible = [char for char in content if not char.isspace()]
         if not visible:
@@ -266,6 +348,7 @@ class QAEngine:
         perspective_ok: bool,
         format_ok: bool,
         duplicate_ok: bool,
+        novelty_ok: bool,
         integrity_ok: bool,
         duplicate_review_required: bool,
     ) -> str:
@@ -283,9 +366,14 @@ class QAEngine:
             return "high"
         if not duplicate_ok:
             return "medium"
+        if not novelty_ok:
+            return "medium"
         if not length_ok or not template_ok:
             return "medium"
         return "low"
+
+    def _signature_motifs(self, motifs: list[str]) -> set[str]:
+        return {motif for motif in motifs if motif not in LOW_SIGNAL_MOTIFS}
 
     def _fallback_duplicate_score(self, content: str, published: list[Post]) -> tuple[float, int | None]:
         normalized = set(content.split())
@@ -315,4 +403,20 @@ class QAEngine:
             "duplicate_method": duplicate_method,
             "duplicate_reason": duplicate_reason,
             "duplicate_review_required": duplicate_review_required,
+        }
+
+    def _novelty_result(
+        self,
+        novelty_ok: bool,
+        novelty_reason: str,
+        novelty_post_id: int | None,
+        novelty_evidence: str,
+        novelty_method: str,
+    ) -> dict:
+        return {
+            "novelty_ok": novelty_ok,
+            "novelty_reason": novelty_reason,
+            "novelty_post_id": novelty_post_id,
+            "novelty_evidence": novelty_evidence[:80],
+            "novelty_method": novelty_method,
         }

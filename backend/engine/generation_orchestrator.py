@@ -21,6 +21,7 @@ from backend.engine.task_gate import TASK_GATE
 from backend.models import Event, GenerationTask, Persona, Post
 from backend.publisher.registry import PublisherRegistry
 from backend.utils.audit import log_audit
+from backend.utils.content_signals import extract_motifs
 from backend.utils.post_content import derive_summary, extract_title
 from backend.utils.publish_decision import build_publish_decision
 from backend.utils.serde import json_dumps, json_loads
@@ -211,6 +212,10 @@ class GenerationOrchestrator:
                         duplicate_post_id=qa_result.get("duplicate_post_id"),
                         duplicate_score=qa_result.get("duplicate_score"),
                         duplicate_review_required=qa_result.get("duplicate_review_required", False),
+                        novelty_ok=qa_result.get("novelty_ok"),
+                        novelty_reason=qa_result.get("novelty_reason", ""),
+                        novelty_post_id=qa_result.get("novelty_post_id"),
+                        novelty_method=qa_result.get("novelty_method", ""),
                         perspective_ok=bool(qa_result.get("perspective_ok", True)),
                         perspective_reason=qa_result.get("perspective_reason", ""),
                         format_ok=bool(qa_result.get("format_ok", True)),
@@ -541,6 +546,8 @@ class GenerationOrchestrator:
                     "content": (
                         f"以人格 {persona.name} 的第一人称写作。"
                         "正文叙述者只能自称“我”或人格设定中的自称，禁止用“你”“您”“你们”作为叙事视角。"
+                        "必须避开近期文章的标题、开头、结尾、核心场景和长句复用。"
+                        "每篇都要有新的具体动作、物件、地点或后果推进。"
                         "保持克制、具体、人格一致。"
                     ),
                 },
@@ -619,12 +626,11 @@ class GenerationOrchestrator:
         title = sanitize_plain_text(title, max_length=64) or f"夜记 {task.id}"
         slug = f"{task.id}-{slugify(title, fallback_prefix=f'task-{task.id}')}"
         summary = sanitize_plain_text(derive_summary(content, title=title), max_length=180) or title
+        tags = self._derive_tags(content, title=title, persona_name=persona.name)
         post = Post(
             title=title,
             slug=slug,
-            front_matter=json_dumps(
-                {"categories": ["night-journal"], "tags": [persona.name, "夜札"], "author": persona.name}
-            ),
+            front_matter=json_dumps({"categories": ["night-journal"], "tags": tags, "author": persona.name}),
             content_markdown=content,
             summary=summary,
             status=status,
@@ -642,6 +648,21 @@ class GenerationOrchestrator:
         await self.db.flush()
         self._set_review_info(post, task)
         return post
+
+    def _derive_tags(self, content: str, *, title: str, persona_name: str) -> list[str]:
+        tags: list[str] = []
+        for tag in (persona_name, "夜札"):
+            if tag and tag not in tags:
+                tags.append(tag)
+
+        low_value = {"王爷", "深夜", "灯影"}
+        for motif in extract_motifs(content, title=title, limit=14):
+            if motif in low_value or motif in tags:
+                continue
+            tags.append(motif)
+            if len(tags) >= 6:
+                break
+        return tags
 
     async def _save_as_draft(
         self,
@@ -666,23 +687,30 @@ class GenerationOrchestrator:
         format_reason = qa_result.get("format_reason", "")
         if format_reason:
             failed.append(f"format:{format_reason}")
+        novelty_reason = qa_result.get("novelty_reason", "")
+        if novelty_reason:
+            novelty_detail = novelty_reason
+            if qa_result.get("novelty_evidence"):
+                novelty_detail += f":{qa_result['novelty_evidence']}"
+            failed.append(f"novelty:{novelty_detail}")
         issues = ", ".join(failed) if failed else "generic_quality"
         return (
-            f"Previous draft:\n{content}\n\n"
-            f"Issues to fix: {issues}.\n"
-            "Rewrite the draft from scratch: keep the same persona, but shift to "
-            "a new scene, new concrete action, and new narrative progression. "
-            "Use strict first-person narration in the article body: write as 我/属下, "
-            "and do not address the reader, 王爷, or any narration target as 你/您/你们. "
-            "The first non-empty line must be a Markdown H1 like '# 具体题目', followed by one blank line."
+            f"上一版草稿：\n{content}\n\n"
+            f"必须修复的问题：{issues}。\n"
+            "请完全重写，不要局部修补：保持同一人格，但换成新的标题、新的开场时间地点、新的具体动作、"
+            "新的核心物件和新的叙事推进。不得复用上一版或近期文章的开头、结尾姿态、长句和场景骨架。"
+            "正文控制在 900 到 1500 个中文字符之间，必须有明确收束。"
+            "正文严格第一人称：自称“我/属下”，不要把读者、王爷或叙述对象写成“你/您/你们”。"
+            "第一行必须是 Markdown H1，例如 '# 具体题目'，标题后空一行。"
         )
 
     def _build_truncation_retry_prompt(self, prompt: str, content: str) -> str:
         return (
             f"{prompt}\n\n"
             "上一版生成在模型长度上限处被截断，不能使用。请重新写一版完整稿：\n"
-            "- 控制篇幅，避免铺得过长。\n"
+            "- 正文控制在 900 到 1500 个中文字符之间，避免铺得过长。\n"
             "- 必须有明确收束，最后一句必须自然结束。\n"
+            "- 换一个更聚焦的开场和动作，不要复用上一版的长句。\n"
             "- 必须保持第一人称正文，自称“我”或“属下”，不得写成“你/您/你们”。\n"
             "- 不要续写上一版，不要提到截断或重试。\n"
             f"上一版截断结尾参考：{self._preview_text(content[-260:])}\n"

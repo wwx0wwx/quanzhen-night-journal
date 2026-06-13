@@ -176,6 +176,45 @@ def test_second_person_generation_is_retried_as_first_person(monkeypatch, authed
     assert "你" not in content
 
 
+def test_second_person_inside_dialogue_does_not_trigger_rewrite(monkeypatch, authed_client):
+    calls = 0
+
+    async def dialogue_chat(self, **_kwargs):  # noqa: ANN001
+        nonlocal calls
+        calls += 1
+        return (
+            "# 门内灯影\n\n"
+            "属下站在门外，听见王爷隔着灯影问：“你为何还不退下？”"
+            "我没有抬头，只把药碗放在案边，又把门缝里的风压住。"
+            "那一句问话落得很轻，我却记了很久。等灯火稳下来，属下才退到廊柱后。",
+            {"prompt_tokens": 12, "completion_tokens": 140, "finish_reason": "stop"},
+            5,
+        )
+
+    monkeypatch.setattr(LLMAdapter, "chat", dialogue_chat)
+
+    config = authed_client.put(
+        "/api/config",
+        json={"items": [{"key": "qa.min_length", "value": "1", "category": "qa"}]},
+    )
+    assert config.status_code == 200
+
+    response = authed_client.post(
+        "/api/tasks/trigger",
+        json={"trigger_source": "manual", "semantic_hint": "dialogue can contain second person", "payload": {}},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "published"
+    assert calls == 1
+
+    detail = authed_client.get(f"/api/tasks/{data['id']}")
+    assert detail.status_code == 200
+    task_data = detail.json()["data"]
+    assert task_data["perspective_ok"] is True
+    assert task_data["retry_count"] == 0
+
+
 def test_repeated_second_person_generation_fails_without_post(monkeypatch, authed_client):
     async def fake_embed(self, **_kwargs):  # noqa: ANN001
         return [[1.0, 0.0]]
@@ -648,6 +687,83 @@ def test_duplicate_check_filters_post_vectors_to_candidate_posts(monkeypatch, au
     asyncio.run(exercise())
 
 
+def test_novelty_reuse_is_rewritten_without_human_signoff(monkeypatch, authed_client):
+    create_post = authed_client.post(
+        "/api/posts",
+        json={
+            "title": "旧药街",
+            "content_markdown": (
+                "# 旧药街\n\n"
+                "属下在药铺街巷收好伤药，把袖口压低。雨水从檐下落下来，"
+                "王爷还不知道属下旧伤又裂开。"
+            ),
+            "status": "published",
+            "persona_id": 1,
+        },
+    )
+    assert create_post.status_code == 200
+    old_post_id = create_post.json()["data"]["id"]
+    calls = 0
+
+    async def fake_embed(self, **_kwargs):  # noqa: ANN001
+        return [[1.0, 0.0]]
+
+    async def sometimes_reuses_opening(self, **_kwargs):  # noqa: ANN001
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return (
+                "# 新药街\n\n"
+                "属下在药铺街巷收好伤药，把袖口压低。雨水从檐下落下来，"
+                "王爷还不知道属下旧伤又裂开。我把药包藏进袖中，仍旧往府门方向走。",
+                {"prompt_tokens": 12, "completion_tokens": 130, "finish_reason": "stop"},
+                5,
+            )
+        return (
+            "# 铁炉冷声\n\n"
+            "属下在铁匠铺等新打的袖箭冷透，炉火把油纸照出一层暗红。"
+            "铺主说昨夜有人问起王府暗器，我便把银钱压在案上，问他那人的左手是不是少了一截小指。"
+            "他脸色变了，我也知道这趟不是白来。回府之前，属下把袖箭收进护腕，"
+            "像把一句没有说出口的担心也一并扣紧。",
+            {"prompt_tokens": 12, "completion_tokens": 180, "finish_reason": "stop"},
+            5,
+        )
+
+    monkeypatch.setattr(EmbeddingAdapter, "embed", fake_embed)
+    monkeypatch.setattr(LLMAdapter, "chat", sometimes_reuses_opening)
+
+    config = authed_client.put(
+        "/api/config",
+        json={"items": [{"key": "qa.min_length", "value": "1", "category": "qa"}]},
+    )
+    assert config.status_code == 200
+
+    response = authed_client.post(
+        "/api/tasks/trigger",
+        json={"trigger_source": "manual", "semantic_hint": "avoid reused opening", "payload": {}},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "published"
+    assert calls == 2
+
+    detail = authed_client.get(f"/api/tasks/{data['id']}")
+    assert detail.status_code == 200
+    task_data = detail.json()["data"]
+    assert task_data["retry_count"] == 1
+    assert task_data["novelty_ok"] is True
+    assert task_data["post_id"] is not None
+    assert any(
+        item["stage"] == "qa_completed"
+        and item["detail"].get("novelty_ok") is False
+        and item["detail"].get("novelty_post_id") == old_post_id
+        for item in task_data["trace"]["trace_events"]
+    )
+    post = authed_client.get(f"/api/posts/{task_data['post_id']}")
+    assert post.status_code == 200
+    assert "铁匠铺" in post.json()["data"]["front_matter"]["tags"]
+
+
 def test_embedding_duplicate_warning_does_not_block_auto_publish(monkeypatch, authed_client):
     async def fake_embed(self, **_kwargs):  # noqa: ANN001
         return [[1.0, 0.0]]
@@ -683,12 +799,18 @@ def test_embedding_duplicate_warning_does_not_block_auto_publish(monkeypatch, au
 
             monkeypatch.setattr(EmbeddingAdapter, "embed", fake_embed)
             engine = QAEngine(db, config_store, EmbeddingAdapter())
-            content = "# 新夜\n\n我靠在廊柱边，看雪落在剑鞘上。" + " 夜色很深，我仍守着旧门。" * 4
+            content = (
+                "# 新夜\n\n"
+                "我在铁匠铺等剑鞘冷透，炉火把袖口照得发红。铺主递来一枚断钉，"
+                "说昨夜有人问过王府暗线。"
+                + (" 我把银钱压在案上，没有多问。" * 4)
+            )
             result = await engine.check(content, persona_id=1)
 
             assert result["duplicate_score"] == 0.8
             assert result["duplicate_ok"] is False
             assert result["duplicate_review_required"] is False
+            assert result["novelty_ok"] is True
             assert result["risk_level"] == "medium"
             assert result["passed"] is True
 
