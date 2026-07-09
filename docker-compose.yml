@@ -31,6 +31,7 @@ services:
       CADDY_RELOAD_ENABLED: ${CADDY_RELOAD_ENABLED:-true}
       CADDY_RELOAD_URL: ${CADDY_RELOAD_URL:-http://caddy:2019/load}
       ALLOW_CLOUDFLARE_PROXY_DOMAIN: ${ALLOW_CLOUDFLARE_PROXY_DOMAIN:-false}
+      SENSORY_HOST_ROOT: ${SENSORY_HOST_ROOT:-}
     volumes:
       - app_data:/app/data
       - hugo_content:/app/hugo/content
@@ -39,6 +40,7 @@ services:
       - ./draft_review:/seed/draft_review:ro
       - ./automation:/seed/automation:ro
       - ./inbox:/app/inbox
+      # Optional host metrics: - /:/host:ro
 
   hugo-builder:
     image: hugomods/hugo:exts-0.152.2

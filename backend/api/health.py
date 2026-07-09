@@ -96,15 +96,24 @@ def _read_build_status() -> dict[str, object]:
         return {"status": "warning", "detail": "build_status_invalid_json"}
 
     status = payload.get("status", "unknown")
+    signal = payload.get("signal", "")
     if status == "ok":
-        return {"status": "ok", "built_at": payload.get("built_at", "")}
+        return {"status": "ok", "built_at": payload.get("built_at", ""), "signal": signal}
+    if status == "running":
+        return {
+            "status": "warning",
+            "detail": "hugo_build_running",
+            "built_at": payload.get("built_at", ""),
+            "signal": signal,
+        }
     if status == "error":
         return {
             "status": "error",
             "detail": payload.get("error", "hugo_build_failed"),
             "built_at": payload.get("built_at", ""),
+            "signal": signal,
         }
-    return {"status": "warning", "detail": "build_status_unknown"}
+    return {"status": "warning", "detail": "build_status_unknown", "signal": signal}
 
 
 async def _probe_http_endpoint(base_url: str) -> dict[str, object]:
@@ -263,5 +272,40 @@ async def system_health(
         {
             "status": _severity_from_checks(checks),
             "checks": checks,
+        }
+    )
+
+
+@router.get("/metrics")
+async def operational_metrics(
+    db: AsyncSession = Depends(get_session),
+    _user=Depends(get_current_user),
+) -> object:
+    """Authenticated JSON metrics for ops dashboards and smoke tooling."""
+    import psutil
+    from sqlalchemy import func, select
+
+    from backend.models import GenerationTask, Memory, Post
+    from backend.utils.metrics import METRICS
+
+    task_rows = await db.execute(select(GenerationTask.status, func.count()).group_by(GenerationTask.status))
+    post_rows = await db.execute(select(Post.status, func.count()).group_by(Post.status))
+    memory_total = await db.scalar(select(func.count()).select_from(Memory)) or 0
+    process = psutil.Process()
+    rss = process.memory_info().rss
+    build_status = _read_build_status()
+    process_snapshot = METRICS.snapshot()
+
+    return success(
+        {
+            "process": {
+                **process_snapshot,
+                "rss_bytes": rss,
+                "cpu_percent": process.cpu_percent(interval=0.0),
+            },
+            "tasks_by_status": {status: count for status, count in task_rows},
+            "posts_by_status": {status: count for status, count in post_rows},
+            "memory_total": int(memory_total),
+            "hugo_build": build_status,
         }
     )

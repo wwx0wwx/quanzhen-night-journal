@@ -2,6 +2,20 @@
 
 本文件记录全真夜记各版本的主要变更。
 
+## [1.0.10] - 2026-07-09
+
+### Fixed
+- Hugo 发布完成判定改为按 build signal 精确匹配，避免接受上一轮构建的陈旧 `status=ok`。
+- 重启恢复：保留 `waiting_human_signoff` 任务；仍处于 `queued` 的任务会在启动后按原事件重新投递。
+- 中文记忆关键词降级检索改用字/双字与混合分词，不再依赖空格分词。
+
+### Changed
+- 记忆检索改为候选池裁剪（核心 + 最近 + 权重补齐），避免全表扫描。
+- 感知采样显式标注容器/宿主机视角；支持 `SENSORY_HOST_ROOT` + `sensory.source_mode=host`。
+- 新增 `/api/health/metrics` 进程与业务指标端点。
+- 前端关键层（api/stores/utils）TypeScript 化；Dashboard/Memories/PersonaEdit 抽出共享模块降低单文件体积。
+- 文档版本与工程实施说明同步到 1.0.10。
+
 ## [1.0.9] - 2026-04-28
 
 ### Added

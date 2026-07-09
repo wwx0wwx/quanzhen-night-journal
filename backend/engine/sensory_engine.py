@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import psutil
 from sqlalchemy import desc, select
@@ -11,6 +12,9 @@ from backend.engine.config_store import ConfigStore
 from backend.models import Post, SensorySnapshot
 from backend.utils.serde import json_dumps
 from backend.utils.time import utcnow, utcnow_iso
+
+# Optional host root for host-scope sampling (e.g. docker bind-mount / as /host:ro).
+DEFAULT_HOST_ROOT = "/host"
 
 
 class SensoryEngine:
@@ -39,44 +43,44 @@ class SensoryEngine:
         self.config_store = config_store
 
     async def sample(self) -> SensorySnapshot:
-        disk = psutil.disk_usage(str(os.getcwd()))
-        net = psutil.net_io_counters()
-        io = psutil.disk_io_counters()
+        scope = await self._resolve_scope()
+        metrics = self._collect_metrics(scope)
         previous = await self._latest_snapshot()
-        try:
-            load = os.getloadavg()[0]
-        except (AttributeError, OSError):
-            load = None
         now_iso = utcnow_iso()
-        interval_seconds, deltas = self._compute_deltas(previous, now_iso, io, net)
+        interval_seconds, deltas = self._compute_deltas(previous, now_iso, metrics["io"], metrics["net"])
 
         snapshot = SensorySnapshot(
-            source=await self.config_store.get("sensory.source_mode", "container") or "container",
+            source=scope,
             sampled_at=now_iso,
-            cpu_percent=psutil.cpu_percent(interval=0.1),
-            memory_percent=psutil.virtual_memory().percent,
-            io_read_bytes=io.read_bytes if io else None,
-            io_write_bytes=io.write_bytes if io else None,
+            cpu_percent=metrics["cpu_percent"],
+            memory_percent=metrics["memory_percent"],
+            io_read_bytes=metrics["io"].read_bytes if metrics["io"] else None,
+            io_write_bytes=metrics["io"].write_bytes if metrics["io"] else None,
             io_read_delta_bytes=deltas["io_read_delta_bytes"],
             io_write_delta_bytes=deltas["io_write_delta_bytes"],
             io_read_bytes_per_sec=deltas["io_read_bytes_per_sec"],
             io_write_bytes_per_sec=deltas["io_write_bytes_per_sec"],
-            disk_usage_percent=disk.percent,
-            network_rx_bytes=net.bytes_recv,
-            network_tx_bytes=net.bytes_sent,
+            disk_usage_percent=metrics["disk_usage_percent"],
+            network_rx_bytes=metrics["net"].bytes_recv,
+            network_tx_bytes=metrics["net"].bytes_sent,
             network_rx_delta_bytes=deltas["network_rx_delta_bytes"],
             network_tx_delta_bytes=deltas["network_tx_delta_bytes"],
             network_rx_bytes_per_sec=deltas["network_rx_bytes_per_sec"],
             network_tx_bytes_per_sec=deltas["network_tx_bytes_per_sec"],
             sample_interval_seconds=interval_seconds,
-            load_average=load,
+            load_average=metrics["load_average"],
             api_latency_ms=None,
             tags="[]",
             translated_text="",
             persona_id=None,
             is_in_blind_zone=0,
         )
-        snapshot.tags = json_dumps(await self._apply_labels(snapshot))
+        labels = await self._apply_labels(snapshot)
+        # Always annotate sampling scope so UI/ops can distinguish container vs host readings.
+        scope_tag = f"scope:{scope}"
+        if scope_tag not in labels:
+            labels.append(scope_tag)
+        snapshot.tags = json_dumps(labels)
         snapshot.is_in_blind_zone = 1 if await self._check_blind_zone() else 0
         self.db.add(snapshot)
         await self.db.flush()
@@ -91,6 +95,100 @@ class SensoryEngine:
             .limit(limit)
         )
         return list(rows)
+
+    async def _resolve_scope(self) -> str:
+        configured = (await self.config_store.get("sensory.source_mode", "container") or "container").strip().lower()
+        if configured in {"host", "host_preferred"}:
+            if self._host_root().exists():
+                return "host"
+            # Fall back transparently when host root is not mounted.
+            return "container"
+        if configured in {"container", "container_runtime", "cgroup"}:
+            return "container"
+        return configured or "container"
+
+    def _host_root(self) -> Path:
+        return Path(os.getenv("SENSORY_HOST_ROOT", DEFAULT_HOST_ROOT))
+
+    def _collect_metrics(self, scope: str) -> dict:
+        if scope == "host":
+            host_metrics = self._collect_host_metrics()
+            if host_metrics is not None:
+                return host_metrics
+        return self._collect_container_metrics()
+
+    def _collect_container_metrics(self) -> dict:
+        disk = psutil.disk_usage(str(os.getcwd()))
+        net = psutil.net_io_counters()
+        io = psutil.disk_io_counters()
+        try:
+            load = os.getloadavg()[0]
+        except (AttributeError, OSError):
+            load = None
+        return {
+            "cpu_percent": psutil.cpu_percent(interval=0.1),
+            "memory_percent": psutil.virtual_memory().percent,
+            "disk_usage_percent": disk.percent,
+            "load_average": load,
+            "io": io,
+            "net": net,
+        }
+
+    def _collect_host_metrics(self) -> dict | None:
+        host_root = self._host_root()
+        if not host_root.exists():
+            return None
+
+        meminfo = host_root / "proc/meminfo"
+        loadavg = host_root / "proc/loadavg"
+        # Disk: prefer host root mount when available.
+        disk_path = host_root if host_root.is_dir() else Path("/")
+        try:
+            disk = psutil.disk_usage(str(disk_path))
+            disk_percent = disk.percent
+        except OSError:
+            disk_percent = psutil.disk_usage("/").percent
+
+        memory_percent = None
+        if meminfo.exists():
+            try:
+                values: dict[str, int] = {}
+                for line in meminfo.read_text(encoding="utf-8", errors="ignore").splitlines():
+                    parts = line.replace(":", " ").split()
+                    if len(parts) >= 2 and parts[1].isdigit():
+                        values[parts[0]] = int(parts[1])
+                total = values.get("MemTotal")
+                available = values.get("MemAvailable")
+                if total and available is not None and total > 0:
+                    memory_percent = round(100.0 * (1.0 - (available / total)), 2)
+            except OSError:
+                memory_percent = None
+        if memory_percent is None:
+            memory_percent = psutil.virtual_memory().percent
+
+        load = None
+        if loadavg.exists():
+            try:
+                load = float(loadavg.read_text(encoding="utf-8", errors="ignore").split()[0])
+            except (OSError, ValueError, IndexError):
+                load = None
+        if load is None:
+            try:
+                load = os.getloadavg()[0]
+            except (AttributeError, OSError):
+                load = None
+
+        # CPU/network/io still come from the process namespace; labels make the scope explicit.
+        net = psutil.net_io_counters()
+        io = psutil.disk_io_counters()
+        return {
+            "cpu_percent": psutil.cpu_percent(interval=0.1),
+            "memory_percent": memory_percent,
+            "disk_usage_percent": disk_percent,
+            "load_average": load,
+            "io": io,
+            "net": net,
+        }
 
     async def _apply_labels(self, snapshot: SensorySnapshot) -> list[str]:
         thresholds = {

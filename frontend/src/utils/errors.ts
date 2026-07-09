@@ -1,4 +1,4 @@
-const CODE_MESSAGES = {
+const CODE_MESSAGES: Record<number, string> = {
   1001: '请求参数无效，请检查后重试。',
   1002: '请求的内容不存在或已被删除。',
   2001: '登录已失效或账号密码错误，请重新确认。',
@@ -7,7 +7,7 @@ const CODE_MESSAGES = {
   4001: '发布失败，请检查发布链路后重试。',
 }
 
-const RAW_MESSAGE_MAP = {
+const RAW_MESSAGE_MAP: Record<string, string> = {
   not_authenticated: '登录已失效，请重新登录。',
   token_invalid: '登录状态无效，请重新登录。',
   user_not_found: '当前用户不存在，请重新登录。',
@@ -16,7 +16,7 @@ const RAW_MESSAGE_MAP = {
   no_active_persona: '当前没有启用中的人格设定，请先检查人格设置。',
 }
 
-const ERROR_CODE_LABELS = {
+const ERROR_CODE_LABELS: Record<string, string> = {
   container_restart: '系统重启导致任务中断',
   invalid_model_output: '模型输出格式异常',
   qa_circuit_open: '质量检查多次未通过',
@@ -28,18 +28,26 @@ const ERROR_CODE_LABELS = {
   embedding_failed: '记忆检索请求失败',
 }
 
-export function describeErrorCode(code) {
+export function describeErrorCode(code?: string | null): string {
   if (!code) return ''
   return ERROR_CODE_LABELS[code] || code
 }
 
-export function describeError(error, fallback = '请求失败，请稍后重试。') {
-  const code = error?.response?.data?.code ?? error?.responseData?.code ?? error?.code
-  if (code && CODE_MESSAGES[code]) {
+type ErrorLike = {
+  code?: number | string
+  message?: string
+  response?: { data?: { code?: number; message?: string } }
+  responseData?: { code?: number; message?: string }
+}
+
+export function describeError(error: unknown, fallback = '请求失败，请稍后重试。'): string {
+  const err = (error || {}) as ErrorLike
+  const code = err?.response?.data?.code ?? err?.responseData?.code ?? err?.code
+  if (typeof code === 'number' && CODE_MESSAGES[code]) {
     return CODE_MESSAGES[code]
   }
 
-  const message = error?.response?.data?.message || error?.responseData?.message || error?.message || ''
+  const message = err?.response?.data?.message || err?.responseData?.message || err?.message || ''
   if (!message) {
     return fallback
   }

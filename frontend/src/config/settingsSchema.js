@@ -419,7 +419,7 @@ export const settingsSections = [
         label: '感知来源模式',
         type: 'text',
         placeholder: 'container',
-        help: '通常为 container，也可按部署需求切换。',
+        help: 'container=容器视角（默认）。host=宿主机视角（需挂载宿主机根目录并设置 SENSORY_HOST_ROOT，例如 /host）。host 不可用时会自动回落 container。',
       },
       {
         key: 'hugo.theme',

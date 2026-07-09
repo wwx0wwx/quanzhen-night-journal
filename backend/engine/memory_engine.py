@@ -12,7 +12,9 @@ from backend.adapters.llm_adapter import LLMAdapter
 from backend.engine.config_store import ConfigStore
 from backend.models import Memory, MemoryVector, Persona, Post
 from backend.schemas.memory import MemoryCreate, MemoryHit
+from backend.utils.metrics import METRICS
 from backend.utils.serde import json_dumps, json_loads
+from backend.utils.text_tokens import token_overlap_score, tokenize_for_search
 from backend.utils.time import UTC, utcnow, utcnow_iso
 
 LEVEL_WEIGHT = {"L0": 4.0, "L1": 3.0, "L2": 2.0, "L3": 1.0}
@@ -25,6 +27,11 @@ SOURCE_WEIGHT = {
     "article": 1.5,
     "import": 1.0,
 }
+
+# Default candidate budget for similarity search. Always keeps core + recent first.
+DEFAULT_SEARCH_CANDIDATE_LIMIT = 200
+DEFAULT_RECENT_CANDIDATES = 80
+DEFAULT_CORE_CANDIDATES = 40
 
 
 class MemoryEngine:
@@ -101,16 +108,16 @@ class MemoryEngine:
         level_filter: list[str] | None = None,
         exclude_memory_ids: list[int] | None = None,
     ) -> list[MemoryHit]:
-        stmt = select(Memory).where(Memory.persona_id == persona_id)
-        if level_filter:
-            stmt = stmt.where(Memory.level.in_(level_filter))
-        excluded = set(exclude_memory_ids or [])
-        if excluded:
-            stmt = stmt.where(Memory.id.notin_(excluded))
-        rows = await self.db.scalars(stmt.order_by(desc(Memory.created_at)))
-        memories = list(rows)
+        memories = await self._candidate_memories(
+            persona_id=persona_id,
+            level_filter=level_filter,
+            exclude_memory_ids=exclude_memory_ids,
+        )
         if not memories:
             return []
+
+        METRICS.incr("memory.search_requests")
+        METRICS.set_gauge("memory.last_candidate_count", float(len(memories)))
 
         try:
             base_url = await self.config_store.get("embedding.base_url", "") or await self.config_store.get(
@@ -152,11 +159,14 @@ class MemoryEngine:
             hits.sort(key=lambda item: item.weighted_score, reverse=True)
             return hits[:top_k]
         except (EmbeddingUnavailableError, ValueError, TypeError, KeyError):
+            METRICS.incr("memory.search_fallback")
             return await self.search_fallback_keyword(
                 query,
                 persona_id,
                 top_k=top_k,
+                level_filter=level_filter,
                 exclude_memory_ids=exclude_memory_ids,
+                candidates=memories,
             )
 
     async def search_fallback_keyword(
@@ -164,31 +174,108 @@ class MemoryEngine:
         query: str,
         persona_id: int,
         top_k: int = 5,
+        level_filter: list[str] | None = None,
         exclude_memory_ids: list[int] | None = None,
+        candidates: list[Memory] | None = None,
     ) -> list[MemoryHit]:
-        query_tokens = {token for token in query.lower().split() if token}
-        excluded = set(exclude_memory_ids or [])
-        rows = await self.db.scalars(select(Memory).where(Memory.persona_id == persona_id))
+        query_tokens = tokenize_for_search(query)
+        if not query_tokens and not query.strip():
+            return []
+
+        memories = candidates or await self._candidate_memories(
+            persona_id=persona_id,
+            level_filter=level_filter,
+            exclude_memory_ids=exclude_memory_ids,
+        )
         hits: list[MemoryHit] = []
-        for memory in rows:
-            if memory.id in excluded:
+        for memory in memories:
+            text = f"{memory.content} {memory.summary}"
+            overlap = token_overlap_score(query, text)
+            if overlap <= 0:
                 continue
-            text = f"{memory.content} {memory.summary}".lower()
-            overlap = len([token for token in query_tokens if token in text])
             score = overlap * self._score_multiplier(memory)
-            if overlap:
-                hits.append(
-                    MemoryHit(
-                        id=memory.id,
-                        level=memory.level,
-                        similarity=float(overlap),
-                        weighted_score=round(score, 4),
-                        content=memory.content,
-                        summary=memory.summary,
-                    )
+            hits.append(
+                MemoryHit(
+                    id=memory.id,
+                    level=memory.level,
+                    similarity=round(float(overlap), 4),
+                    weighted_score=round(score, 4),
+                    content=memory.content,
+                    summary=memory.summary,
                 )
+            )
         hits.sort(key=lambda item: item.weighted_score, reverse=True)
         return hits[:top_k]
+
+    async def _candidate_memories(
+        self,
+        *,
+        persona_id: int,
+        level_filter: list[str] | None,
+        exclude_memory_ids: list[int] | None,
+    ) -> list[Memory]:
+        """Select a bounded candidate set instead of scanning every memory row."""
+        candidate_limit = int(
+            await self.config_store.get("memory.search_candidate_limit", str(DEFAULT_SEARCH_CANDIDATE_LIMIT))
+            or DEFAULT_SEARCH_CANDIDATE_LIMIT
+        )
+        recent_limit = int(
+            await self.config_store.get("memory.search_recent_limit", str(DEFAULT_RECENT_CANDIDATES))
+            or DEFAULT_RECENT_CANDIDATES
+        )
+        core_limit = int(
+            await self.config_store.get("memory.search_core_limit", str(DEFAULT_CORE_CANDIDATES))
+            or DEFAULT_CORE_CANDIDATES
+        )
+        candidate_limit = max(1, candidate_limit)
+        recent_limit = max(1, recent_limit)
+        core_limit = max(1, core_limit)
+
+        excluded = set(exclude_memory_ids or [])
+        selected: dict[int, Memory] = {}
+
+        def accept(rows: list[Memory], limit: int) -> None:
+            if limit <= 0 or len(selected) >= candidate_limit:
+                return
+            taken = 0
+            for memory in rows:
+                if memory.id in excluded or memory.id in selected:
+                    continue
+                selected[memory.id] = memory
+                taken += 1
+                if taken >= limit or len(selected) >= candidate_limit:
+                    return
+
+        base = select(Memory).where(Memory.persona_id == persona_id)
+        if level_filter:
+            base = base.where(Memory.level.in_(level_filter))
+
+        # Core / high-level memories first.
+        core_rows = list(
+            await self.db.scalars(
+                base.where((Memory.is_core == 1) | (Memory.level.in_(["L0", "L1"])))
+                .order_by(desc(Memory.weight), desc(Memory.created_at), desc(Memory.id))
+                .limit(core_limit * 2)
+            )
+        )
+        accept(core_rows, core_limit)
+
+        # Recent memories for narrative continuity.
+        recent_rows = list(
+            await self.db.scalars(base.order_by(desc(Memory.created_at), desc(Memory.id)).limit(recent_limit * 2))
+        )
+        accept(recent_rows, recent_limit)
+
+        # Fill remaining budget with weighted mid-level memories.
+        if len(selected) < candidate_limit:
+            filler = list(
+                await self.db.scalars(
+                    base.order_by(desc(Memory.weight), desc(Memory.created_at), desc(Memory.id)).limit(candidate_limit)
+                )
+            )
+            accept(filler, candidate_limit - len(selected))
+
+        return list(selected.values())
 
     async def decay_memories(self) -> int:
         rows = await self.db.scalars(select(Memory))

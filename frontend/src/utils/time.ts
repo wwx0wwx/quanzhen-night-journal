@@ -8,24 +8,24 @@ const ABSOLUTE_FORMATTER = new Intl.DateTimeFormat('zh-CN', {
 
 const RELATIVE_FORMATTER = new Intl.RelativeTimeFormat('zh-CN', { numeric: 'auto' })
 
-const RELATIVE_UNITS = [
+const RELATIVE_UNITS: Array<[Intl.RelativeTimeFormatUnit, number]> = [
   ['day', 24 * 60 * 60 * 1000],
   ['hour', 60 * 60 * 1000],
   ['minute', 60 * 1000],
 ]
 
-function parseDate(value) {
+function parseDate(value: unknown): Date | null {
   if (!value) return null
-  const date = new Date(value)
+  const date = new Date(String(value))
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-export function formatDateTime(value) {
+export function formatDateTime(value: unknown): string {
   const date = parseDate(value)
   return date ? ABSOLUTE_FORMATTER.format(date) : '-'
 }
 
-export function formatRelativeTime(value, now = Date.now()) {
+export function formatRelativeTime(value: unknown, now = Date.now()): string {
   const date = parseDate(value)
   if (!date) return ''
 
@@ -39,14 +39,14 @@ export function formatRelativeTime(value, now = Date.now()) {
   return '刚刚'
 }
 
-export function formatDateTimeWithRelative(value) {
+export function formatDateTimeWithRelative(value: unknown): string {
   const absolute = formatDateTime(value)
   if (absolute === '-') return absolute
   const relative = formatRelativeTime(value)
   return relative ? `${absolute} · ${relative}` : absolute
 }
 
-export function formatDurationMs(value) {
+export function formatDurationMs(value: unknown): string {
   if (value == null || value === '') return '-'
   const ms = Number(value)
   if (Number.isNaN(ms)) return '-'

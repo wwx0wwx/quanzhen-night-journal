@@ -6,7 +6,7 @@
           Sensory Console
         </div>
         <h1>感知状态</h1>
-        <p>查看当前运行环境、人格化翻译和最近采样曲线，确认写作上下文里“此时此刻”的信号是否正常。</p>
+        <p>查看当前运行环境、人格化翻译和最近采样曲线。默认采样是容器视角；若挂载宿主机根目录并配置 host 模式，可读取宿主机内存/磁盘等指标。</p>
       </div>
       <div class="button-row">
         <button
@@ -67,7 +67,7 @@
           </div>
           <strong>{{ formatPercent(current?.memory_percent) }}</strong>
           <div class="muted">
-            当前容器或主机内存占用。
+            当前采样视角下的内存占用（默认容器命名空间）。
           </div>
         </div>
         <div class="metric">
@@ -100,7 +100,11 @@
           </div>
           <dl class="meta-grid">
             <div>
-              <dt>来源</dt>
+              <dt>采样视角</dt>
+              <dd>{{ current?.scope_label || current?.source || '-' }}</dd>
+            </div>
+            <div>
+              <dt>来源标识</dt>
               <dd>{{ current?.source || '-' }}</dd>
             </div>
             <div>

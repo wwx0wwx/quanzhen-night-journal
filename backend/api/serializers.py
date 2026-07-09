@@ -138,10 +138,22 @@ def event_to_dict(event: Event) -> dict:
     }
 
 
+_SCOPE_LABELS = {
+    "container": "容器视角（core 进程命名空间）",
+    "container_runtime": "容器视角（core 进程命名空间）",
+    "host": "宿主机视角（已挂载 host root）",
+    "host_preferred": "宿主机优先（不可用时回落容器）",
+}
+
+
 def sensory_to_dict(snapshot: SensorySnapshot) -> dict:
+    source = (snapshot.source or "container").strip() or "container"
+    tags = json_loads(snapshot.tags, [])
     return {
         "id": snapshot.id,
-        "source": snapshot.source,
+        "source": source,
+        "scope": source,
+        "scope_label": _SCOPE_LABELS.get(source, f"自定义采样源：{source}"),
         "sampled_at": snapshot.sampled_at,
         "cpu_percent": snapshot.cpu_percent,
         "memory_percent": snapshot.memory_percent,
@@ -161,7 +173,7 @@ def sensory_to_dict(snapshot: SensorySnapshot) -> dict:
         "sample_interval_seconds": snapshot.sample_interval_seconds,
         "load_average": snapshot.load_average,
         "api_latency_ms": snapshot.api_latency_ms,
-        "tags": json_loads(snapshot.tags, []),
+        "tags": tags,
         "translated_text": snapshot.translated_text,
         "persona_id": snapshot.persona_id,
         "is_in_blind_zone": bool(snapshot.is_in_blind_zone),

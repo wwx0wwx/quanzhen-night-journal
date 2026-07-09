@@ -288,12 +288,12 @@ class QAEngine:
         return "low"
 
     def _fallback_duplicate_score(self, content: str, published: list[Post]) -> tuple[float, int | None]:
-        normalized = set(content.split())
+        from backend.utils.text_tokens import token_overlap_score
+
         best_overlap = 0.0
         best_post_id = None
         for post in published:
-            tokens = set(post.content_markdown.split())
-            overlap = len(normalized & tokens) / max(1, len(normalized | tokens))
+            overlap = token_overlap_score(content, post.content_markdown)
             if overlap > best_overlap:
                 best_overlap = overlap
                 best_post_id = post.id

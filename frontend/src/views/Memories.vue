@@ -453,13 +453,17 @@ import AppEmpty from '../components/AppEmpty.vue'
 import AppLoading from '../components/AppLoading.vue'
 import MemoryTree from '../components/MemoryTree.vue'
 import { describeError } from '../utils/errors'
+import {
+  MEMORY_LEVEL_OPTIONS,
+  createEmptyMemoryForm,
+  formatScore as formatMemoryScore,
+  levelLabel as formatMemoryLevel,
+  normalizeTags as normalizeMemoryTags,
+  parseTags as parseMemoryTags,
+  reviewStatusLabel as formatReviewStatus,
+} from '../utils/memoryForm'
 
-const levelOptions = [
-  { value: 'L0', label: 'L0 核心设定' },
-  { value: 'L1', label: 'L1 长期主题' },
-  { value: 'L2', label: 'L2 近期线索' },
-  { value: 'L3', label: 'L3 瞬时片段' },
-]
+const levelOptions = MEMORY_LEVEL_OPTIONS
 
 const memories = ref([])
 const personas = ref([])
@@ -474,18 +478,7 @@ const search = reactive({ query: '', persona_id: null, top_k: 5, level: '' })
 const page = ref(1)
 const pageSize = 20
 const total = ref(0)
-const form = reactive({
-  persona_id: null,
-  level: 'L0',
-  content: '',
-  summary: '',
-  tags: ['manual'],
-  source: 'hand_written',
-  weight: 1,
-  review_status: 'reviewed',
-  decay_strategy: 'standard',
-  is_core: true,
-})
+const form = reactive(createEmptyMemoryForm(1))
 const tagsText = ref('')
 const editing = reactive({
   id: null,
@@ -503,36 +496,19 @@ const currentPersonaName = computed(() => personaName(search.persona_id) || '未
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
 const actionBusy = computed(() => Boolean(activeAction.value))
 
-function levelLabel(level) {
-  return levelOptions.find((item) => item.value === level)?.label || level
-}
+const levelLabel = formatMemoryLevel
 
 function personaName(personaId) {
   return personas.value.find((item) => item.id === personaId)?.name || `#${personaId}`
 }
 
-function formatScore(value) {
-  return Number(value || 0).toFixed(2)
-}
+const formatScore = formatMemoryScore
 
-function reviewStatusLabel(status) {
-  return {
-    unreviewed: '未复核',
-    reviewed: '已复核',
-    promoted: '已提升',
-  }[status] || status
-}
+const reviewStatusLabel = formatReviewStatus
 
-function normalizeTags() {
-  return parseTags(tagsText.value)
-}
+const normalizeTags = normalizeMemoryTags
 
-function parseTags(value) {
-  return String(value || '')
-    .split(/[，,、]/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-}
+const parseTags = parseMemoryTags
 
 function startEdit(memory) {
   Object.assign(editing, {
