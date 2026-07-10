@@ -17,7 +17,7 @@
     <template v-else>
       <div class="hero task-hero">
         <div>
-<h1>{{ t('taskDetail.title', { id: route.params.id }) }}</h1>
+          <h1>{{ t('taskDetail.title', { id: route.params.id }) }}</h1>
           <p>{{ t('taskDetail.subtitle') }}</p>
         </div>
         <div class="button-row">
@@ -158,10 +158,8 @@
 import { useI18n } from 'vue-i18n'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { useToastStore } from '../stores/toast'
 import { confirmAction } from '../composables/useConfirm'
 const { t } = useI18n()
-const toast = useToastStore()
 
 import { api, unwrap } from '../api'
 import AppError from '../components/AppError.vue'

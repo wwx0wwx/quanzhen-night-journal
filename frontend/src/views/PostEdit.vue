@@ -17,7 +17,7 @@
     <template v-else>
       <div class="hero editor-hero">
         <div>
-<h1>{{ isNew ? t('postEdit.newTitle') : t('postEdit.editTitle', { id: route.params.id }) }}</h1>
+          <h1>{{ isNew ? t('postEdit.newTitle') : t('postEdit.editTitle', { id: route.params.id }) }}</h1>
           <p>{{ t('postEdit.subtitle') }}</p>
         </div>
         <div class="button-row">

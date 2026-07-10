@@ -2,7 +2,7 @@
   <section class="stack">
     <div class="hero about-hero">
       <div>
-<h1>{{ t('about.title') }}</h1>
+        <h1>{{ t('about.title') }}</h1>
         <p>{{ t('about.subtitle') }}</p>
       </div>
     </div>

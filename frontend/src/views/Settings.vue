@@ -17,17 +17,37 @@
     <template v-else>
       <div class="hero settings-hero">
         <div>
-<h1>{{ t('settings.title') }}</h1>
+          <h1>{{ t('settings.title') }}</h1>
           <p>{{ t('settings.subtitle') }}</p>
         </div>
         <div class="settings-toolbar">
           <div class="button-row">
-            <button class="btn ghost btn-small" type="button" :class="{ active: simpleMode }" @click="simpleMode = true">{{ t('settings.modeBasic') }}</button>
-            <button class="btn ghost btn-small" type="button" :class="{ active: !simpleMode }" @click="simpleMode = false">{{ t('settings.modeAll') }}</button>
+            <button
+              class="btn ghost btn-small"
+              type="button"
+              :class="{ active: simpleMode }"
+              @click="simpleMode = true"
+            >
+              {{ t('settings.modeBasic') }}
+            </button>
+            <button
+              class="btn ghost btn-small"
+              type="button"
+              :class="{ active: !simpleMode }"
+              @click="simpleMode = false"
+            >
+              {{ t('settings.modeAll') }}
+            </button>
           </div>
-          <label class="field" style="min-width:200px">
+          <label
+            class="field"
+            style="min-width:200px"
+          >
             <span>{{ t('settings.searchFields') }}</span>
-            <input v-model.trim="fieldQuery" :placeholder="t('settings.searchFields')" />
+            <input
+              v-model.trim="fieldQuery"
+              :placeholder="t('settings.searchFields')"
+            >
           </label>
 
           <div class="button-row">
@@ -153,7 +173,9 @@
           <div class="settings-section-head">
             <div>
               <h2>{{ t('twofa.settingsTitle') }}</h2>
-              <p class="muted">{{ t('twofa.settingsDesc') }}</p>
+              <p class="muted">
+                {{ t('twofa.settingsDesc') }}
+              </p>
             </div>
             <span
               class="tag"

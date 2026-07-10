@@ -1,11 +1,19 @@
 <template>
-  <div class="app-state" :class="{ panel: !inline, 'panel-pad': !inline, 'app-state-inline': inline }">
-    <div class="loading-mark" aria-hidden="true">
+  <div
+    class="app-state"
+    :class="{ panel: !inline, 'panel-pad': !inline, 'app-state-inline': inline }"
+  >
+    <div
+      class="loading-mark"
+      aria-hidden="true"
+    >
       <div class="state-spinner" />
       <div class="loading-ring" />
     </div>
     <strong class="app-state-title">{{ displayTitle }}</strong>
-    <div class="muted app-state-body">{{ displayDescription }}</div>
+    <div class="muted app-state-body">
+      {{ displayDescription }}
+    </div>
   </div>
 </template>
 

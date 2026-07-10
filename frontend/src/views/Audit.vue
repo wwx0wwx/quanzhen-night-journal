@@ -17,7 +17,7 @@
     <template v-else>
       <div class="hero audit-hero">
         <div>
-<h1>{{ t('audit.title') }}</h1>
+          <h1>{{ t('audit.title') }}</h1>
           <p>{{ t('audit.subtitle') }}</p>
         </div>
         <div class="button-row">

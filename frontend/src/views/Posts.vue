@@ -2,7 +2,7 @@
   <section class="stack">
     <div class="hero posts-hero">
       <div>
-<h1>{{ t('posts.title') }}</h1>
+        <h1>{{ t('posts.title') }}</h1>
         <p>{{ t('posts.subtitle') }}</p>
       </div>
       <div class="button-row posts-hero-actions">
@@ -153,7 +153,7 @@
     <template v-else>
       <div class="panel panel-pad posts-ledger-meta">
         <div>
-<strong>共 {{ total }} 篇，第 {{ page }} / {{ totalPages }} 页，当前显示 {{ posts.length }} 篇。</strong>
+          <strong>共 {{ total }} 篇，第 {{ page }} / {{ totalPages }} 页，当前显示 {{ posts.length }} 篇。</strong>
         </div>
         <div class="muted">
           主操作优先处理“待审核 / 可发布 / 失败待排查”的稿件，其余状态可延后整理。
@@ -365,10 +365,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useToastStore } from '../stores/toast'
-import { confirmAction } from '../composables/useConfirm'
-import { useRouter } from 'vue-router'
-
 import { api, unwrap } from '../api'
 import AppEmpty from '../components/AppEmpty.vue'
 import AppError from '../components/AppError.vue'
@@ -383,9 +379,6 @@ import { POST_STATUS_OPTIONS, getReviewReasonLabel, getStatusClass, getStatusLab
 import { formatDateTimeWithRelative, formatDurationMs } from '../utils/time'
 
 const { t } = useI18n()
-const toast = useToastStore()
-
-const router = useRouter()
 const posts = ref([])
 const total = ref(0)
 const status = ref('')

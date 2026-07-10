@@ -73,7 +73,9 @@
           </div>
         </div>
         <div class="status-hero-side">
-          <div class="muted">{{ t('dashboard.nextStep') }}</div>
+          <div class="muted">
+            {{ t('dashboard.nextStep') }}
+          </div>
           <strong>{{ nextStep.title }}</strong>
           <div class="muted">
             {{ nextStep.description }}
@@ -89,7 +91,13 @@
         @approve="approveSignoff"
       />
 
-      <div v-if="costHint" class="status-banner" :class="costHintClass">{{ costHint }}</div>
+      <div
+        v-if="costHint"
+        class="status-banner"
+        :class="costHintClass"
+      >
+        {{ costHint }}
+      </div>
 
       <div
         v-if="configWarnings.length"
@@ -106,29 +114,43 @@
 
       <div class="card-row">
         <div class="metric">
-          <div class="muted">{{ t('dashboard.pending') }}</div>
+          <div class="muted">
+            {{ t('dashboard.pending') }}
+          </div>
           <strong>{{ pendingRiskCount }}</strong>
-          <div class="muted">{{ t('dashboard.pendingHint') }}</div>
+          <div class="muted">
+            {{ t('dashboard.pendingHint') }}
+          </div>
         </div>
         <div class="metric">
-          <div class="muted">{{ t('dashboard.failedTasks') }}</div>
+          <div class="muted">
+            {{ t('dashboard.failedTasks') }}
+          </div>
           <strong>{{ unackedFailed }}</strong>
         </div>
         <div class="metric">
-          <div class="muted">{{ t('dashboard.waitingSignoff') }}</div>
+          <div class="muted">
+            {{ t('dashboard.waitingSignoff') }}
+          </div>
           <strong>{{ data.risk_overview.waiting_human_signoff }}</strong>
         </div>
         <div class="metric">
-          <div class="muted">{{ t('dashboard.todayCost') }}</div>
+          <div class="muted">
+            {{ t('dashboard.todayCost') }}
+          </div>
           <strong>{{ Number(data.cost?.cost || 0).toFixed(4) }}</strong>
-          <div class="muted">{{ t('dashboard.budgetLimit', { n: Number(data.cost?.limit || 0) }) }}</div>
+          <div class="muted">
+            {{ t('dashboard.budgetLimit', { n: Number(data.cost?.limit || 0) }) }}
+          </div>
         </div>
       </div>
 
       <div class="grid two dashboard-columns">
         <div class="panel panel-pad stack">
           <div class="split">
-            <div class="section-title">{{ t('dashboard.todos') }}</div>
+            <div class="section-title">
+              {{ t('dashboard.todos') }}
+            </div>
             <button
               v-if="hasFailedAttention"
               class="btn ghost btn-small"
@@ -142,8 +164,8 @@
           <AppEmpty
             v-if="!attentionCards.length"
             inline
-:title="t('dashboard.noTodosTitle')"
-:description="t('dashboard.noTodosDesc')"
+            :title="t('dashboard.noTodosTitle')"
+            :description="t('dashboard.noTodosDesc')"
           />
 
           <div
@@ -194,13 +216,15 @@
         </div>
 
         <div class="panel panel-pad stack">
-          <div class="section-title">{{ t('dashboard.recentPosts') }}</div>
+          <div class="section-title">
+            {{ t('dashboard.recentPosts') }}
+          </div>
 
           <AppEmpty
             v-if="!data.recent_posts.length"
             inline
-:title="t('dashboard.noPostsTitle')"
-:description="t('dashboard.noPostsDesc')"
+            :title="t('dashboard.noPostsTitle')"
+            :description="t('dashboard.noPostsDesc')"
           />
 
           <div
@@ -232,12 +256,14 @@
       </div>
 
       <div class="panel panel-pad stack">
-        <div class="section-title">{{ t('dashboard.recentTasks') }}</div>
+        <div class="section-title">
+          {{ t('dashboard.recentTasks') }}
+        </div>
         <AppEmpty
           v-if="!data.recent_tasks.length"
           inline
-:title="t('dashboard.noTasksTitle')"
-:description="t('dashboard.noTasksDesc')"
+          :title="t('dashboard.noTasksTitle')"
+          :description="t('dashboard.noTasksDesc')"
         />
         <div
           v-else
@@ -276,7 +302,10 @@
         </summary>
         <div class="collapsible-body stack">
           <div class="split">
-            <p class="muted" style="margin: 0">
+            <p
+              class="muted"
+              style="margin: 0"
+            >
               {{ t('dashboard.healthHint') }}
             </p>
             <button
@@ -295,9 +324,13 @@
               :key="item.key"
               class="metric"
             >
-              <div class="muted">{{ item.label }}</div>
+              <div class="muted">
+                {{ item.label }}
+              </div>
               <strong>{{ item.statusLabel }}</strong>
-              <div class="muted">{{ item.detail }}</div>
+              <div class="muted">
+                {{ item.detail }}
+              </div>
             </div>
           </div>
 
@@ -310,19 +343,27 @@
 
           <div class="card-row">
             <div class="metric">
-              <div class="muted">{{ t('dashboard.boundDomain') }}</div>
+              <div class="muted">
+                {{ t('dashboard.boundDomain') }}
+              </div>
               <strong>{{ data.domain_status.domain || t('dashboard.notConfigured') }}</strong>
             </div>
             <div class="metric">
-              <div class="muted">{{ t('dashboard.blogBaseUrl') }}</div>
+              <div class="muted">
+                {{ t('dashboard.blogBaseUrl') }}
+              </div>
               <strong>{{ data.domain_status.base_url || '/' }}</strong>
             </div>
             <div class="metric">
-              <div class="muted">{{ t('dashboard.todayViews') }}</div>
+              <div class="muted">
+                {{ t('dashboard.todayViews') }}
+              </div>
               <strong>{{ Number(data.click_stats.today_page_views || 0) }}</strong>
             </div>
             <div class="metric">
-              <div class="muted">{{ t('dashboard.domainStatus') }}</div>
+              <div class="muted">
+                {{ t('dashboard.domainStatus') }}
+              </div>
               <strong>{{ data.domain_status.enabled ? t('dashboard.domainEnabled') : t('dashboard.domainPrivate') }}</strong>
             </div>
           </div>
@@ -343,7 +384,7 @@
             <span
               v-else
               class="muted"
->{{ t('dashboard.noDomainProbe') }}</span>
+            >{{ t('dashboard.noDomainProbe') }}</span>
             <span
               v-if="blogProbe.done"
               class="tag"
@@ -362,16 +403,16 @@
 
           <div class="card-row">
             <StabilityGauge
-:label="t('dashboard.personaStability')"
+              :label="t('dashboard.personaStability')"
               :score="Number(data.persona_stability || 0)"
             />
             <StabilityGauge
-:label="t('dashboard.memoryCoherence')"
+              :label="t('dashboard.memoryCoherence')"
               :score="Number(data.memory_coherence || 0)"
             />
             <CostChart
-:title="t('dashboard.costTitle')"
-:subtitle="t('dashboard.costSubtitle')"
+              :title="t('dashboard.costTitle')"
+              :subtitle="t('dashboard.costSubtitle')"
               :cost="Number(data.cost?.cost || 0)"
               :limit="Number(data.cost?.limit || 1)"
             />
@@ -399,7 +440,7 @@ import {
   getPublishDecisionDescription,
 } from '../utils/publishDecision'
 import { getStatusClass, getStatusDescription, getStatusLabel } from '../utils/statusMeta'
-import { formatDateTimeWithRelative, formatDateTime } from '../utils/time'
+import { formatDateTimeWithRelative } from '../utils/time'
 import {
   buildHealthCards,
   createDashboardState,

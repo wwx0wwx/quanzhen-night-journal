@@ -15,12 +15,16 @@ PRAGMA busy_timeout=5000;
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS users (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    username        TEXT    NOT NULL UNIQUE,
-    password_hash   TEXT    NOT NULL,
-    is_initialized  INTEGER NOT NULL DEFAULT 0,  -- 0=未完成初始化, 1=已完成
-    created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
-    updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    username            TEXT    NOT NULL UNIQUE,
+    password_hash       TEXT    NOT NULL,
+    is_initialized      INTEGER NOT NULL DEFAULT 0,  -- 0=未完成初始化, 1=已完成
+    totp_enabled        INTEGER NOT NULL DEFAULT 0,  -- 0=未启用 2FA, 1=已启用
+    totp_secret_enc     TEXT,                        -- 加密后的 TOTP secret (base32)
+    totp_confirmed_at   TEXT,                        -- 确认绑定时间 (ISO)
+    recovery_codes_hash TEXT,                        -- 恢复码哈希（JSON/序列化）
+    created_at          TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at          TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
 -- 默认管理员 (密码在首次登录后强制修改)

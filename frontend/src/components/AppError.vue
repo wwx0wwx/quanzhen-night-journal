@@ -3,17 +3,49 @@
     class="app-state app-state-error"
     :class="{ panel: !inline, 'panel-pad': !inline, 'app-state-inline': inline }"
   >
-    <div class="app-state-mark" aria-hidden="true">
-      <svg viewBox="0 0 64 64" class="app-state-icon">
-        <path d="M32 12 11 49h42L32 12Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2.8" />
-        <path d="M32 25v12" stroke="currentColor" stroke-linecap="round" stroke-width="3.2" />
-        <circle cx="32" cy="43.2" r="1.9" fill="currentColor" />
+    <div
+      class="app-state-mark"
+      aria-hidden="true"
+    >
+      <svg
+        viewBox="0 0 64 64"
+        class="app-state-icon"
+      >
+        <path
+          d="M32 12 11 49h42L32 12Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-linejoin="round"
+          stroke-width="2.8"
+        />
+        <path
+          d="M32 25v12"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-width="3.2"
+        />
+        <circle
+          cx="32"
+          cy="43.2"
+          r="1.9"
+          fill="currentColor"
+        />
       </svg>
     </div>
     <strong class="app-state-title">{{ displayTitle }}</strong>
-    <div class="muted app-state-body">{{ displayMessage }}</div>
-    <div v-if="displayAction" class="button-row">
-      <button class="btn ghost" type="button" :disabled="disabled" @click="$emit('retry')">
+    <div class="muted app-state-body">
+      {{ displayMessage }}
+    </div>
+    <div
+      v-if="displayAction"
+      class="button-row"
+    >
+      <button
+        class="btn ghost"
+        type="button"
+        :disabled="disabled"
+        @click="$emit('retry')"
+      >
         {{ displayAction }}
       </button>
     </div>

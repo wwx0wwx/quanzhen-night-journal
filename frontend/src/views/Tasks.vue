@@ -2,7 +2,7 @@
   <section class="stack">
     <div class="hero tasks-hero">
       <div>
-<h1>{{ t('tasks.title') }}</h1>
+        <h1>{{ t('tasks.title') }}</h1>
         <p>{{ t('tasks.subtitle') }}</p>
       </div>
       <div class="button-row">
@@ -79,7 +79,7 @@
     <template v-else>
       <div class="panel panel-pad tasks-ledger-meta">
         <div>
-<strong>{{ t('tasks.pageMeta', { total, page, totalPages }) }}</strong>
+          <strong>{{ t('tasks.pageMeta', { total, page, totalPages }) }}</strong>
         </div>
       </div>
 

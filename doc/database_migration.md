@@ -11,7 +11,7 @@
 系统启动时会自动检测并补全缺失的列和表。迁移逻辑位于 `backend/database.py` 的 `init_database()` 函数中：
 
 ```python
-async def _ensure_column_exists(conn, table, column, ddl):
+async def _ensure_column(conn, table, column, ddl):
     # 检查列是否存在，不存在则执行 ALTER TABLE
 ```
 

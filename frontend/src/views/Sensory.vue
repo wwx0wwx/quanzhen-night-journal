@@ -2,7 +2,7 @@
   <section class="stack">
     <div class="hero sensory-hero">
       <div>
-<h1>{{ t('sensory.title') }}</h1>
+        <h1>{{ t('sensory.title') }}</h1>
         <p>{{ t('sensory.subtitle') }}</p>
       </div>
       <div class="button-row">

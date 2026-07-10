@@ -5,7 +5,10 @@
         <div class="section-title">
           {{ t('signoff.title') }}
         </div>
-        <p class="muted" style="margin: 6px 0 0">
+        <p
+          class="muted"
+          style="margin: 6px 0 0"
+        >
           {{ t('signoff.subtitle') }}
         </p>
       </div>

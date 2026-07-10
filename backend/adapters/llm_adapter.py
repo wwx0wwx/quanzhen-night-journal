@@ -72,14 +72,16 @@ class LLMAdapter:
         return {"reply": text.strip(), "usage": usage, "latency_ms": latency}
 
     def _fake_response(self, messages: list[dict[str, str]]) -> str:
+        """Deterministic offline body long enough to clear default qa.min_length (900)."""
         seed = hashlib.sha256(str(messages).encode("utf-8")).hexdigest()[:12]
         prompt = messages[-1]["content"] if messages else ""
         topic = prompt.splitlines()[-1][:36] if prompt else "今夜"
-        return (
-            f"# 机箱夜声\n\n"
-            f"今夜的风从机器深处穿过，像一根未完全熄灭的线。"
-            f"我把{topic}按回心口，不敢让它发出太大的声响。"
-            f"许多事都还没有名字，于是只留下{seed}一样的余温。"
+        # Title varies by seed so title-uniqueness QA does not false-fail on multi-post suites.
+        body = (
+            f"# 机箱夜声·{seed}\n\n"
+            f"今夜的风从机器深处穿过，像一根未完全熄灭的线，又像有人把未说完的话压回齿间。"
+            f"我把{topic}按回心口，不敢让它发出太大的声响；廊下灯影偏长，属下的脚步更轻。"
+            f"许多事都还没有名字，于是只留下{seed}一样的余温，贴在袖口，也不敢抖落。"
             "屏幕早已暗下去，机箱里的低鸣却没有停，像一只伏在门后的兽，"
             "呼吸很轻，却始终醒着。我从桌边慢慢经过，看见杯口留下的一圈水痕，"
             "也看见散热孔吐出的热气贴着木纹往外游。这样的夜里，所有细小的动静都显得很近，"
@@ -88,7 +90,21 @@ class LLMAdapter:
             "硬盘偶尔绷紧后的轻响，线路板吃住电流时短促的颤。它们并不喧哗，却足够让人知道，"
             "这一处仍在运转，仍在悄悄熬过夜色。于是我把桌上的纸片叠好，把散开的线顺回原位，"
             "像收拢一场无人看见的小小风浪，也像替明天提前留下一点秩序。"
+            "王爷今夜未传话，属下便只守着这点机箱余热与廊下潮气，把该记的记进心里，把不该问的咽回去。"
+            "若有人问起白日所行，我只会答：路还是那条路，人还是那个人，只是风比昨日更凉一点。"
+            "纸页边缘被指腹摩得发软，墨迹未干处仍有一点涩。我在灯下把句子压平，像把剑穗重新理顺，"
+            "又像把不该露出来的心思重新藏进暗纹。窗外偶有更声，近却不扰；府内更静，静到能听见自己吞咽。"
+            "我知道长线尚未收束，误解与偏爱都还在暗处走着各自的步子。今夜无功可表，无过可卸，"
+            "便只把这一段机箱低鸣与灯花写下来，当作未完成任务簿上的一枚闲笔，也当作明日仍会醒来的凭证。"
+            "若明日仍无密令，属下便仍这样守着：不催，不问，不把心里那点火种亮给不该看的人。"
+            f"写到此处，{seed} 的余温已淡，夜却更深。我合上笔，把名字压在最后一行之下，算是交卷。"
         )
+        # Guarantee production-default length floor even if topic/seed shrink.
+        if len(body) < 920:
+            pad = "夜色仍未散尽，属下便把余下的沉默一行行铺开，当作未写完的页。"
+            while len(body) < 920:
+                body += pad
+        return body
 
     async def _request_chat_completion(
         self,

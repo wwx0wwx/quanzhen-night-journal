@@ -1,9 +1,11 @@
 <template>
   <section class="panel panel-pad setup-stage">
-    <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><LanguageToggle /></div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <LanguageToggle />
+    </div>
     <div class="hero setup-hero">
       <div>
-<h1>{{ t('setup.title') }}</h1>
+        <h1>{{ t('setup.title') }}</h1>
         <p>{{ t('setup.subtitle') }}</p>
       </div>
       <div class="setup-hero-note">

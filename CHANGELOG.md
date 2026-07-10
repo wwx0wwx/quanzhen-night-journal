@@ -2,6 +2,14 @@
 
 本文件记录全真夜记各版本的主要变更。
 
+## [1.4.2] - 2026-07-10
+
+### Fixed
+- 生成链路回归：fake LLM 正文补足至默认 `qa.min_length=900` 以上，标题按 seed 区分；未显式降门槛的生成/webhook 用例补 `qa.min_length` 夹具，消除 `circuit_open` 误熔断。
+- `doc/database_schema.sql` 的 `users` 表补齐 2FA 列（`totp_*` / `recovery_codes_hash`），与 `init_database` 迁移一致。
+- `doc/database_migration.md` 迁移辅助函数名更正为 `_ensure_column`。
+- 前端 ESLint：清理 unused 与可自动修复的格式 warning；`npm run lint` 启用 `--max-warnings=0`。
+
 ## [1.4.1] - 2026-07-10
 
 ### Added

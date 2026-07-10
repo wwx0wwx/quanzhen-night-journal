@@ -17,7 +17,7 @@
     <template v-else>
       <div class="hero personas-hero">
         <div>
-<h1>{{ t('personas.title') }}</h1>
+          <h1>{{ t('personas.title') }}</h1>
           <p>
             {{ t('personas.subtitle') }}
           </p>
@@ -152,7 +152,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { confirmAction } from '../composables/useConfirm'
-import { useToastStore } from '../stores/toast'
 
 import AppEmpty from '../components/AppEmpty.vue'
 import AppError from '../components/AppError.vue'
@@ -161,7 +160,6 @@ import { usePersonaStore } from '../stores/persona'
 import { describeError } from '../utils/errors'
 
 const { t } = useI18n()
-const toast = useToastStore()
 
 const store = usePersonaStore()
 const personas = ref([])

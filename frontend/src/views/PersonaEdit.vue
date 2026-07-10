@@ -17,7 +17,7 @@
     <template v-else>
       <div class="hero persona-edit-hero">
         <div>
-<h1>{{ isNew ? t('personaEdit.newTitle') : t('personaEdit.editTitle', { id: route.params.id }) }}</h1>
+          <h1>{{ isNew ? t('personaEdit.newTitle') : t('personaEdit.editTitle', { id: route.params.id }) }}</h1>
           <p>{{ t('personaEdit.subtitle') }}</p>
         </div>
         <div class="persona-edit-hero-side">
@@ -84,7 +84,7 @@
         <div class="panel panel-pad stack persona-story-panel">
           <div class="persona-panel-head">
             <div>
-<div class="section-title">
+              <div class="section-title">
                 {{ t('personaEdit.sections.story') }}
               </div>
             </div>
@@ -213,7 +213,7 @@
         <div class="panel panel-pad stack persona-meta-panel">
           <div class="persona-panel-head">
             <div>
-<div class="section-title">
+              <div class="section-title">
                 {{ t('personaEdit.sections.constraints') }}
               </div>
             </div>
@@ -261,7 +261,7 @@
       <div class="panel panel-pad stack persona-lexicon-panel">
         <div class="split persona-lexicon-head">
           <div>
-<div class="section-title">
+            <div class="section-title">
               {{ t('personaEdit.sections.lexicon') }}
             </div>
             <div class="muted">
@@ -363,7 +363,7 @@
       <div class="panel panel-pad stack persona-scene-panel">
         <div class="split persona-scene-head">
           <div>
-<div class="section-title">
+            <div class="section-title">
               {{ t('personaEdit.sections.scenes') }}
             </div>
             <div class="muted">

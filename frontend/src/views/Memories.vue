@@ -17,7 +17,7 @@
     <template v-else>
       <div class="hero memories-hero">
         <div>
-<h1>{{ t('memories.title') }}</h1>
+          <h1>{{ t('memories.title') }}</h1>
           <p>
             {{ t('memories.subtitle') }}
           </p>
@@ -76,7 +76,7 @@
         <div class="panel panel-pad stack memory-search-card">
           <div class="memory-card-head">
             <div>
-<div class="section-title">
+              <div class="section-title">
                 快速搜索
               </div>
               <p class="muted">
@@ -166,7 +166,7 @@
         <div class="panel panel-pad stack memory-create-card">
           <div class="memory-card-head">
             <div>
-<div class="section-title">
+              <div class="section-title">
                 新增长期设定
               </div>
               <p class="muted">

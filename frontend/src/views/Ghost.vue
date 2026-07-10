@@ -385,7 +385,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useToastStore } from '../stores/toast'
 import { confirmAction } from '../composables/useConfirm'
 
 import { api, unwrap } from '../api'
@@ -396,7 +395,6 @@ import { describeError } from '../utils/errors'
 import { formatDateTimeWithRelative } from '../utils/time'
 
 const { t } = useI18n()
-const toast = useToastStore()
 
 const MAX_GHOST_FILE_BYTES = 20 * 1024 * 1024
 const selectedFile = ref(null)

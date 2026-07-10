@@ -2,7 +2,7 @@
   <section class="stack">
     <div class="hero folder-hero">
       <div>
-<h1>{{ t('folderMonitors.title') }}</h1>
+        <h1>{{ t('folderMonitors.title') }}</h1>
         <p>{{ t('folderMonitors.subtitle') }}</p>
       </div>
       <div class="button-row">

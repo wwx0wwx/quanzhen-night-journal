@@ -3,16 +3,40 @@
     class="app-state app-state-empty"
     :class="{ panel: !inline, 'panel-pad': !inline, 'app-state-inline': inline }"
   >
-    <div class="app-state-mark" aria-hidden="true">
-      <svg viewBox="0 0 64 64" class="app-state-icon">
-        <path d="M40 14c-8 3-14 10.9-14 20.2 0 9.3 6 17.1 14 20.3-2.4.8-4.9 1.2-7.6 1.2-12.8 0-23.2-10.3-23.2-23 0-12.7 10.4-23 23.2-23 2.7 0 5.2.4 7.6 1.3Z" fill="currentColor" />
-        <path d="M45 18h9M49.5 13.5v9M13 46h11M18.5 40.5v11" stroke="currentColor" stroke-linecap="round" stroke-width="2.5" />
+    <div
+      class="app-state-mark"
+      aria-hidden="true"
+    >
+      <svg
+        viewBox="0 0 64 64"
+        class="app-state-icon"
+      >
+        <path
+          d="M40 14c-8 3-14 10.9-14 20.2 0 9.3 6 17.1 14 20.3-2.4.8-4.9 1.2-7.6 1.2-12.8 0-23.2-10.3-23.2-23 0-12.7 10.4-23 23.2-23 2.7 0 5.2.4 7.6 1.3Z"
+          fill="currentColor"
+        />
+        <path
+          d="M45 18h9M49.5 13.5v9M13 46h11M18.5 40.5v11"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-width="2.5"
+        />
       </svg>
     </div>
     <strong class="app-state-title">{{ displayTitle }}</strong>
-    <div class="muted app-state-body">{{ displayDescription }}</div>
-    <div v-if="actionLabel" class="button-row">
-      <button class="btn ghost" type="button" :disabled="disabled" @click="$emit('action')">
+    <div class="muted app-state-body">
+      {{ displayDescription }}
+    </div>
+    <div
+      v-if="actionLabel"
+      class="button-row"
+    >
+      <button
+        class="btn ghost"
+        type="button"
+        :disabled="disabled"
+        @click="$emit('action')"
+      >
         {{ actionLabel }}
       </button>
     </div>

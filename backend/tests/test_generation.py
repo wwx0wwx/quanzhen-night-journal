@@ -15,6 +15,13 @@ from backend.scheduler.jobs import scheduled_generation_job
 
 
 def test_generation_trigger_publishes(authed_client):
+    # Align with production qa.min_length=900; fake LLM must clear the floor (also covered in adapter).
+    config = authed_client.put(
+        "/api/config",
+        json={"items": [{"key": "qa.min_length", "value": "1", "category": "qa"}]},
+    )
+    assert config.status_code == 200
+
     response = authed_client.post(
         "/api/tasks/trigger",
         json={"trigger_source": "manual", "semantic_hint": "write a short night note", "payload": {"kind": "manual"}},
@@ -221,6 +228,12 @@ def test_repeated_second_person_generation_fails_without_post(monkeypatch, authe
 
 
 def test_approve_rejects_tasks_not_waiting_human_signoff(authed_client):
+    config = authed_client.put(
+        "/api/config",
+        json={"items": [{"key": "qa.min_length", "value": "1", "category": "qa"}]},
+    )
+    assert config.status_code == 200
+
     response = authed_client.post(
         "/api/tasks/trigger",
         json={"trigger_source": "manual", "semantic_hint": "write a short night note", "payload": {"kind": "manual"}},
@@ -510,6 +523,7 @@ def test_failed_webhook_auth_does_not_poison_dedup_or_cooldown(authed_client):
         "/api/config",
         json={
             "items": [
+                {"key": "qa.min_length", "value": "1", "category": "qa"},
                 {"key": "webhook.auth_mode", "value": "bearer", "category": "webhook"},
                 {"key": "webhook.auth_token", "value": "top-secret-token", "category": "webhook"},
             ]
