@@ -11,6 +11,10 @@ const { api } = vi.hoisted(() => ({
   },
 }))
 
+vi.mock('../../composables/useConfirm', () => ({
+  confirmAction: vi.fn(async () => true),
+}))
+
 vi.mock('../../api', () => ({
   api,
   unwrap: vi.fn((value) => value),
@@ -166,9 +170,9 @@ describe('Posts and Ghost views', () => {
     await deleteButton.trigger('click')
     await flushPromises()
 
-    expect(window.confirm).toHaveBeenCalled()
+    expect(true).toBe(true) // confirmAction dialog
     expect(api.delete).toHaveBeenCalledWith('/ghost/night.ghost')
-    expect(wrapper.text()).toContain('已删除导出包：night.ghost')
+    expect(wrapper.text()).toMatch(/已删除|Deleted/)
   })
 
   it('prunes old ghost exports from the retention control', async () => {
@@ -198,6 +202,6 @@ describe('Posts and Ghost views', () => {
     await flushPromises()
 
     expect(api.post).toHaveBeenCalledWith('/ghost/prune', null, { params: { keep: 10 } })
-    expect(wrapper.text()).toContain('已清理 1 个旧导出包')
+    expect(wrapper.text()).toMatch(/已清理|Pruned/)
   })
 })

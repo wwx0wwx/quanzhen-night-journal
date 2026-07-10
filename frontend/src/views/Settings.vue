@@ -22,6 +22,15 @@
         </div>
         <div class="settings-toolbar">
           <div class="button-row">
+            <button class="btn ghost btn-small" type="button" :class="{ active: simpleMode }" @click="simpleMode = true">{{ t('settings.modeBasic') }}</button>
+            <button class="btn ghost btn-small" type="button" :class="{ active: !simpleMode }" @click="simpleMode = false">{{ t('settings.modeAll') }}</button>
+          </div>
+          <label class="field" style="min-width:200px">
+            <span>{{ t('settings.searchFields') }}</span>
+            <input v-model.trim="fieldQuery" :placeholder="t('settings.searchFields')" />
+          </label>
+
+          <div class="button-row">
             <button
               class="btn primary"
               :disabled="isBusy || !isDirty"
@@ -185,21 +194,43 @@ import AppError from '../components/AppError.vue'
 import AppLoading from '../components/AppLoading.vue'
 import SettingsSection from '../components/settings/SettingsSection.vue'
 import { settingFields, settingsSections } from '../config/settingsSchema'
+import { translateField } from '../utils/i18nField'
+import { useToastStore } from '../stores/toast'
 import { describeError } from '../utils/errors'
 
 const { t } = useI18n()
-const translatedSections = computed(() =>
-  settingsSections.map((section) => {
-    const base = `settingsSchema.sections.${section.id}`
-    const titleKey = `${base}.title`
-    const descKey = `${base}.description`
-    return {
-      ...section,
-      title: t(titleKey) !== titleKey ? t(titleKey) : section.title,
-      description: t(descKey) !== descKey ? t(descKey) : section.description,
-    }
-  }),
-)
+
+const toast = useToastStore()
+const simpleMode = ref(true)
+const fieldQuery = ref('')
+
+const BASIC_SECTION_IDS = new Set(['site', 'panel', 'llm', 'embedding', 'schedule', 'quality'])
+
+const translatedSections = computed(() => {
+  const q = fieldQuery.value.trim().toLowerCase()
+  return settingsSections
+    .filter((section) => (simpleMode.value ? BASIC_SECTION_IDS.has(section.id) : true))
+    .map((section) => {
+      const base = `settingsSchema.sections.${section.id}`
+      const titleKey = `${base}.title`
+      const descKey = `${base}.description`
+      const fields = section.fields
+        .map((field) => translateField(field))
+        .filter((field) => {
+          if (!q) return true
+          const hay = `${field.label || ''} ${field.key} ${field.help || ''}`.toLowerCase()
+          return hay.includes(q)
+        })
+      return {
+        ...section,
+        title: t(titleKey) !== titleKey ? t(titleKey) : section.title,
+        description: t(descKey) !== descKey ? t(descKey) : section.description,
+        fields,
+      }
+    })
+    .filter((section) => section.fields.length > 0)
+})
+
 
 
 const formValues = reactive({})
@@ -343,7 +374,8 @@ function buildProviderPayload(prefix) {
 
 function resetTransientMessages() {
   saveError.value = ''
-  saveSuccess.value = ''
+  toast.success(t('toast.saved'))
+    saveSuccess.value = ''
   testError.value = ''
   testSuccess.value = ''
 }
@@ -364,7 +396,8 @@ function broadcastPanelConfig() {
 function updateField(key, value) {
   formValues[key] = value
   saveError.value = ''
-  saveSuccess.value = ''
+  toast.success(t('toast.saved'))
+    saveSuccess.value = ''
 }
 
 async function load() {
@@ -395,19 +428,22 @@ async function save() {
   if (!isDirty.value || isSaving.value) return
 
   saveError.value = ''
-  saveSuccess.value = ''
+  toast.success(t('toast.saved'))
+    saveSuccess.value = ''
 
   isSaving.value = true
   try {
     const items = buildItems()
     if (!items.length) {
       initialSnapshot.value = createSnapshot()
-      saveSuccess.value = '没有需要保存的修改。'
+      toast.success(t('toast.saved'))
+    saveSuccess.value = '没有需要保存的修改。'
       return
     }
     const result = await unwrap(api.put('/config', { items }))
     initialSnapshot.value = createSnapshot()
     broadcastPanelConfig()
+    toast.success(t('toast.saved'))
     saveSuccess.value = result.site_runtime?.reason || '配置已保存。'
   } catch (error) {
     saveError.value = describeError(error, '保存配置失败，请检查填写内容后重试。')

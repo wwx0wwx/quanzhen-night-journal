@@ -2,23 +2,23 @@
   <section class="stack">
     <AppLoading
       v-if="isLoading"
-      title="正在加载任务"
-      description="正在读取任务状态、轨迹和 Trace。"
+      :title="t('tasks.loadingTitle')"
+      :description="t('tasks.loadingDesc')"
     />
 
     <AppError
       v-else-if="loadError"
-      title="任务加载失败"
+      :title="t('tasks.loadError')"
       :message="loadError"
-      action-label="重试"
+      :action-label="t('common.retry')"
       @retry="load"
     />
 
     <template v-else>
       <div class="hero task-hero">
         <div>
-<h1>任务 #{{ route.params.id }}</h1>
-          <p>这里查看一次写作任务从触发到结束的全部轨迹。先判断是否稳，再决定是人工签发还是直接中止。</p>
+<h1>{{ t('taskDetail.title', { id: route.params.id }) }}</h1>
+          <p>{{ t('taskDetail.subtitle') }}</p>
         </div>
         <div class="button-row">
           <button
@@ -28,7 +28,7 @@
             data-tooltip="确认高风险内容安全后放行发布"
             @click="approve"
           >
-            {{ activeAction === 'approve' ? '处理中…' : '人工签发并发布' }}
+            {{ activeAction === 'approve' ? t('common.busy') : t('taskDetail.approve') }}
           </button>
           <button
             v-if="canAbort"
@@ -37,7 +37,7 @@
             data-tooltip="强制中止当前任务，需重新触发才能继续"
             @click="abort"
           >
-            {{ activeAction === 'abort' ? '处理中…' : '终止任务' }}
+            {{ activeAction === 'abort' ? t('common.busy') : t('taskDetail.abort') }}
           </button>
           <button
             v-if="isFailedOrCircuitOpen"
@@ -46,7 +46,7 @@
             data-tooltip="标记为已知悉，总览页将不再提示此任务"
             @click="dismiss"
           >
-            {{ activeAction === 'dismiss' ? '处理中…' : '忽略此错误' }}
+            {{ activeAction === 'dismiss' ? t('common.busy') : t('taskDetail.dismiss') }}
           </button>
           <button
             v-if="isFailedOrCircuitOpen"
@@ -55,7 +55,7 @@
             data-tooltip="用同一角色设定重新写一次"
             @click="retry"
           >
-            {{ activeAction === 'retry' ? '处理中…' : '重新触发' }}
+            {{ activeAction === 'retry' ? t('common.busy') : t('taskDetail.retry') }}
           </button>
         </div>
       </div>
@@ -73,7 +73,7 @@
 
         <div class="panel panel-pad stack task-summary-card">
           <div class="section-title">
-            任务摘要
+            {{ t('taskDetail.summary') }}
           </div>
           <div class="button-row">
             <span
@@ -98,15 +98,15 @@
           </div>
           <dl class="meta-grid">
             <div>
-              <dt>来源</dt>
+              <dt>{{ t('taskDetail.source') }}</dt>
               <dd>{{ task.trigger_source || 'manual' }}</dd>
             </div>
             <div>
-              <dt>角色设定</dt>
+              <dt>{{ t('posts.persona') }}</dt>
               <dd>{{ task.persona_id ? `#${task.persona_id}` : '-' }}</dd>
             </div>
             <div>
-              <dt>关联文章</dt>
+              <dt>{{ t('taskDetail.post') }}</dt>
               <dd>
                 <RouterLink
                   v-if="task.post_id"
@@ -155,8 +155,13 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { useToastStore } from '../stores/toast'
+import { confirmAction } from '../composables/useConfirm'
+const { t } = useI18n()
+const toast = useToastStore()
 
 import { api, unwrap } from '../api'
 import AppError from '../components/AppError.vue'
@@ -213,8 +218,17 @@ async function load() {
 }
 
 async function approve() {
+  const ok = await confirmAction({
+    title: t('signoff.approve'),
+    message: t('confirm.danger'),
+    confirmLabel: t('signoff.approve'),
+    danger: true,
+  })
+  if (!ok) return
+  return approveInner()
+}
+async function approveInner() {
   if (activeAction.value) return
-  if (!window.confirm('确认人工签发这个任务，并允许它继续发布？')) return
 
   activeAction.value = 'approve'
   message.value = ''
@@ -233,7 +247,6 @@ async function approve() {
 
 async function abort() {
   if (activeAction.value) return
-  if (!window.confirm('确认终止这个任务？终止后需要重新触发。')) return
 
   activeAction.value = 'abort'
   message.value = ''

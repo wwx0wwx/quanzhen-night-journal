@@ -52,6 +52,8 @@
         </AppErrorBoundary>
       </div>
     </main>
+    <AppToast />
+    <ConfirmDialog />
   </div>
 </template>
 
@@ -64,6 +66,8 @@ import AppErrorBoundary from './components/AppErrorBoundary.vue'
 import AppSidebar from './components/AppSidebar.vue'
 import LanguageToggle from './components/LanguageToggle.vue'
 import ThemeToggle from './components/ThemeToggle.vue'
+import AppToast from './components/AppToast.vue'
+import ConfirmDialog from './components/ConfirmDialog.vue'
 import { api, unwrap } from './api'
 
 const route = useRoute()

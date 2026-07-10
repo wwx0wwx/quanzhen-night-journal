@@ -151,6 +151,8 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { confirmAction } from '../composables/useConfirm'
+import { useToastStore } from '../stores/toast'
 
 import AppEmpty from '../components/AppEmpty.vue'
 import AppError from '../components/AppError.vue'
@@ -159,6 +161,7 @@ import { usePersonaStore } from '../stores/persona'
 import { describeError } from '../utils/errors'
 
 const { t } = useI18n()
+const toast = useToastStore()
 
 const store = usePersonaStore()
 const personas = ref([])
@@ -207,7 +210,7 @@ async function load() {
 
 async function removePersona(persona) {
   if (isDeleting.value || persona.is_default) return
-  if (!window.confirm(`确认删除角色「${persona.name}」？此操作不可撤销。`)) return
+  if (!(await confirmAction({ title: t('common.delete'), message: t('personaEdit.deleteConfirm'), confirmLabel: t('common.delete'), danger: true }))) return
 
   actionError.value = ''
   isDeleting.value = persona.id

@@ -81,6 +81,16 @@
         </div>
       </div>
 
+
+      <SignoffQueue
+        v-if="signoffTasks && signoffTasks.length"
+        :items="signoffTasks"
+        :busy-id="signoffBusyId"
+        @approve="approveSignoff"
+      />
+
+      <div v-if="costHint" class="status-banner" :class="costHintClass">{{ costHint }}</div>
+
       <div
         v-if="configWarnings.length"
         class="stack"
@@ -382,6 +392,8 @@ import AppError from '../components/AppError.vue'
 import AppLoading from '../components/AppLoading.vue'
 import CostChart from '../components/CostChart.vue'
 import StabilityGauge from '../components/StabilityGauge.vue'
+import SignoffQueue from '../components/SignoffQueue.vue'
+import { useToastStore } from '../stores/toast'
 import { describeError, describeErrorCode } from '../utils/errors'
 import {
   getPublishDecisionDescription,
@@ -396,14 +408,53 @@ import {
 } from '../utils/dashboardHealth'
 
 const { t } = useI18n()
+const toast = useToastStore()
 const data = reactive(createDashboardState())
 const health = reactive({ status: 'unknown', checks: {} })
 const isLoading = ref(true)
 const loadError = ref('')
 const hasLoadedOnce = ref(false)
 const dismissBusy = ref(false)
+const signoffBusyId = ref(null)
 const blogProbe = reactive({ busy: false, done: false, reachable: false, reason: '' })
 const healthProbe = reactive({ busy: false, error: '' })
+
+const signoffTasks = computed(() =>
+  (data.recent_tasks || []).filter((task) => task.status === 'waiting_human_signoff'),
+)
+const costHint = computed(() => {
+  const cost = Number(data.cost?.cost || 0)
+  const limit = Number(data.cost?.limit || data.cost?.budget || 0)
+  if (!limit || limit >= 99999) return ''
+  const ratio = cost / limit
+  if (ratio >= 1) return t('cost.overLimit')
+  if (ratio >= 0.8) return t('cost.nearLimit')
+  const remain = Math.max(0, Math.floor((limit - cost) / 0.05))
+  return t('cost.remaining', { n: remain })
+})
+const costHintClass = computed(() => {
+  const cost = Number(data.cost?.cost || 0)
+  const limit = Number(data.cost?.limit || data.cost?.budget || 0)
+  if (!limit || limit >= 99999) return 'info'
+  const ratio = cost / limit
+  if (ratio >= 1) return 'error'
+  if (ratio >= 0.8) return 'warning'
+  return 'info'
+})
+
+async function approveSignoff(task) {
+  if (signoffBusyId.value) return
+  signoffBusyId.value = task.id
+  try {
+    await unwrap(api.post(`/tasks/${task.id}/approve`))
+    toast.success(t('toast.approved'))
+    await load(false)
+  } catch (error) {
+    toast.error(describeError(error))
+  } finally {
+    signoffBusyId.value = null
+  }
+}
 const pendingRiskCount = computed(
   () => unackedFailed.value + unackedCircuitOpen.value + Number(data.risk_overview.waiting_human_signoff || 0),
 )

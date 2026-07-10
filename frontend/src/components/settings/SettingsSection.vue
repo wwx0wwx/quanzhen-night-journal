@@ -6,9 +6,6 @@
   >
     <summary class="settings-section-summary">
       <div>
-        <div class="settings-section-kicker">
-          Advanced Section
-        </div>
         <h2>{{ section.title }}</h2>
         <p
           v-if="section.description"
@@ -22,7 +19,7 @@
           name="actions"
           :section="section"
         />
-        <span class="tag">高级</span>
+        <span class="tag">{{ advancedTag }}</span>
       </div>
     </summary>
     <div class="settings-section-body">
@@ -45,9 +42,6 @@
   >
     <div class="settings-section-head">
       <div>
-        <div class="settings-section-kicker">
-          Config Section
-        </div>
         <h2>{{ section.title }}</h2>
         <p
           v-if="section.description"
@@ -77,7 +71,10 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import SettingField from './SettingField.vue'
+const { t } = useI18n()
+const advancedTag = t('settings.modeAll')
 
 defineProps({
   section: {

@@ -263,6 +263,11 @@ export default {
     needPersonaContent: '请先选择角色并填写内容。',
   },
   settings: {
+    testEmbed: "测试记忆检索",
+    testLlm: "测试大脑接入",
+    searchFields: "搜索设置项",
+    modeAll: "显示全部",
+    modeBasic: "简单模式",
     title: '系统设置',
     subtitle: '改站点名称、模型密钥、发文节奏等。不确定的选项可以先不动。',
     loadingTitle: '正在加载设置',
@@ -279,6 +284,14 @@ export default {
     emptyDesc: '当前前端 schema 没有定义任何可编辑字段。',
   },
   ghost: {
+    deleteExport: "确认删除这个导出包？此操作不可恢复。",
+    pruneExports: "确认清理旧的导出包？将只保留最近若干份。",
+    deleteDb: "确认删除这个数据库快照？",
+    pruneDb: "确认清理旧的数据库快照？",
+    deletedExport: "已删除导出包：{name}",
+    prunedExports: "已清理 {n} 个旧导出包",
+    deletedDb: "已删除数据库快照：{name}",
+    prunedDb: "已清理 {n} 个旧数据库快照",
     title: '备份与迁移',
     subtitle: '两件常用事：快速备份数据库，或导出完整搬家包（方便换服务器）。导入前建议先备份。',
     importNote: '导入会合并数据；同名角色和重复文章地址会保留，不会直接覆盖。',
@@ -334,6 +347,9 @@ export default {
     editTitle: '编辑文章 #{id}',
   },
   empty: {
+    tasksCta: "查看文章",
+    writeCta: "立即写一篇",
+    postsCta: "新建第一篇文章",
     defaultTitle: '暂无内容',
     defaultDesc: '这里还没有可显示的数据。',
   },
@@ -454,6 +470,257 @@ export default {
     network: '网络异常，请检查连接后重试。',
     llmGeneric: '大脑接入请求失败，请检查模型配置或稍后重试。',
   },
+  settingsFields: {
+    'site.title': {
+      label: "站点标题",
+      placeholder: "例如：Night Journal、深夜漫笔",
+      help: "显示在博客首页、浏览器标题和后台页头。",
+    },
+    'site.subtitle': {
+      label: "副标题",
+      placeholder: "例如：记录深夜、感知与自我校准的写作站点",
+      help: "用于首页说明。写一句 10 到 40 字的介绍即可。",
+    },
+    'site.domain': {
+      label: "绑定域名",
+      placeholder: "journal.example.com",
+      help: "只填域名本身，不要带 http:// 或 https:// 。",
+    },
+    'panel.title': {
+      label: "面板标题",
+      placeholder: "留空则沿用博客标题",
+      help: "显示在后台左上角。留空时会自动沿用“博客信息”中的站点标题。",
+    },
+    'panel.status_text': {
+      label: "面板状态文案",
+      placeholder: "{user} 正在守夜",
+      help0: "显示在标题下方，可直接写成一句短状态。",
+      help1: "如果想带上当前登录名，可在文案里使用 {user}，例如：{user} 正在值守。",
+    },
+    'panel.port': {
+      label: "面板端口",
+      placeholder: "5210",
+      help0: "Docker 部署下端口映射由 docker-compose.yml 控制，后台内不可直接修改。",
+      help1: "如需变更，请先调整端口映射并重启容器，避免当前后台入口失效。",
+    },
+    'llm.base_url': {
+      label: "接口地址（Base URL）",
+      placeholder: "例如：https://api.openai.com/v1 或你的中转地址",
+      help: "填写模型服务的根地址。通常以 /v1 结尾，并兼容 OpenAI Chat Completions。",
+    },
+    'llm.api_key': {
+      label: "访问密钥（API Key）",
+      placeholder: "sk-...",
+      help0: "填写模型服务分配给你的密钥。",
+      help1: "保留 ****** 表示不修改当前密钥。",
+    },
+    'llm.model_id': {
+      label: "模型名称（Model ID）",
+      placeholder: "例如：gpt-4.1-mini、qwen-max、deepseek-chat",
+      help: "填写服务商文档里要求的模型名称，用于生成正文。",
+    },
+    'llm.max_tokens': {
+      label: "正文输出上限",
+      placeholder: "2400",
+      help: "单次正文生成允许的最大输出 token。过小会导致文章被模型截断。",
+    },
+    'embedding.base_url': {
+      label: "接口地址（Base URL）",
+      placeholder: "例如：https://api.openai.com/v1 或你的向量服务地址",
+      help: "填写向量模型服务的根地址。若留空，部分流程会回退到大脑接入配置。",
+    },
+    'embedding.api_key': {
+      label: "访问密钥（API Key）",
+      placeholder: "sk-...",
+      help0: "填写向量模型服务的密钥。",
+      help1: "保留 ****** 表示不修改当前密钥。",
+    },
+    'embedding.model_id': {
+      label: "模型名称（Model ID）",
+      placeholder: "例如：text-embedding-3-large、text-embedding-v4",
+      help: "用于把记忆和文章内容转成向量，支撑检索与去重。",
+    },
+    'schedule.days_per_cycle': {
+      label: "几天一轮",
+      placeholder: "1",
+      help: "例如填 3，表示每 3 天作为一轮来安排发文。改动后会从今天重新开始计算新轮次。",
+    },
+    'schedule.posts_per_cycle': {
+      label: "一轮发几篇",
+      placeholder: "1",
+      help: "例如填 2，配合上面的 3 天一轮，就表示 3 天内发 2 篇。填 0 表示只手动发文。",
+    },
+    'schedule.publish_time': {
+      label: "默认发文时间",
+      placeholder: "21:02",
+      help0: "使用 24 小时制，例如 21:02。",
+      help1: "如果一轮内会发多篇，第一篇固定在这个时间点，剩余篇数会在当天其他时间随机发出。",
+    },
+    'schedule.sample_interval_minutes': {
+      label: "采样间隔（分钟）",
+      placeholder: "5",
+      help: "系统隔多久查看一次环境变化。数值越小，更新越频繁。",
+    },
+    'budget.daily_limit_usd': {
+      label: "每日预算上限（USD）",
+      placeholder: "99999",
+      help: "默认 99999，视为基本不限制。当天模型费用超过这个数字后，系统才会休眠。",
+    },
+    'qa.max_retries': {
+      label: "最大重试次数",
+      placeholder: "3",
+      help: "QA 未通过时允许的最大重写次数。",
+    },
+    'qa.min_length': {
+      label: "最小长度",
+      placeholder: "200",
+      help: "正文最小字符数。",
+      opt: {
+        zh: "中文",
+      },
+    },
+    'qa.max_length': {
+      label: "最大长度",
+      placeholder: "5000",
+      help: "正文最大字符数。",
+      opt: {
+        zh: "中文",
+        en: "英文",
+        any: "不限制",
+      },
+    },
+    'qa.duplicate_threshold': {
+      label: "重复阈值",
+      placeholder: "0.85",
+      help: "越高越宽松，通常保持在 0 到 1 之间。",
+      opt: {
+        zh: "中文",
+        en: "英文",
+        any: "不限制",
+        first_person: "第一人称",
+      },
+    },
+    'qa.required_language': {
+      label: "目标语言",
+      placeholder: "zh",
+      help: "生成正文若偏离目标语言，会进入高风险人工签发。",
+      opt: {
+        zh: "中文",
+        en: "英文",
+        any: "不限制",
+        first_person: "第一人称",
+      },
+    },
+    'qa.required_perspective': {
+      label: "叙事人称",
+      placeholder: "first_person",
+      help: "默认要求正文使用第一人称，出现“你/您”等第二人称会自动重写。",
+      opt: {
+        first_person: "第一人称",
+        any: "不限制",
+      },
+    },
+    'qa.forbidden_words': {
+      label: "禁用词列表",
+      placeholder: "[\"示例词\"]",
+      help: "使用 JSON 数组，命中后会进入高风险处理。",
+    },
+    'qa.template_phrases': {
+      label: "模板短语列表",
+      placeholder: "[\"首先\",\"其次\"]",
+      help: "使用 JSON 数组，用于识别模板化措辞。",
+    },
+    'budget.monthly_limit_usd': {
+      label: "每月预算上限（USD）",
+      placeholder: "99999",
+      help: "默认 99999，适合不做月度限制的场景。只有你确实需要封顶时再调小。",
+    },
+    'schedule.review_cron': {
+      label: "复查时间",
+      placeholder: "0 3 * * 0",
+      help: "控制系统定期复查与整理内容的时间。一般无需修改。",
+    },
+    'schedule.decay_cron': {
+      label: "维护时间",
+      placeholder: "0 4 * * *",
+      help: "控制记忆衰减等后台维护任务的时间。一般保持默认即可。",
+    },
+    'webhook.auth_mode': {
+      label: "Webhook 鉴权模式",
+      placeholder: "bearer",
+      help: "当前支持 bearer 或 hmac。",
+    },
+    'webhook.auth_token': {
+      label: "Webhook 密钥",
+      placeholder: "token-or-secret",
+      help: "保留 ****** 表示不修改当前密钥。",
+    },
+    'webhook.cooldown_seconds': {
+      label: "Webhook 冷却时间（秒）",
+      placeholder: "1800",
+      help: "防止外部事件短时间内重复触发。",
+    },
+    'notify.enabled': {
+      label: "启用告警通知",
+      placeholder: "https://hooks.example.com/quanzhen",
+      help: "开启后，任务失败、熔断和待人工签发会主动推送到通知 Webhook。",
+    },
+    'notify.webhook_url': {
+      label: "通知 Webhook URL",
+      placeholder: "https://hooks.example.com/quanzhen",
+      help: "接收系统告警的 Webhook 地址。",
+    },
+    'notify.bearer_token': {
+      label: "通知 Bearer Token",
+      placeholder: "token",
+      help: "可选。保留 ****** 表示不修改当前令牌。",
+    },
+    'anti_perfection.enabled': {
+      label: "启用反完美化",
+      placeholder: "3",
+      help: "开启后系统会在特定条件下降低“过度工整”的倾向。",
+    },
+    'anti_perfection.consecutive_max': {
+      label: "连续触发上限",
+      placeholder: "3",
+      help: "连续进入反完美化模式的最大次数。",
+    },
+    'anti_perfection.cooldown_hours': {
+      label: "反完美化冷却（小时）",
+      placeholder: "24",
+      help: "两次连续触发之间的冷却时间。",
+    },
+    'sensory.blind_zone_minutes': {
+      label: "感知盲区（分钟）",
+      placeholder: "30",
+      help: "低于该窗口的感知会被视为盲区。",
+    },
+    'sensory.cpu_high_threshold': {
+      label: "CPU 高负载阈值",
+      placeholder: "80",
+      help: "单位为百分比。",
+    },
+    'sensory.mem_high_threshold': {
+      label: "内存高负载阈值",
+      placeholder: "85",
+      help: "单位为百分比。",
+    },
+    'sensory.io_high_threshold': {
+      label: "IO 高负载阈值",
+      placeholder: "70",
+      help: "单位为百分比。",
+    },
+    'sensory.source_mode': {
+      label: "感知来源模式",
+      placeholder: "container",
+      help: "container=容器视角（默认）。host=宿主机视角（需挂载宿主机根目录并设置 SENSORY_HOST_ROOT，例如 /host）。host 不可用时会自动回落 container。",
+    },
+    'hugo.theme': {
+      label: "Hugo 主题",
+      placeholder: "PaperMod",
+      help: "静态博客主题名称。",
+    },
+  },
   settingsSchema: {
     sections: {
       site: { title: '博客信息', description: '填写读者在博客前台会看到的名称、简介和公开访问地址。' },
@@ -467,6 +734,72 @@ export default {
       quality: { title: '质量策略', description: '控制正文长度、重试次数与质量过滤规则。' },
       advanced: { title: '高级配置', description: '较少改动的运行控制项，默认折叠。' },
     },
+  },
+  toast: {
+    saved: "已保存",
+    deleted: "已删除",
+    triggered: "已触发写作任务",
+    copied: "已复制",
+    approved: "已签发并发布",
+    aborted: "任务已终止",
+    dismissed: "已忽略",
+    backupOk: "备份完成",
+    exportOk: "导出完成",
+    importOk: "导入完成",
+  },
+  timeline: {
+    title: "任务轨迹",
+    hint: "从排队到发布，按顺序保留每一段状态变化。",
+    current: "当前阶段",
+    done: "已完成",
+    pending: "尚未进入",
+  },
+  cost: {
+    remaining: "约还可写 {n} 篇（粗估）",
+    nearLimit: "接近今日预算上限，注意控制生成。",
+    overLimit: "已达或超过今日预算，自动写作可能暂停。",
+  },
+  decision: {
+    qa_auto_passed: {
+      label: "QA 自动通过",
+      description: "QA 已自动允许发布。",
+    },
+    human_approved: {
+      label: "人工签发",
+      description: "高风险稿件已由人工签发后允许发布。",
+    },
+    human_approved_legacy_inferred: {
+      label: "人工签发（历史推断）",
+      description: "该发布路径来自历史记录推断，建议复核一次。",
+    },
+    waiting_human_signoff: {
+      label: "待人工签发",
+      description: "高风险稿件仍在等待人工签发。",
+    },
+    blocked: {
+      label: "已阻断",
+      description: "当前任务未满足发布条件。",
+    },
+    manual_post: {
+      label: "手动文章",
+      description: "这篇文章不走自动 QA 决策链。",
+    },
+    pending: {
+      label: "待判定",
+      description: "发布结论尚未形成。",
+    },
+  },
+  cron: {
+    daily: "每天",
+    mon: "每周一",
+    tue: "每周二",
+    wed: "每周三",
+    thu: "每周四",
+    fri: "每周五",
+    sat: "每周六",
+    sun: "每周日",
+    monthly1: "每月 1 日",
+    monthly15: "每月 15 日",
   },
   theme: {
     toLight: '切换浅色',

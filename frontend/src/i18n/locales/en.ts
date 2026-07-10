@@ -264,6 +264,11 @@ export default {
     needPersonaContent: 'Pick a persona and fill in content.',
   },
   settings: {
+    testEmbed: "Test embedding",
+    testLlm: "Test LLM",
+    searchFields: "Search settings",
+    modeAll: "Show all",
+    modeBasic: "Simple mode",
     title: 'Settings',
     subtitle: 'Site name, model keys, writing cadence, and more. Leave unknown fields alone.',
     loadingTitle: 'Loading settings',
@@ -280,6 +285,14 @@ export default {
     emptyDesc: 'The frontend schema defines no editable fields.',
   },
   ghost: {
+    deleteExport: "Delete this export package? This cannot be undone.",
+    pruneExports: "Prune old export packages? Only the newest ones will be kept.",
+    deleteDb: "Delete this database snapshot?",
+    pruneDb: "Prune old database snapshots?",
+    deletedExport: "Deleted export: {name}",
+    prunedExports: "Pruned {n} old export package(s)",
+    deletedDb: "Deleted database snapshot: {name}",
+    prunedDb: "Pruned {n} old database snapshot(s)",
     title: 'Backup & migrate',
     subtitle: 'Two common actions: quick DB snapshot, or full move package for a new server. Back up before import.',
     importNote: 'Import merges data; same-named personas and duplicate slugs are kept, not overwritten.',
@@ -336,6 +349,9 @@ export default {
     editTitle: 'Edit post #{id}',
   },
   empty: {
+    tasksCta: "Go to posts",
+    writeCta: "Write a post",
+    postsCta: "Create first post",
     defaultTitle: 'Nothing here',
     defaultDesc: 'No data to show yet.',
   },
@@ -462,6 +478,240 @@ export default {
     network: 'Network error. Check connectivity and retry.',
     llmGeneric: 'LLM request failed. Check model config or try later.',
   },
+  settingsFields: {
+    'site.title': {
+      label: "Site title",
+      placeholder: "e.g. Night Journal",
+      help: "Shown on the blog home, browser title, and admin header.",
+    },
+    'site.subtitle': {
+      label: "Subtitle",
+      placeholder: "e.g. Late-night notes and slow calibration",
+      help: "Home blurb. One short sentence of 10–40 characters is enough.",
+    },
+    'site.domain': {
+      label: "Domain",
+      placeholder: "journal.example.com",
+      help: "Domain only — no http:// or https://.",
+    },
+    'panel.title': {
+      label: "Panel title",
+      placeholder: "Leave empty to use the blog title",
+      help: "Shown at the top-left of admin. Empty falls back to the blog title.",
+    },
+    'panel.status_text': {
+      label: "Panel status text",
+      placeholder: "{user} on duty",
+      help0: "Short status under the title.",
+      help1: "Use {user} to insert the signed-in username, e.g. {user} on duty.",
+    },
+    'panel.port': {
+      label: "Panel port",
+      placeholder: "5210",
+      help0: "Docker maps this port in docker-compose.yml; it cannot be changed inside admin.",
+      help1: "To change it, edit the port mapping and restart the container so you do not lose access.",
+    },
+    'llm.base_url': {
+      label: "API base URL",
+      placeholder: "e.g. https://api.openai.com/v1 or your gateway",
+      help: "Root URL of the model API. Usually ends with /v1 and is OpenAI-compatible.",
+    },
+    'llm.api_key': {
+      label: "API key",
+      placeholder: "sk-...",
+      help0: "Key issued by your model provider.",
+      help1: "Keep ****** to leave the saved key unchanged.",
+    },
+    'llm.model_id': {
+      label: "Model ID",
+      placeholder: "e.g. gpt-4.1-mini, qwen-max, deepseek-chat",
+      help: "Model name required by the provider for writing posts.",
+    },
+    'llm.max_tokens': {
+      label: "Max output tokens",
+      placeholder: "2400",
+      help: "Max tokens for one body generation. Too low may truncate the article.",
+    },
+    'embedding.base_url': {
+      label: "API base URL",
+      placeholder: "e.g. https://api.openai.com/v1 or your vector API",
+      help: "Root URL of the embedding service. Empty may fall back to the LLM config.",
+    },
+    'embedding.api_key': {
+      label: "API key",
+      placeholder: "sk-...",
+      help0: "Key for the embedding service.",
+      help1: "Keep ****** to leave the saved key unchanged.",
+    },
+    'embedding.model_id': {
+      label: "Model ID",
+      placeholder: "e.g. text-embedding-3-large",
+      help: "Turns memory and posts into vectors for search and dedupe.",
+    },
+    'schedule.days_per_cycle': {
+      label: "Days per cycle",
+      placeholder: "1",
+      help: "e.g. 3 means a 3-day publishing cycle. Changes restart the cycle from today.",
+    },
+    'schedule.posts_per_cycle': {
+      label: "Posts per cycle",
+      placeholder: "1",
+      help: "e.g. 2 with a 3-day cycle means 2 posts every 3 days. 0 means manual only.",
+    },
+    'schedule.publish_time': {
+      label: "Default publish time",
+      placeholder: "21:02",
+      help0: "24-hour clock, e.g. 21:02.",
+      help1: "If a cycle has multiple posts, the first is fixed at this time; others are random that day.",
+    },
+    'schedule.sample_interval_minutes': {
+      label: "Sample interval (minutes)",
+      placeholder: "5",
+      help: "How often the system samples environment metrics. Smaller = more frequent.",
+    },
+    'budget.daily_limit_usd': {
+      label: "Daily budget (USD)",
+      placeholder: "99999",
+      help: "Default 99999 means effectively unlimited. The system hibernates after this spend.",
+    },
+    'qa.max_retries': {
+      label: "Max QA retries",
+      placeholder: "3",
+      help: "How many rewrites are allowed when QA fails.",
+    },
+    'qa.min_length': {
+      label: "Min length",
+      placeholder: "200",
+      help: "Minimum body character count.",
+    },
+    'qa.max_length': {
+      label: "Max length",
+      placeholder: "5000",
+      help: "Maximum body character count.",
+    },
+    'qa.duplicate_threshold': {
+      label: "Duplicate threshold",
+      placeholder: "0.85",
+      help: "Higher is looser; usually between 0 and 1.",
+    },
+    'qa.required_language': {
+      label: "Target language",
+      placeholder: "zh",
+      help: "If the body drifts from this language, it goes to high-risk human sign-off.",
+      opt: {
+        zh: "Chinese",
+        en: "English",
+        any: "Any",
+      },
+    },
+    'qa.required_perspective': {
+      label: "Narrative person",
+      placeholder: "first_person",
+      help: "Default requires first person; second-person “you” triggers rewrite.",
+      opt: {
+        first_person: "First person",
+        any: "Any",
+      },
+    },
+    'qa.forbidden_words': {
+      label: "Forbidden words",
+      placeholder: "[\"example\"]",
+      help: "JSON array. Hits go to high-risk handling.",
+    },
+    'qa.template_phrases': {
+      label: "Template phrases",
+      placeholder: "[\"first\",\"second\"]",
+      help: "JSON array used to detect templated wording.",
+    },
+    'budget.monthly_limit_usd': {
+      label: "Monthly budget (USD)",
+      placeholder: "99999",
+      help: "Default 99999. Lower only if you need a hard monthly cap.",
+    },
+    'schedule.review_cron': {
+      label: "Review schedule",
+      placeholder: "0 3 * * 0",
+      help: "When periodic content review runs. Usually leave default.",
+    },
+    'schedule.decay_cron': {
+      label: "Maintenance schedule",
+      placeholder: "0 4 * * *",
+      help: "When memory decay and maintenance jobs run. Default is fine.",
+    },
+    'webhook.auth_mode': {
+      label: "Webhook auth mode",
+      placeholder: "bearer",
+      help: "Supports bearer or hmac.",
+    },
+    'webhook.auth_token': {
+      label: "Webhook secret",
+      placeholder: "token-or-secret",
+      help: "Keep ****** to leave the saved secret unchanged.",
+    },
+    'webhook.cooldown_seconds': {
+      label: "Webhook cooldown (seconds)",
+      placeholder: "1800",
+      help: "Prevents burst retriggers from external events.",
+    },
+    'notify.enabled': {
+      label: "Enable alerts",
+      help: "Push failures, circuit-open, and sign-off needs to the notify webhook.",
+    },
+    'notify.webhook_url': {
+      label: "Notify webhook URL",
+      placeholder: "https://hooks.example.com/quanzhen",
+      help: "Webhook that receives system alerts.",
+    },
+    'notify.bearer_token': {
+      label: "Notify bearer token",
+      placeholder: "token",
+      help: "Optional. Keep ****** to leave the token unchanged.",
+    },
+    'anti_perfection.enabled': {
+      label: "Anti-perfection mode",
+      help: "When on, the system may reduce overly polished output in some cases.",
+    },
+    'anti_perfection.consecutive_max': {
+      label: "Consecutive trigger limit",
+      placeholder: "3",
+      help: "Max consecutive anti-perfection activations.",
+    },
+    'anti_perfection.cooldown_hours': {
+      label: "Anti-perfection cooldown (hours)",
+      placeholder: "24",
+      help: "Cooldown between consecutive activations.",
+    },
+    'sensory.blind_zone_minutes': {
+      label: "Sensory blind zone (minutes)",
+      placeholder: "30",
+      help: "Shorter windows than this count as a blind zone.",
+    },
+    'sensory.cpu_high_threshold': {
+      label: "CPU high threshold",
+      placeholder: "80",
+      help: "Percentage.",
+    },
+    'sensory.mem_high_threshold': {
+      label: "Memory high threshold",
+      placeholder: "85",
+      help: "Percentage.",
+    },
+    'sensory.io_high_threshold': {
+      label: "I/O high threshold",
+      placeholder: "70",
+      help: "Percentage.",
+    },
+    'sensory.source_mode': {
+      label: "Sensory source mode",
+      placeholder: "container",
+      help: "container = container view (default). host = host metrics (needs host root mount and SENSORY_HOST_ROOT, e.g. /host). Falls back to container if host is unavailable.",
+    },
+    'hugo.theme': {
+      label: "Hugo theme",
+      placeholder: "PaperMod",
+      help: "Static blog theme name.",
+    },
+  },
   settingsSchema: {
     sections: {
       site: {
@@ -493,6 +743,72 @@ export default {
         description: 'Less common controls; usually leave folded.',
       },
     },
+  },
+  toast: {
+    saved: "Saved",
+    deleted: "Deleted",
+    triggered: "Writing task started",
+    copied: "Copied",
+    approved: "Approved and published",
+    aborted: "Task aborted",
+    dismissed: "Dismissed",
+    backupOk: "Backup complete",
+    exportOk: "Export complete",
+    importOk: "Import complete",
+  },
+  timeline: {
+    title: "Task timeline",
+    hint: "Status steps from queue to publish.",
+    current: "Current",
+    done: "Done",
+    pending: "Not yet",
+  },
+  cost: {
+    remaining: "~{n} more posts today (rough)",
+    nearLimit: "Near daily budget — go easy on generation.",
+    overLimit: "At or over daily budget — auto-write may pause.",
+  },
+  decision: {
+    qa_auto_passed: {
+      label: "QA auto-passed",
+      description: "QA allowed publish automatically.",
+    },
+    human_approved: {
+      label: "Human approved",
+      description: "High-risk draft was approved by a human.",
+    },
+    human_approved_legacy_inferred: {
+      label: "Human approved (legacy)",
+      description: "Path inferred from history — consider a quick re-check.",
+    },
+    waiting_human_signoff: {
+      label: "Awaiting sign-off",
+      description: "Still waiting for human approval.",
+    },
+    blocked: {
+      label: "Blocked",
+      description: "Publish conditions not met.",
+    },
+    manual_post: {
+      label: "Manual post",
+      description: "This post skips the auto QA decision chain.",
+    },
+    pending: {
+      label: "Pending",
+      description: "No publish decision yet.",
+    },
+  },
+  cron: {
+    daily: "Every day",
+    mon: "Every Monday",
+    tue: "Every Tuesday",
+    wed: "Every Wednesday",
+    thu: "Every Thursday",
+    fri: "Every Friday",
+    sat: "Every Saturday",
+    sun: "Every Sunday",
+    monthly1: "Monthly on the 1st",
+    monthly15: "Monthly on the 15th",
   },
   theme: {
     toLight: 'Switch to light',

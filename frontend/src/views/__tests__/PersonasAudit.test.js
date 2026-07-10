@@ -1,3 +1,4 @@
+vi.mock('../../composables/useConfirm', () => ({ confirmAction: vi.fn(async () => true) }))
 import { mount, RouterLinkStub } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 

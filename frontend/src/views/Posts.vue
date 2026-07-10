@@ -131,23 +131,23 @@
     <AppLoading
       v-if="isLoading"
       :title="t('posts.loadingTitle')"
-      description="正在汇总文章、审核状态和关联任务信息。"
+      :description="t('posts.loadingDesc')"
     />
 
     <AppError
       v-else-if="loadError"
       :title="t('posts.loadError')"
       :message="loadError"
-      action-label="重试"
+      :action-label="t('common.retry')"
       @retry="load"
     />
 
     <AppEmpty
       v-else-if="!posts.length"
-      title="还没有文章"
-      description="可以先手动新建一篇，或直接在这里触发一次自动生成。"
-      :action-label="t('posts.newPost') "
-      @action="router.push('/admin/posts/new')"
+      :title="t('posts.emptyTitle')"
+      :description="t('posts.emptyDesc')"
+      :action-label="t('empty.writeCta')"
+      @action="triggerTask"
     />
 
     <template v-else>
@@ -365,6 +365,8 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useToastStore } from '../stores/toast'
+import { confirmAction } from '../composables/useConfirm'
 import { useRouter } from 'vue-router'
 
 import { api, unwrap } from '../api'
@@ -381,6 +383,7 @@ import { POST_STATUS_OPTIONS, getReviewReasonLabel, getStatusClass, getStatusLab
 import { formatDateTimeWithRelative, formatDurationMs } from '../utils/time'
 
 const { t } = useI18n()
+const toast = useToastStore()
 
 const router = useRouter()
 const posts = ref([])

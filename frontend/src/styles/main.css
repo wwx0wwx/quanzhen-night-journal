@@ -1358,3 +1358,9 @@ pre {
     justify-items: start;
   }
 }
+
+.btn.active {
+  border-color: var(--accent-strong);
+  background: var(--accent-glow);
+  color: var(--accent-strong);
+}

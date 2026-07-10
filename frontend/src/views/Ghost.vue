@@ -358,6 +358,8 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useToastStore } from '../stores/toast'
+import { confirmAction } from '../composables/useConfirm'
 
 import { api, unwrap } from '../api'
 import AppEmpty from '../components/AppEmpty.vue'
@@ -366,6 +368,7 @@ import AppLoading from '../components/AppLoading.vue'
 import { describeError } from '../utils/errors'
 
 const { t } = useI18n()
+const toast = useToastStore()
 
 const MAX_GHOST_FILE_BYTES = 20 * 1024 * 1024
 const selectedFile = ref(null)
@@ -480,7 +483,7 @@ async function backupDatabase() {
 
 async function deleteExport(filename) {
   if (deletingExportFilename.value) return
-  if (!window.confirm(`确认删除导出包 ${filename} 吗？删除后将不能再下载。`)) return
+  if (!(await confirmAction({ title: t('common.delete'), message: t('ghost.deleteExport'), confirmLabel: t('common.delete'), danger: true }))) return
 
   actionError.value = ''
   actionSuccess.value = ''
@@ -490,7 +493,7 @@ async function deleteExport(filename) {
     if (preview.value?.filename === filename) {
       preview.value = null
     }
-    actionSuccess.value = `已删除导出包：${filename}`
+    actionSuccess.value = t('ghost.deletedExport', { name: filename })
     await loadExports()
   } catch (error) {
     actionError.value = describeError(error, '删除备份包失败，请稍后重试。')
@@ -501,14 +504,14 @@ async function deleteExport(filename) {
 
 async function pruneExports() {
   if (isPruningExports.value) return
-  if (!window.confirm(`确认只保留最近 ${exportKeep.value} 个 .ghost 包，并删除更早的导出吗？`)) return
+  if (!(await confirmAction({ title: t('common.confirm'), message: t('ghost.pruneExports'), confirmLabel: t('common.confirm'), danger: true }))) return
 
   actionError.value = ''
   actionSuccess.value = ''
   isPruningExports.value = true
   try {
     const result = await unwrap(api.post('/ghost/prune', null, { params: { keep: exportKeep.value } }))
-    actionSuccess.value = `已清理 ${result.deleted} 个旧导出包。`
+    actionSuccess.value = t('ghost.prunedExports', { n: result.deleted })
     await loadExports()
   } catch (error) {
     actionError.value = describeError(error, '清理旧备份失败，请稍后重试。')
@@ -519,7 +522,7 @@ async function pruneExports() {
 
 async function deleteDatabaseBackup(filename) {
   if (deletingDatabaseBackupFilename.value) return
-  if (!window.confirm(`确认删除数据库快照 ${filename} 吗？删除后将不能再下载。`)) return
+  if (!(await confirmAction({ title: t('common.delete'), message: t('ghost.deleteDb'), confirmLabel: t('common.delete'), danger: true }))) return
 
   actionError.value = ''
   actionSuccess.value = ''
@@ -537,7 +540,7 @@ async function deleteDatabaseBackup(filename) {
 
 async function pruneDatabaseBackups() {
   if (isPruningDatabaseBackups.value) return
-  if (!window.confirm(`确认只保留最近 ${databaseBackupKeep.value} 个数据库快照，并删除更早的快照吗？`)) return
+  if (!(await confirmAction({ title: t('common.confirm'), message: t('ghost.pruneDb'), confirmLabel: t('common.confirm'), danger: true }))) return
 
   actionError.value = ''
   actionSuccess.value = ''
@@ -546,7 +549,7 @@ async function pruneDatabaseBackups() {
     const result = await unwrap(
       api.post('/ghost/database-backups/prune', null, { params: { keep: databaseBackupKeep.value } }),
     )
-    actionSuccess.value = `已清理 ${result.deleted} 个旧数据库快照。`
+    actionSuccess.value = t('ghost.prunedDb', { n: result.deleted })
     await loadExports()
   } catch (error) {
     actionError.value = describeError(error, '清理旧数据库快照失败，请稍后重试。')
@@ -575,7 +578,7 @@ async function previewGhost() {
 
 async function importGhost() {
   if (!selectedFile.value || isImporting.value) return
-  if (!window.confirm('确认导入这个完整搬家包吗？同名角色和重复文章地址会被保留、不会覆盖。')) return
+  if (!(await confirmAction({ title: t('common.import'), message: t('ghost.importConfirm'), confirmLabel: t('common.import'), danger: true }))) return
 
   actionError.value = ''
   actionSuccess.value = ''

@@ -63,7 +63,7 @@
           @change="onScheduleFreqChange"
         >
           <option
-            v-for="opt in FREQ_LABELS"
+            v-for="opt in freqLabels"
             :key="opt.value"
             :value="opt.value"
           >{{ opt.label }}</option>
@@ -151,12 +151,14 @@
 </template>
 
 <script setup>
-import { useI18n } from 'vue-i18n'
-const { t } = useI18n()
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { api, unwrap } from '../../api'
-import { buildCron, cronToHuman, FREQ_LABELS, parseCron } from '../../utils/cronHuman'
+import { buildCron, cronToHuman, getFreqLabels, parseCron } from '../../utils/cronHuman'
+
+const { t } = useI18n()
+const freqLabels = computed(() => getFreqLabels())
 
 const props = defineProps({
   field: {

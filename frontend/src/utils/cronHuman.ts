@@ -1,6 +1,25 @@
-const DAY_NAMES = ['日', '一', '二', '三', '四', '五', '六']
+import { tGlobal } from '../i18n'
 
-const FREQ_LABELS = [
+const DOW_MAP = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 }
+const DOW_REVERSE = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+
+export function getFreqLabels() {
+  return [
+    { value: 'daily', label: tGlobal('cron.daily') },
+    { value: 'mon', label: tGlobal('cron.mon') },
+    { value: 'tue', label: tGlobal('cron.tue') },
+    { value: 'wed', label: tGlobal('cron.wed') },
+    { value: 'thu', label: tGlobal('cron.thu') },
+    { value: 'fri', label: tGlobal('cron.fri') },
+    { value: 'sat', label: tGlobal('cron.sat') },
+    { value: 'sun', label: tGlobal('cron.sun') },
+    { value: 'monthly-1', label: tGlobal('cron.monthly1') },
+    { value: 'monthly-15', label: tGlobal('cron.monthly15') },
+  ]
+}
+
+/** @deprecated use getFreqLabels() for i18n-aware labels */
+export const FREQ_LABELS = [
   { value: 'daily', label: '每天' },
   { value: 'mon', label: '每周一' },
   { value: 'tue', label: '每周二' },
@@ -13,12 +32,7 @@ const FREQ_LABELS = [
   { value: 'monthly-15', label: '每月 15 日' },
 ]
 
-export { FREQ_LABELS }
-
-const DOW_MAP = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 }
-const DOW_REVERSE = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
-
-export function parseCron(expr) {
+export function parseCron(expr: string | null | undefined) {
   if (!expr || typeof expr !== 'string') return null
   const parts = expr.trim().split(/\s+/)
   if (parts.length !== 5) return null
@@ -45,13 +59,13 @@ export function parseCron(expr) {
   return null
 }
 
-export function buildCron(frequency, time) {
+export function buildCron(frequency: string, time: string) {
   const [hStr, mStr] = (time || '00:00').split(':')
   const h = Number(hStr) || 0
   const m = Number(mStr) || 0
 
   if (frequency === 'daily') return `${m} ${h} * * *`
-  if (frequency in DOW_MAP) return `${m} ${h} * * ${DOW_MAP[frequency]}`
+  if (frequency in DOW_MAP) return `${m} ${h} * * ${DOW_MAP[frequency as keyof typeof DOW_MAP]}`
   if (frequency.startsWith('monthly-')) {
     const dom = frequency.split('-')[1]
     return `${m} ${h} ${dom} * *`
@@ -59,83 +73,29 @@ export function buildCron(frequency, time) {
   return `${m} ${h} * * *`
 }
 
-export function cronToHuman(expr) {
+function formatTime(minute: string, hour: string) {
+  const h = Number(hour)
+  const m = Number(minute)
+  if (!Number.isInteger(h) || !Number.isInteger(m)) return `${hour}:${minute}`
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+export function cronToHuman(expr: string | null | undefined) {
   if (!expr || typeof expr !== 'string') return ''
   const parts = expr.trim().split(/\s+/)
   if (parts.length !== 5) return expr
 
   const [minute, hour, dom, , dow] = parts
   const time = formatTime(minute, hour)
+  const parsed = parseCron(expr)
+  if (parsed) {
+    const label = getFreqLabels().find((item) => item.value === parsed.frequency)?.label || parsed.frequency
+    return `${label} ${parsed.time}`
+  }
 
   if (minute === '*' && hour === '*' && dom === '*' && dow === '*') {
-    return '每分钟'
+    return expr
   }
 
-  if (hour === '*' && dom === '*' && dow === '*') {
-    if (minute.startsWith('*/')) {
-      const n = Number(minute.slice(2))
-      return n > 0 ? `每 ${n} 分钟` : expr
-    }
-    return `每小时的第 ${minute} 分钟`
-  }
-
-  if (dom === '*' && dow === '*') {
-    if (hour.startsWith('*/')) {
-      const n = Number(hour.slice(2))
-      return n > 0 ? `每 ${n} 小时` : expr
-    }
-    return time ? `每天 ${time}` : expr
-  }
-
-  if (dom === '*' && dow !== '*') {
-    const dayDesc = parseDow(dow)
-    if (!dayDesc) return time ? `Cron: ${expr}` : expr
-    return time ? `${dayDesc} ${time}` : `${dayDesc}`
-  }
-
-  if (dow === '*' && dom !== '*') {
-    const d = Number(dom)
-    if (Number.isInteger(d) && d >= 1 && d <= 31) {
-      return time ? `每月 ${d} 日 ${time}` : `每月 ${d} 日`
-    }
-  }
-
-  return expr
-}
-
-function formatTime(minute, hour) {
-  const m = Number(minute)
-  const h = Number(hour)
-  if (!Number.isInteger(m) || !Number.isInteger(h)) return ''
-  if (m < 0 || m > 59 || h < 0 || h > 23) return ''
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-}
-
-function parseDow(dow) {
-  if (dow === '*') return null
-
-  if (/^\d$/.test(dow)) {
-    const d = Number(dow)
-    if (d >= 0 && d <= 6) return `每周${DAY_NAMES[d]}`
-    return null
-  }
-
-  if (/^\d-\d$/.test(dow)) {
-    const [a, b] = dow.split('-').map(Number)
-    if (a >= 0 && a <= 6 && b >= 0 && b <= 6) {
-      if (a === 1 && b === 5) return '工作日（周一至周五）'
-      return `每周${DAY_NAMES[a]}至周${DAY_NAMES[b]}`
-    }
-    return null
-  }
-
-  if (/^[\d,]+$/.test(dow)) {
-    const days = dow.split(',').map(Number)
-    if (days.every((d) => d >= 0 && d <= 6)) {
-      return days.map((d) => `周${DAY_NAMES[d]}`).join('、')
-    }
-    return null
-  }
-
-  return null
+  return `${time} (${expr})`
 }

@@ -16,6 +16,15 @@ vi.mock('../../api', () => ({
   unwrap,
 }))
 
+
+async function enableAllSettings(wrapper) {
+  const btn = wrapper.findAll('button').find((b) => /显示全部|Show all/.test(b.text()))
+  if (btn) {
+    await btn.trigger('click')
+    await flushPromises()
+  }
+}
+
 const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 function makeConfig() {
@@ -94,7 +103,12 @@ describe('Settings view', () => {
 
     const wrapper = mount(Settings)
     await flushPromises()
+    await enableAllSettings(wrapper)
+    const allModeBtn = wrapper.findAll('button').find((b) => b.text().includes('显示全部') || b.text().includes('Show all'))
+    if (allModeBtn) await allModeBtn.trigger('click')
+    await flushPromises()
 
+    await enableAllSettings(wrapper)
     expect(wrapper.text()).toContain('现在能不能发文')
     expect(wrapper.text()).toContain('发文能力受限')
     expect(wrapper.text()).toContain('博客信息')
@@ -144,6 +158,7 @@ describe('Settings view', () => {
 
     const wrapper = mount(Settings)
     await flushPromises()
+    await enableAllSettings(wrapper)
 
     const llmButton = wrapper.findAll('button').find((button) => button.text().includes('测试大脑接入'))
     const embeddingButton = wrapper.findAll('button').find((button) => button.text().includes('测试记忆检索'))
