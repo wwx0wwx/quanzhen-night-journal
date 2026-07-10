@@ -1,36 +1,39 @@
-const CODE_MESSAGES: Record<number, string> = {
-  1001: '请求参数无效，请检查后重试。',
-  1002: '请求的内容不存在或已被删除。',
-  2001: '登录已失效或账号密码错误，请重新确认。',
-  3001: '系统尚未初始化，请先完成初始化配置。',
-  3003: '系统已经初始化，不能重复执行初始化。',
-  4001: '发布失败，请检查发布链路后重试。',
+import { tGlobal } from '../i18n'
+
+const CODE_KEYS: Record<number, string> = {
+  1001: 'errors.codes.1001',
+  1002: 'errors.codes.1002',
+  2001: 'errors.codes.2001',
+  3001: 'errors.codes.3001',
+  3003: 'errors.codes.3003',
+  4001: 'errors.codes.4001',
 }
 
-const RAW_MESSAGE_MAP: Record<string, string> = {
-  not_authenticated: '登录已失效，请重新登录。',
-  token_invalid: '登录状态无效，请重新登录。',
-  user_not_found: '当前用户不存在，请重新登录。',
-  request_failed: '请求失败，请稍后重试。',
-  llm_not_configured: '大脑接入尚未配置完整，请先检查设置页。',
-  no_active_persona: '当前没有启用中的人格设定，请先检查人格设置。',
+const RAW_MESSAGE_KEYS: Record<string, string> = {
+  not_authenticated: 'errors.raw.not_authenticated',
+  token_invalid: 'errors.raw.token_invalid',
+  user_not_found: 'errors.raw.user_not_found',
+  request_failed: 'errors.raw.request_failed',
+  llm_not_configured: 'errors.raw.llm_not_configured',
+  no_active_persona: 'errors.raw.no_active_persona',
 }
 
-const ERROR_CODE_LABELS: Record<string, string> = {
-  container_restart: '系统重启导致任务中断',
-  invalid_model_output: '模型输出格式异常',
-  qa_circuit_open: '质量检查多次未通过',
-  budget_exhausted: '当日/当月预算已用完',
-  publish_failed: '文章发布到博客失败',
-  task_aborted: '任务已被手动终止',
-  llm_request_failed: '大脑接入请求失败',
-  llm_timeout: '大脑接入请求超时',
-  embedding_failed: '记忆检索请求失败',
+const ERROR_CODE_KEYS: Record<string, string> = {
+  container_restart: 'errors.labels.container_restart',
+  invalid_model_output: 'errors.labels.invalid_model_output',
+  qa_circuit_open: 'errors.labels.qa_circuit_open',
+  budget_exhausted: 'errors.labels.budget_exhausted',
+  publish_failed: 'errors.labels.publish_failed',
+  task_aborted: 'errors.labels.task_aborted',
+  llm_request_failed: 'errors.labels.llm_request_failed',
+  llm_timeout: 'errors.labels.llm_timeout',
+  embedding_failed: 'errors.labels.embedding_failed',
 }
 
 export function describeErrorCode(code?: string | null): string {
   if (!code) return ''
-  return ERROR_CODE_LABELS[code] || code
+  const key = ERROR_CODE_KEYS[code]
+  return key ? tGlobal(key) : code
 }
 
 type ErrorLike = {
@@ -40,34 +43,35 @@ type ErrorLike = {
   responseData?: { code?: number; message?: string }
 }
 
-export function describeError(error: unknown, fallback = '请求失败，请稍后重试。'): string {
+export function describeError(error: unknown, fallback?: string): string {
+  const fb = fallback || tGlobal('errors.fallback')
   const err = (error || {}) as ErrorLike
   const code = err?.response?.data?.code ?? err?.responseData?.code ?? err?.code
-  if (typeof code === 'number' && CODE_MESSAGES[code]) {
-    return CODE_MESSAGES[code]
+  if (typeof code === 'number' && CODE_KEYS[code]) {
+    return tGlobal(CODE_KEYS[code])
   }
 
   const message = err?.response?.data?.message || err?.responseData?.message || err?.message || ''
   if (!message) {
-    return fallback
+    return fb
   }
-  if (RAW_MESSAGE_MAP[message]) {
-    return RAW_MESSAGE_MAP[message]
+  if (RAW_MESSAGE_KEYS[message]) {
+    return tGlobal(RAW_MESSAGE_KEYS[message])
   }
   if (/database is locked/i.test(message)) {
-    return '系统正在处理其他写入，请稍后重试。'
+    return tGlobal('errors.dbLocked')
   }
   if (/timeout/i.test(message)) {
-    return '请求超时，请稍后重试。'
+    return tGlobal('errors.timeout')
   }
   if (/network error/i.test(message)) {
-    return '网络异常，请检查连接后重试。'
+    return tGlobal('errors.network')
   }
   if (/^llm_/.test(message)) {
-    return '大脑接入请求失败，请检查模型配置或稍后重试。'
+    return tGlobal('errors.llmGeneric')
   }
   if (/[一-龥]/.test(message)) {
     return message
   }
-  return fallback
+  return fb
 }

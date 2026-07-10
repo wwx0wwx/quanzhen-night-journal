@@ -2,8 +2,8 @@
   <section class="stack">
     <div class="hero sensory-hero">
       <div>
-<h1>环境状态</h1>
-        <p>机器运行状态会翻译成文风线索（一般不用改）。默认看容器内指标。</p>
+<h1>{{ t('sensory.title') }}</h1>
+        <p>{{ t('sensory.subtitle') }}</p>
       </div>
       <div class="button-row">
         <button
@@ -90,7 +90,7 @@
       <div class="grid two sensory-grid">
         <div class="panel panel-pad stack">
           <div class="section-title">
-            文风翻译
+            {{ t('sensory.translation') }}
           </div>
           <div class="status-banner info">
             {{ current?.translated_text || '当前采样没有触发明显环境意象。' }}
@@ -175,7 +175,7 @@
               </div>
             </div>
             <div class="muted">
-              {{ item.translated_text || '无明显文风翻译。' }}
+              {{ item.translated_text || t('sensory.noTranslation') }}
             </div>
           </div>
         </div>
@@ -186,6 +186,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { api, unwrap } from '../api'
 import AppEmpty from '../components/AppEmpty.vue'
@@ -194,6 +195,8 @@ import AppLoading from '../components/AppLoading.vue'
 import SensoryChart from '../components/SensoryChart.vue'
 import { describeError } from '../utils/errors'
 import { formatDateTimeWithRelative } from '../utils/time'
+
+const { t } = useI18n()
 
 const current = ref(null)
 const history = ref([])

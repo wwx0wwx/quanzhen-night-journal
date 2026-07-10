@@ -1,9 +1,10 @@
 <template>
   <section class="panel panel-pad setup-stage">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><LanguageToggle /></div>
     <div class="hero setup-hero">
       <div>
-<h1>第一次使用</h1>
-        <p>三步完成：设密码 → 站点名称 → AI 模型（可稍后设置）。</p>
+<h1>{{ t('setup.title') }}</h1>
+        <p>{{ t('setup.subtitle') }}</p>
       </div>
       <div class="setup-hero-note">
         <span class="tag">仅需三步</span>
@@ -162,12 +163,16 @@
 
 <script setup>
 import { reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import LanguageToggle from '../components/LanguageToggle.vue'
 import { useRouter } from 'vue-router'
 
 import { api, unwrap } from '../api'
 import { useAuthStore } from '../stores/auth'
 import { getPostLoginRoute } from '../utils/adminNavigation'
 import { describeError } from '../utils/errors'
+
+const { t } = useI18n()
 
 const auth = useAuthStore()
 const router = useRouter()

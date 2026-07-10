@@ -16,7 +16,7 @@
             type="checkbox"
             @change="updateBoolean"
           >
-          <span>{{ Boolean(modelValue) ? '已启用' : '未启用' }}</span>
+          <span>{{ Boolean(modelValue) ? t('common.enabled') : t('common.disabled') }}</span>
         </label>
       </div>
     </template>
@@ -47,7 +47,7 @@
           :disabled="isDisabled || isRevealing"
           @click="toggleSecret"
         >
-          {{ isRevealing ? '加载中...' : showSecret ? '隐藏' : '显示' }}
+          {{ isRevealing ? t('common.loading') : showSecret ? t('common.hide') : t('common.show') }}
         </button>
       </div>
     </template>
@@ -151,6 +151,8 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 import { computed, ref, watch } from 'vue'
 
 import { api, unwrap } from '../../api'

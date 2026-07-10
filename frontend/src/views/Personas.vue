@@ -2,13 +2,13 @@
   <section class="stack">
     <AppLoading
       v-if="isLoading"
-      title="正在加载角色设定"
-      description="正在读取角色列表。"
+      :title="t('personas.loadingTitle')"
+      :description="t('personas.loadingDesc')"
     />
 
     <AppError
       v-else-if="loadError"
-      title="角色列表加载失败"
+      :title="t('personas.loadError')"
       :message="loadError"
       action-label="重新加载"
       @retry="load"
@@ -17,9 +17,9 @@
     <template v-else>
       <div class="hero personas-hero">
         <div>
-<h1>角色设定</h1>
+<h1>{{ t('personas.title') }}</h1>
           <p>
-            决定文章用什么口吻写。可以建多个角色，并指定一个默认。
+            {{ t('personas.subtitle') }}
           </p>
         </div>
         <div class="personas-hero-actions">
@@ -30,7 +30,7 @@
             class="btn primary"
             to="/admin/personas/new"
           >
-            新建角色
+            {{ t('personas.newPersona') }}
           </RouterLink>
         </div>
       </div>
@@ -150,12 +150,15 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import AppEmpty from '../components/AppEmpty.vue'
 import AppError from '../components/AppError.vue'
 import AppLoading from '../components/AppLoading.vue'
 import { usePersonaStore } from '../stores/persona'
 import { describeError } from '../utils/errors'
+
+const { t } = useI18n()
 
 const store = usePersonaStore()
 const personas = ref([])

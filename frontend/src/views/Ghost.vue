@@ -2,12 +2,12 @@
   <section class="stack">
     <div class="hero ghost-hero">
       <div>
-        <h1>备份与迁移</h1>
-        <p>两件常用事：快速备份数据库，或导出完整搬家包（方便换服务器）。导入前建议先备份。</p>
+        <h1>{{ t('ghost.title') }}</h1>
+        <p>{{ t('ghost.subtitle') }}</p>
       </div>
       <div class="ghost-hero-actions">
         <div class="muted">
-          导入会合并数据；同名角色和重复文章地址会保留，不会直接覆盖。
+          {{ t('ghost.importNote') }}
         </div>
         <button
           class="btn primary"
@@ -15,7 +15,7 @@
           :disabled="isExporting"
           @click="exportGhost"
         >
-          {{ isExporting ? '导出中…' : '导出完整搬家包' }}
+          {{ isExporting ? t('ghost.exporting') : t('ghost.exportFull') }}
         </button>
         <button
           class="btn ghost"
@@ -48,13 +48,13 @@
 
     <AppLoading
       v-if="isLoading"
-      title="正在加载备份记录"
+      :title="t('ghost.loadingTitle')"
       description="正在读取导出历史和当前迁移状态。"
     />
 
     <AppError
       v-else-if="loadError"
-      title="备份页加载失败"
+      :title="t('ghost.loadError')"
       :message="loadError"
       action-label="重试"
       @retry="loadExports"
@@ -357,12 +357,15 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { api, unwrap } from '../api'
 import AppEmpty from '../components/AppEmpty.vue'
 import AppError from '../components/AppError.vue'
 import AppLoading from '../components/AppLoading.vue'
 import { describeError } from '../utils/errors'
+
+const { t } = useI18n()
 
 const MAX_GHOST_FILE_BYTES = 20 * 1024 * 1024
 const selectedFile = ref(null)

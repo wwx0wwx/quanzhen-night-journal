@@ -2,7 +2,7 @@
   <button
     class="theme-toggle"
     type="button"
-    :title="isDark ? '切换浅色' : '切换深色'"
+    :title="isDark ? t('theme.toLight') : t('theme.toDark')"
     @click="toggle"
   >
     <svg
@@ -88,8 +88,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const STORAGE_KEY = 'qz-admin-v2-theme'
+const { t } = useI18n()
 
 const isDark = ref(false)
 

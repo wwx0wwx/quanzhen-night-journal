@@ -30,7 +30,7 @@ describe('dashboardHealth', () => {
       unackedCircuitOpen: 0,
       unackedFailed: 0,
     })
-    expect(state.label).toContain('降级')
+    expect(state.label).toContain('关注')
     const step = deriveNextStep({
       systemInitialized: true,
       llmReady: true,

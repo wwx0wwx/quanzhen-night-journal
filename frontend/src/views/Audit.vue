@@ -2,13 +2,13 @@
   <section class="stack">
     <AppLoading
       v-if="isLoading"
-      title="正在加载运行日志"
+      :title="t('audit.loadingTitle')"
       description="正在获取审计日志与筛选结果。"
     />
 
     <AppError
       v-else-if="loadError"
-      title="运行日志加载失败"
+      :title="t('audit.loadError')"
       :message="loadError"
       action-label="重新加载"
       @retry="load"
@@ -17,8 +17,8 @@
     <template v-else>
       <div class="hero audit-hero">
         <div>
-<h1>运行日志</h1>
-          <p>登录、发文、报错等操作记录。平时很少需要看；出问题时再来查。</p>
+<h1>{{ t('audit.title') }}</h1>
+          <p>{{ t('audit.subtitle') }}</p>
         </div>
         <div class="button-row">
           <button
@@ -26,7 +26,7 @@
             :disabled="isLoading"
             @click="exportCurrent"
           >
-            导出当前结果
+            {{ t('audit.exportCurrent') }}
           </button>
         </div>
       </div>
@@ -159,12 +159,15 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { api, unwrap } from '../api'
 import AppEmpty from '../components/AppEmpty.vue'
 import AppError from '../components/AppError.vue'
 import AppLoading from '../components/AppLoading.vue'
 import { describeError } from '../utils/errors'
+
+const { t } = useI18n()
 
 const filters = reactive({
   severity: '',

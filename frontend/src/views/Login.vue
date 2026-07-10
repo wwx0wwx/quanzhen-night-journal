@@ -1,9 +1,14 @@
 <template>
   <section class="login-card panel panel-pad">
+    <div class="login-lang">
+      <LanguageToggle />
+    </div>
     <div class="login-head">
-      <div class="login-logo">夜</div>
-      <h1>登录管理后台</h1>
-      <p>登录后可以写文章、查看发文任务、修改设置和备份。</p>
+      <div class="login-logo">
+        {{ locale === 'en' ? 'Q' : '夜' }}
+      </div>
+      <h1>{{ t('login.title') }}</h1>
+      <p>{{ t('login.subtitle') }}</p>
     </div>
 
     <form
@@ -11,21 +16,21 @@
       @submit.prevent="submit"
     >
       <label class="field">
-        <span>用户名</span>
+        <span>{{ t('login.username') }}</span>
         <input
           v-model="form.username"
           autocomplete="username"
-          placeholder="默认是 admin"
+          :placeholder="t('login.usernamePlaceholder')"
         >
       </label>
 
       <label class="field">
-        <span>密码</span>
+        <span>{{ t('login.password') }}</span>
         <input
           v-model="form.password"
           type="password"
           autocomplete="current-password"
-          placeholder="请输入管理员密码"
+          :placeholder="t('login.passwordPlaceholder')"
         >
       </label>
 
@@ -35,7 +40,7 @@
         :disabled="isSubmitting"
         style="width: 100%"
       >
-        {{ isSubmitting ? '登录中…' : '登录' }}
+        {{ isSubmitting ? t('login.submitting') : t('login.submit') }}
       </button>
 
       <div
@@ -49,19 +54,26 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
+import LanguageToggle from '../components/LanguageToggle.vue'
 import { useAuthStore } from '../stores/auth'
 import { getPostLoginRoute } from '../utils/adminNavigation'
 import { describeError } from '../utils/errors'
 
 const auth = useAuthStore()
 const router = useRouter()
+const { t, locale } = useI18n()
 const isSubmitting = ref(false)
 const isError = ref(false)
-const message = ref('默认账号是 admin。请使用你自己设置的密码登录。')
+const message = ref(t('login.hint'))
 const form = reactive({ username: 'admin', password: '' })
+
+watch(locale, () => {
+  if (!isError.value) message.value = t('login.hint')
+})
 
 async function submit() {
   if (isSubmitting.value) return
@@ -73,7 +85,7 @@ async function submit() {
     router.push(getPostLoginRoute(Boolean(data.system_initialized ?? data.is_initialized)))
   } catch (error) {
     isError.value = true
-    message.value = describeError(error, '登录失败，请检查账号密码或稍后重试。')
+    message.value = describeError(error, t('login.hint'))
   } finally {
     isSubmitting.value = false
   }
@@ -84,11 +96,19 @@ async function submit() {
 .login-card {
   width: min(420px, 100%);
   margin: 0 auto;
+  position: relative;
+}
+
+.login-lang {
+  position: absolute;
+  top: 16px;
+  right: 16px;
 }
 
 .login-head {
   text-align: center;
   margin-bottom: 22px;
+  padding-top: 8px;
 }
 
 .login-logo {

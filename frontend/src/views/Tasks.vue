@@ -2,8 +2,8 @@
   <section class="stack">
     <div class="hero tasks-hero">
       <div>
-<h1>发文任务</h1>
-        <p>查看每一次自动写作的进度：排队、写作、检查、发布。有问题也可以在这里重试。</p>
+<h1>{{ t('tasks.title') }}</h1>
+        <p>{{ t('tasks.subtitle') }}</p>
       </div>
       <div class="button-row">
         <button
@@ -12,7 +12,7 @@
           :disabled="isLoading"
           @click="load"
         >
-          刷新列表
+          {{ t('tasks.refreshList') }}
         </button>
       </div>
     </div>
@@ -22,12 +22,12 @@
       @submit.prevent="load"
     >
       <label class="field">
-        <span>状态筛选</span>
+        <span>{{ t('tasks.statusFilter') }}</span>
         <select
           v-model="status"
           :disabled="isLoading"
         >
-          <option value="">全部</option>
+          <option value="">{{ t('common.all') }}</option>
           <option
             v-for="item in TASK_STATUS_OPTIONS"
             :key="item"
@@ -43,7 +43,7 @@
           type="submit"
           :disabled="isLoading"
         >
-          应用筛选
+          {{ t('common.apply') }}
         </button>
         <button
           class="btn ghost"
@@ -51,15 +51,15 @@
           :disabled="isLoading"
           @click="resetFilters"
         >
-          清空
+          {{ t('common.clear') }}
         </button>
       </div>
     </form>
 
     <AppLoading
       v-if="isLoading"
-      title="正在加载任务"
-      description="正在加载任务记录。"
+      :title="t('tasks.loadingTitle')"
+      :description="t('tasks.loadingDesc')"
     />
 
     <AppError
@@ -72,14 +72,14 @@
 
     <AppEmpty
       v-else-if="!tasks.length"
-      title="还没有任务记录"
-      description="点「立即写一篇」或等定时任务跑起来后，这里会有记录。"
+      :title="t('tasks.emptyTitle')"
+      :description="t('tasks.emptyDesc')"
     />
 
     <template v-else>
       <div class="panel panel-pad tasks-ledger-meta">
         <div>
-<strong>共 {{ total }} 条任务 · 第 {{ page }} / {{ totalPages }} 页</strong>
+<strong>{{ t('tasks.pageMeta', { total, page, totalPages }) }}</strong>
         </div>
       </div>
 
@@ -131,7 +131,7 @@
                   <dd>{{ task.trigger_source || '-' }}</dd>
                 </div>
                 <div>
-                  <dt>角色</dt>
+                  <dt>{{ t('tasks.persona') }}</dt>
                   <dd>{{ task.persona_id ? `#${task.persona_id}` : '-' }}</dd>
                 </div>
                 <div>
@@ -217,6 +217,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { api, unwrap } from '../api'
 import AppEmpty from '../components/AppEmpty.vue'
@@ -226,6 +227,8 @@ import { describeError, describeErrorCode } from '../utils/errors'
 import { getPublishDecisionClass, getPublishDecisionLabel } from '../utils/publishDecision'
 import { getStatusClass, getStatusDescription, getStatusLabel } from '../utils/statusMeta'
 import { formatDateTimeWithRelative, formatDurationMs } from '../utils/time'
+
+const { t } = useI18n()
 
 const TASK_STATUS_OPTIONS = [
   'queued',

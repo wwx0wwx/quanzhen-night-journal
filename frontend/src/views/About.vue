@@ -2,23 +2,23 @@
   <section class="stack">
     <div class="hero about-hero">
       <div>
-<h1>使用说明</h1>
-        <p>3 分钟上手：看懂后台在干什么，以及日常只要做哪几步。</p>
+<h1>{{ t('about.title') }}</h1>
+        <p>{{ t('about.subtitle') }}</p>
       </div>
     </div>
 
     <div class="panel panel-pad about-section">
-      <h2>这是什么</h2>
+      <h2>{{ t('about.what') }}</h2>
       <p>
-        全真夜记是一套「自动写博客」的后台：你设定角色口吻和长期记忆，系统会按节奏写文章、做质量检查，再发布成博客。
+        {{ t('about.whatP1') }}
       </p>
       <p>
-        你平时主要关心三件事：现在能不能发文、有没有待确认的稿、设置和备份有没有问题。
+        {{ t('about.whatP2') }}
       </p>
     </div>
 
     <div class="panel panel-pad about-section">
-      <h2>3 分钟上手</h2>
+      <h2>{{ t('about.quickStart') }}</h2>
       <div class="about-steps">
         <div class="about-step">
           <div class="about-step-num">
@@ -127,6 +127,9 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+
 const version = __APP_VERSION__
 
 const faqs = [

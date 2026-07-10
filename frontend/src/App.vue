@@ -10,10 +10,13 @@
           type="button"
           @click="drawerOpen = !drawerOpen"
         >
-          {{ drawerOpen ? '关闭菜单' : '菜单' }}
+          {{ drawerOpen ? t('common.closeMenu') : t('common.menu') }}
         </button>
         <strong>{{ mobileTitle }}</strong>
-        <ThemeToggle />
+        <div class="mobile-topbar-actions">
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
       </header>
 
       <div
@@ -33,7 +36,7 @@
       class="view-shell"
       :class="{ solo: !showChrome }"
     >
-<div :class="showChrome ? 'view-content' : ''">
+      <div :class="showChrome ? 'view-content' : ''">
         <AppErrorBoundary>
           <router-view v-slot="{ Component }">
             <Transition
@@ -42,7 +45,7 @@
             >
               <component
                 :is="Component"
-                :key="$route.path"
+                :key="$route.path + ':' + locale"
               />
             </Transition>
           </router-view>
@@ -55,36 +58,39 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 import AppErrorBoundary from './components/AppErrorBoundary.vue'
 import AppSidebar from './components/AppSidebar.vue'
+import LanguageToggle from './components/LanguageToggle.vue'
 import ThemeToggle from './components/ThemeToggle.vue'
 import { api, unwrap } from './api'
 
 const route = useRoute()
+const { t, locale } = useI18n()
 const drawerOpen = ref(false)
 const pendingCount = ref(0)
 
 const showChrome = computed(() => !['/admin/login', '/admin/setup'].includes(route.path))
 
 const mobileTitle = computed(() => {
-  const map = {
-    '/admin/': '首页',
-    '/admin/posts': '文章',
-    '/admin/tasks': '发文任务',
-    '/admin/personas': '角色设定',
-    '/admin/memories': '长期记忆',
-    '/admin/settings': '系统设置',
-    '/admin/ghost': '备份与迁移',
-    '/admin/audit': '运行日志',
-    '/admin/sensory': '环境状态',
-    '/admin/folder-monitors': '目录监控',
-    '/admin/about': '使用说明',
+  const map = [
+    ['/admin/', 'nav.home'],
+    ['/admin/posts', 'nav.posts'],
+    ['/admin/tasks', 'nav.tasks'],
+    ['/admin/personas', 'nav.personas'],
+    ['/admin/memories', 'nav.memories'],
+    ['/admin/settings', 'nav.settings'],
+    ['/admin/ghost', 'nav.backup'],
+    ['/admin/audit', 'nav.audit'],
+    ['/admin/sensory', 'nav.sensory'],
+    ['/admin/folder-monitors', 'nav.folderMonitors'],
+    ['/admin/about', 'nav.about'],
+  ]
+  for (const [path, key] of map) {
+    if (route.path === path || (path !== '/admin/' && route.path.startsWith(path))) return t(key)
   }
-  for (const [path, title] of Object.entries(map)) {
-    if (route.path === path || (path !== '/admin/' && route.path.startsWith(path))) return title
-  }
-  return '管理后台'
+  return t('common.admin')
 })
 
 watch(
@@ -128,5 +134,11 @@ watch(() => route.path, refreshPending)
 .page-leave-to {
   opacity: 0;
   transform: translateY(-3px);
+}
+
+.mobile-topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>

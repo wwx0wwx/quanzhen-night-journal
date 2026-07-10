@@ -17,9 +17,9 @@
     <template v-else>
       <div class="hero memories-hero">
         <div>
-<h1>长期记忆</h1>
+<h1>{{ t('memories.title') }}</h1>
           <p>
-            给写作角色准备的背景与素材。写文章时系统会参考这些内容。
+            {{ t('memories.subtitle') }}
           </p>
         </div>
         <div class="memories-hero-aside">
@@ -437,6 +437,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { api, unwrap } from '../api'
 import AppError from '../components/AppError.vue'
@@ -453,6 +454,8 @@ import {
   parseTags as parseMemoryTags,
   reviewStatusLabel as formatReviewStatus,
 } from '../utils/memoryForm'
+
+const { t } = useI18n()
 
 const levelOptions = MEMORY_LEVEL_OPTIONS
 

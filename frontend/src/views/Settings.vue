@@ -2,13 +2,13 @@
   <section class="stack">
     <AppLoading
       v-if="isLoading"
-      title="正在加载设置"
-      description="正在获取系统配置，请稍候。"
+      :title="t('settings.loadingTitle')"
+      :description="t('settings.loadingDesc')"
     />
 
     <AppError
       v-else-if="loadError"
-      title="设置页加载失败"
+      :title="t('settings.loadError')"
       :message="loadError"
       action-label="重新加载"
       @retry="load"
@@ -17,8 +17,8 @@
     <template v-else>
       <div class="hero settings-hero">
         <div>
-<h1>系统设置</h1>
-          <p>改站点名称、模型密钥、发文节奏等。不确定的选项可以先不动。</p>
+<h1>{{ t('settings.title') }}</h1>
+          <p>{{ t('settings.subtitle') }}</p>
         </div>
         <div class="settings-toolbar">
           <div class="button-row">
@@ -27,7 +27,7 @@
               :disabled="isBusy || !isDirty"
               @click="save"
             >
-              {{ isSaving ? '保存中...' : '保存配置' }}
+              {{ isSaving ? t('settings.saving') : t('settings.save') }}
             </button>
           </div>
           <div class="button-row">
@@ -35,7 +35,7 @@
               class="tag"
               :class="isDirty ? 'tag-warning' : 'tag-success'"
             >
-              {{ isDirty ? '有未保存修改' : '当前已同步' }}
+              {{ isDirty ? t('settings.dirty') : t('settings.synced') }}
             </span>
           </div>
         </div>
@@ -73,23 +73,23 @@
           v-if="isDirty"
           class="status-banner warning"
         >
-          当前表单有未保存修改，离开页面前请确认是否需要保存。
+          {{ t('settings.dirtyBanner') }}
         </div>
       </div>
 
       <AppEmpty
-        v-if="!settingsSections.length"
-        title="没有可展示的配置"
-        description="当前前端 schema 没有定义任何可编辑字段。"
+        v-if="!translatedSections.length"
+        :title="t('settings.emptyTitle')"
+        :description="t('settings.emptyDesc')"
       />
 
       <template v-else>
         <div class="panel panel-pad config-summary-card settings-summary-card">
           <div class="settings-section-head">
             <div>
-              <h2>现在能不能发文</h2>
+              <h2>{{ t('settings.canPublish') }}</h2>
               <p class="muted">
-                根据当前填写内容判断系统是否准备好自动写作。
+                {{ t('settings.canPublishHint') }}
               </p>
             </div>
             <div class="button-row">
@@ -141,7 +141,7 @@
         </div>
 
         <SettingsSection
-          v-for="section in settingsSections"
+          v-for="section in translatedSections"
           :key="section.id"
           :disabled="isBusy"
           :section="section"
@@ -176,6 +176,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { onBeforeRouteLeave } from 'vue-router'
 
 import { api, unwrap } from '../api'
@@ -185,6 +186,21 @@ import AppLoading from '../components/AppLoading.vue'
 import SettingsSection from '../components/settings/SettingsSection.vue'
 import { settingFields, settingsSections } from '../config/settingsSchema'
 import { describeError } from '../utils/errors'
+
+const { t } = useI18n()
+const translatedSections = computed(() =>
+  settingsSections.map((section) => {
+    const base = `settingsSchema.sections.${section.id}`
+    const titleKey = `${base}.title`
+    const descKey = `${base}.description`
+    return {
+      ...section,
+      title: t(titleKey) !== titleKey ? t(titleKey) : section.title,
+      description: t(descKey) !== descKey ? t(descKey) : section.description,
+    }
+  }),
+)
+
 
 const formValues = reactive({})
 const fieldMeta = reactive({})

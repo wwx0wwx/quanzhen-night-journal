@@ -2,18 +2,18 @@
   <section class="stack">
     <div class="hero posts-hero">
       <div>
-<h1>文章</h1>
-        <p>查看、编辑和发布博客文章。也可以让系统自动写一篇。</p>
+<h1>{{ t('posts.title') }}</h1>
+        <p>{{ t('posts.subtitle') }}</p>
       </div>
       <div class="button-row posts-hero-actions">
         <button
           class="btn primary"
           type="button"
           :disabled="actionBusy"
-          data-tooltip="让系统自动写一篇文章"
+          :data-tooltip="t('posts.tooltipWrite')"
           @click="triggerTask"
         >
-          {{ isTriggering ? '写作中…' : '立即写一篇' }}
+          {{ isTriggering ? t('posts.writing') : t('posts.writeNow') }}
         </button>
         <button
           class="btn ghost"
@@ -21,32 +21,32 @@
           :disabled="isLoading"
           @click="load"
         >
-          刷新列表
+          {{ t('posts.refreshList') }}
         </button>
         <RouterLink
           class="btn primary"
           to="/admin/posts/new"
-          data-tooltip="手动新建一篇文章草稿"
+          :data-tooltip="t('posts.tooltipNew')"
         >
-          新建文章
+          {{ t('posts.newPost') }}
         </RouterLink>
         <button
           class="btn ghost"
           type="button"
           :disabled="actionBusy"
-          data-tooltip="暂停定时自动写作"
+          :data-tooltip="t('posts.tooltipHibernate')"
           @click="hibernate"
         >
-          {{ isHibernating ? '处理中…' : '暂停自动写作' }}
+          {{ isHibernating ? t('common.busy') : t('posts.hibernate') }}
         </button>
         <button
           class="btn ghost"
           type="button"
           :disabled="actionBusy"
-          data-tooltip="恢复定时自动写作"
+          :data-tooltip="t('posts.tooltipWake')"
           @click="wakeUp"
         >
-          {{ isWakingUp ? '处理中…' : '恢复自动写作' }}
+          {{ isWakingUp ? t('common.busy') : t('posts.wake') }}
         </button>
       </div>
     </div>
@@ -56,12 +56,12 @@
       @submit.prevent="load"
     >
       <label class="field">
-        <span>状态筛选</span>
+        <span>{{ t('posts.statusFilter') }}</span>
         <select
           v-model="status"
           :disabled="isLoading"
         >
-          <option value="">全部</option>
+          <option value="">{{ t('common.all') }}</option>
           <option
             v-for="item in POST_STATUS_OPTIONS"
             :key="item"
@@ -72,23 +72,23 @@
         </select>
       </label>
       <label class="field">
-        <span>搜索</span>
+        <span>{{ t('posts.search') }}</span>
         <input
           v-model.trim="keyword"
           :disabled="isLoading"
-          placeholder="标题、slug、摘要"
+          :placeholder="t('posts.searchPlaceholder')"
         >
       </label>
       <label class="field">
-        <span>排序</span>
+        <span>{{ t('posts.sort') }}</span>
         <select
           v-model="sort"
           :disabled="isLoading"
         >
-          <option value="updated_desc">最近更新优先</option>
-          <option value="published_desc">最近发布优先</option>
-          <option value="created_desc">最近创建优先</option>
-          <option value="updated_asc">最早更新优先</option>
+          <option value="updated_desc">{{ t('posts.sortUpdatedDesc') }}</option>
+          <option value="published_desc">{{ t('posts.sortPublishedDesc') }}</option>
+          <option value="created_desc">{{ t('posts.sortCreatedDesc') }}</option>
+          <option value="updated_asc">{{ t('posts.sortUpdatedAsc') }}</option>
         </select>
       </label>
       <div class="button-row toolbar-actions">
@@ -97,7 +97,7 @@
           type="submit"
           :disabled="isLoading"
         >
-          应用筛选
+          {{ t('common.apply') }}
         </button>
         <button
           class="btn ghost"
@@ -105,7 +105,7 @@
           :disabled="isLoading"
           @click="resetFilters"
         >
-          清空
+          {{ t('common.clear') }}
         </button>
       </div>
     </form>
@@ -130,13 +130,13 @@
 
     <AppLoading
       v-if="isLoading"
-      title="正在加载文章"
+      :title="t('posts.loadingTitle')"
       description="正在汇总文章、审核状态和关联任务信息。"
     />
 
     <AppError
       v-else-if="loadError"
-      title="文章列表加载失败"
+      :title="t('posts.loadError')"
       :message="loadError"
       action-label="重试"
       @retry="load"
@@ -146,7 +146,7 @@
       v-else-if="!posts.length"
       title="还没有文章"
       description="可以先手动新建一篇，或直接在这里触发一次自动生成。"
-      action-label="新建文章"
+      :action-label="t('posts.newPost') "
       @action="router.push('/admin/posts/new')"
     />
 
@@ -230,7 +230,7 @@
                   <dd>{{ post.task_id ? '自动生成' : '手动创建' }}</dd>
                 </div>
                 <div>
-                  <dt>角色设定</dt>
+                  <dt>{{ t('posts.persona') }}</dt>
                   <dd>{{ personaName(post.persona_id) }}</dd>
                 </div>
                 <div>
@@ -364,6 +364,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { api, unwrap } from '../api'
@@ -378,6 +379,8 @@ import {
 } from '../utils/publishDecision'
 import { POST_STATUS_OPTIONS, getReviewReasonLabel, getStatusClass, getStatusLabel } from '../utils/statusMeta'
 import { formatDateTimeWithRelative, formatDurationMs } from '../utils/time'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const posts = ref([])

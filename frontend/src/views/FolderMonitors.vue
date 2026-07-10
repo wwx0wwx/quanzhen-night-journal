@@ -2,8 +2,8 @@
   <section class="stack">
     <div class="hero folder-hero">
       <div>
-<h1>目录监控</h1>
-        <p>监视某个文件夹的变化并触发动作（高级功能，一般不用改）。</p>
+<h1>{{ t('folderMonitors.title') }}</h1>
+        <p>{{ t('folderMonitors.subtitle') }}</p>
       </div>
       <div class="button-row">
         <button
@@ -161,6 +161,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { api, unwrap } from '../api'
 import AppEmpty from '../components/AppEmpty.vue'
@@ -168,6 +169,8 @@ import AppError from '../components/AppError.vue'
 import AppLoading from '../components/AppLoading.vue'
 import { describeError } from '../utils/errors'
 import { formatDateTimeWithRelative } from '../utils/time'
+
+const { t } = useI18n()
 
 const monitors = ref([])
 const isLoading = ref(true)

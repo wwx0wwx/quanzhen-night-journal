@@ -8,7 +8,7 @@
         class="sidebar-logo"
         aria-hidden="true"
       >
-        夜
+        {{ locale === 'en' ? 'Q' : '夜' }}
       </div>
       <div class="sidebar-brand-text">
         <div class="sidebar-brand-title">
@@ -22,7 +22,7 @@
 
     <nav
       class="sidebar-nav"
-      aria-label="后台导航"
+      :aria-label="t('nav.aria')"
     >
       <RouterLink
         to="/admin/"
@@ -31,7 +31,7 @@
         @click="emitClose"
       >
         <span class="sidebar-link-icon">⌂</span>
-        <span>首页</span>
+        <span>{{ t('nav.home') }}</span>
         <span
           v-if="pendingCount > 0"
           class="sidebar-badge"
@@ -39,7 +39,7 @@
       </RouterLink>
 
       <div class="sidebar-section-label">
-        写作
+        {{ t('nav.writing') }}
       </div>
       <RouterLink
         to="/admin/posts"
@@ -47,8 +47,8 @@
         :class="{ active: isActive('/admin/posts') }"
         @click="emitClose"
       >
-        <span class="sidebar-link-icon">文</span>
-        <span>文章</span>
+        <span class="sidebar-link-icon">{{ locale === 'en' ? 'P' : '文' }}</span>
+        <span>{{ t('nav.posts') }}</span>
       </RouterLink>
       <RouterLink
         to="/admin/tasks"
@@ -56,12 +56,12 @@
         :class="{ active: isActive('/admin/tasks') }"
         @click="emitClose"
       >
-        <span class="sidebar-link-icon">任</span>
-        <span>发文任务</span>
+        <span class="sidebar-link-icon">{{ locale === 'en' ? 'T' : '任' }}</span>
+        <span>{{ t('nav.tasks') }}</span>
       </RouterLink>
 
       <div class="sidebar-section-label">
-        角色与记忆
+        {{ t('nav.personaMemory') }}
       </div>
       <RouterLink
         to="/admin/personas"
@@ -69,8 +69,8 @@
         :class="{ active: isActive('/admin/personas') }"
         @click="emitClose"
       >
-        <span class="sidebar-link-icon">角</span>
-        <span>角色设定</span>
+        <span class="sidebar-link-icon">{{ locale === 'en' ? 'R' : '角' }}</span>
+        <span>{{ t('nav.personas') }}</span>
       </RouterLink>
       <RouterLink
         to="/admin/memories"
@@ -78,12 +78,12 @@
         :class="{ active: isActive('/admin/memories') }"
         @click="emitClose"
       >
-        <span class="sidebar-link-icon">记</span>
-        <span>长期记忆</span>
+        <span class="sidebar-link-icon">{{ locale === 'en' ? 'M' : '记' }}</span>
+        <span>{{ t('nav.memories') }}</span>
       </RouterLink>
 
       <div class="sidebar-section-label">
-        运行与安全
+        {{ t('nav.runSafe') }}
       </div>
       <RouterLink
         to="/admin/settings"
@@ -91,8 +91,8 @@
         :class="{ active: isActive('/admin/settings') }"
         @click="emitClose"
       >
-        <span class="sidebar-link-icon">设</span>
-        <span>系统设置</span>
+        <span class="sidebar-link-icon">{{ locale === 'en' ? 'S' : '设' }}</span>
+        <span>{{ t('nav.settings') }}</span>
       </RouterLink>
       <RouterLink
         to="/admin/ghost"
@@ -100,8 +100,8 @@
         :class="{ active: isActive('/admin/ghost') }"
         @click="emitClose"
       >
-        <span class="sidebar-link-icon">备</span>
-        <span>备份与迁移</span>
+        <span class="sidebar-link-icon">{{ locale === 'en' ? 'B' : '备' }}</span>
+        <span>{{ t('nav.backup') }}</span>
       </RouterLink>
       <RouterLink
         to="/admin/audit"
@@ -109,12 +109,12 @@
         :class="{ active: isActive('/admin/audit') }"
         @click="emitClose"
       >
-        <span class="sidebar-link-icon">志</span>
-        <span>运行日志</span>
+        <span class="sidebar-link-icon">{{ locale === 'en' ? 'L' : '志' }}</span>
+        <span>{{ t('nav.audit') }}</span>
       </RouterLink>
 
       <div class="sidebar-section-label">
-        更多工具
+        {{ t('nav.moreTools') }}
       </div>
       <RouterLink
         to="/admin/sensory"
@@ -122,8 +122,8 @@
         :class="{ active: isActive('/admin/sensory') }"
         @click="emitClose"
       >
-        <span class="sidebar-link-icon">感</span>
-        <span>环境状态</span>
+        <span class="sidebar-link-icon">{{ locale === 'en' ? 'E' : '感' }}</span>
+        <span>{{ t('nav.sensory') }}</span>
       </RouterLink>
       <RouterLink
         to="/admin/folder-monitors"
@@ -131,8 +131,8 @@
         :class="{ active: isActive('/admin/folder-monitors') }"
         @click="emitClose"
       >
-        <span class="sidebar-link-icon">监</span>
-        <span>目录监控</span>
+        <span class="sidebar-link-icon">{{ locale === 'en' ? 'F' : '监' }}</span>
+        <span>{{ t('nav.folderMonitors') }}</span>
       </RouterLink>
       <RouterLink
         to="/admin/about"
@@ -141,7 +141,7 @@
         @click="emitClose"
       >
         <span class="sidebar-link-icon">?</span>
-        <span>使用说明</span>
+        <span>{{ t('nav.about') }}</span>
       </RouterLink>
     </nav>
 
@@ -155,11 +155,12 @@
             {{ auth.username || 'admin' }}
           </div>
           <div class="sidebar-user-role">
-            管理员
+            {{ t('common.administrator') }}
           </div>
         </div>
       </div>
       <div class="sidebar-actions">
+        <LanguageToggle />
         <ThemeToggle />
         <button
           class="btn ghost btn-small"
@@ -167,7 +168,7 @@
           style="flex: 1"
           @click="handleLogout"
         >
-          退出登录
+          {{ t('common.logout') }}
         </button>
       </div>
     </div>
@@ -175,11 +176,13 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 import { api, unwrap } from '../api'
 import { useAuthStore } from '../stores/auth'
+import LanguageToggle from './LanguageToggle.vue'
 import ThemeToggle from './ThemeToggle.vue'
 
 defineProps({
@@ -192,14 +195,20 @@ const emit = defineEmits(['close'])
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
+const { t, locale } = useI18n()
 const branding = reactive({
   siteTitle: '',
   panelTitle: '',
-  panelStatusText: '{user} 已登录',
+  panelStatusText: '',
 })
 
-const brandTitle = computed(() => branding.panelTitle.trim() || branding.siteTitle.trim() || '全真夜记')
-const brandStatus = computed(() => renderStatusText(branding.panelStatusText))
+const brandTitle = computed(
+  () => branding.panelTitle.trim() || branding.siteTitle.trim() || t('common.appName'),
+)
+const brandStatus = computed(() => {
+  const template = branding.panelStatusText.trim() || t('common.loggedInAs', { user: '{user}' })
+  return renderStatusText(template)
+})
 const avatarLetter = computed(() => String(auth.username || 'A').slice(0, 1).toUpperCase())
 
 function isActive(path, exact = false) {
@@ -208,7 +217,7 @@ function isActive(path, exact = false) {
 }
 
 function renderStatusText(template) {
-  const value = String(template || '').trim() || '{user} 已登录'
+  const value = String(template || '').trim() || t('common.loggedInAs', { user: '{user}' })
   return value.includes('{user}') ? value.replaceAll('{user}', auth.username || 'admin') : value
 }
 
@@ -260,3 +269,12 @@ onBeforeUnmount(() => {
   window.removeEventListener('admin-config-updated', handleConfigUpdated)
 })
 </script>
+
+<style scoped>
+.sidebar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+</style>
