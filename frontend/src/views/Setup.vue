@@ -2,11 +2,8 @@
   <section class="panel panel-pad setup-stage">
     <div class="hero setup-hero">
       <div>
-        <div class="hero-kicker">
-          First Night Sequence
-        </div>
-        <h1>初始化引导</h1>
-        <p>把安全、站点和大脑接入按顺序安放好，这个控制台才会真正醒来。初始化不是填表，更像把夜间守则一项项点亮。</p>
+<h1>第一次使用</h1>
+        <p>三步完成：设密码 → 站点名称 → AI 模型（可稍后设置）。</p>
       </div>
       <div class="setup-hero-note">
         <span class="tag">仅需三步</span>
@@ -97,7 +94,7 @@
             03
           </div>
           <div>
-            <h2>大脑接入</h2>
+            <h2>AI 模型</h2>
             <p class="muted">
               首次可先接好 LLM，用来完成正文生成。记忆检索相关配置保持原样提交，后续可在配置页再补。
             </p>
@@ -175,7 +172,7 @@ import { describeError } from '../utils/errors'
 const auth = useAuthStore()
 const router = useRouter()
 const isSubmitting = ref(false)
-const message = ref('初始化完成后会自动生成默认人格。')
+const message = ref('完成后会自动生成默认写作角色。')
 const form = reactive({
   new_password: '',
   site_title: '',

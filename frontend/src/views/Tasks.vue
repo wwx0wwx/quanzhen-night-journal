@@ -2,11 +2,8 @@
   <section class="stack">
     <div class="hero tasks-hero">
       <div>
-        <div class="hero-kicker">
-          Execution Ledger
-        </div>
-        <h1>任务列表</h1>
-        <p>所有写作任务的运行记录。从这里查看执行状态、排查异常、进入单条任务的 Trace 详情。</p>
+<h1>发文任务</h1>
+        <p>查看每一次自动写作的进度：排队、写作、检查、发布。有问题也可以在这里重试。</p>
       </div>
       <div class="button-row">
         <button
@@ -62,12 +59,12 @@
     <AppLoading
       v-if="isLoading"
       title="正在加载任务"
-      description="正在汇总任务执行记录与关联文章状态。"
+      description="正在加载任务记录。"
     />
 
     <AppError
       v-else-if="loadError"
-      title="任务列表加载失败"
+      title="发文任务加载失败"
       :message="loadError"
       action-label="重试"
       @retry="load"
@@ -76,16 +73,13 @@
     <AppEmpty
       v-else-if="!tasks.length"
       title="还没有任务记录"
-      description="触发一次自动创作或手动创建文章后，任务会出现在这里。"
+      description="点「立即写一篇」或等定时任务跑起来后，这里会有记录。"
     />
 
     <template v-else>
       <div class="panel panel-pad tasks-ledger-meta">
         <div>
-          <div class="hero-kicker">
-            Ledger Count
-          </div>
-          <strong>共 {{ total }} 条，第 {{ page }} / {{ totalPages }} 页，当前显示 {{ tasks.length }} 条。</strong>
+<strong>共 {{ total }} 条任务 · 第 {{ page }} / {{ totalPages }} 页</strong>
         </div>
       </div>
 
@@ -137,7 +131,7 @@
                   <dd>{{ task.trigger_source || '-' }}</dd>
                 </div>
                 <div>
-                  <dt>人格</dt>
+                  <dt>角色</dt>
                   <dd>{{ task.persona_id ? `#${task.persona_id}` : '-' }}</dd>
                 </div>
                 <div>
@@ -289,7 +283,7 @@ async function load() {
     tasks.value = data.items || []
     total.value = data.total || 0
   } catch (error) {
-    loadError.value = describeError(error, '加载任务列表失败，请稍后重试。')
+    loadError.value = describeError(error, '加载发文任务失败，请稍后重试。')
   } finally {
     isLoading.value = false
   }

@@ -2,13 +2,13 @@
   <section class="stack">
     <AppLoading
       v-if="isLoading"
-      title="正在加载人格设定"
-      description="正在读取人格详情、禁忌与感知词典。"
+      title="正在加载角色设定"
+      description="正在读取角色详情。"
     />
 
     <AppError
       v-else-if="loadError"
-      title="人格设定加载失败"
+      title="角色设定加载失败"
       :message="loadError"
       action-label="重试"
       @retry="load"
@@ -17,10 +17,7 @@
     <template v-else>
       <div class="hero persona-edit-hero">
         <div>
-          <div class="hero-kicker">
-            Persona Drafting Room
-          </div>
-          <h1>{{ isNew ? '新建人格设定' : `编辑人格设定 #${route.params.id}` }}</h1>
+<h1>{{ isNew ? '新建角色设定' : `编辑角色设定 #${route.params.id}` }}</h1>
           <p>先定她是谁、如何看待王爷与江湖、说话时如何藏锋，再补禁忌与感知词典。默认不需要直接写 JSON。</p>
         </div>
         <div class="persona-edit-hero-side">
@@ -44,7 +41,7 @@
               </div>
             </div>
             <div class="muted">
-              {{ form.description || '先用一句话定义这张人格卡的核心气质。' }}
+              {{ form.description || '用一句话说明这个角色的气质。' }}
             </div>
           </div>
           <div class="button-row">
@@ -69,7 +66,7 @@
               :disabled="isDeleting || isActivating"
               @click="removePersona"
             >
-              {{ isDeleting ? '删除中...' : '删除人格设定' }}
+              {{ isDeleting ? '删除中...' : '删除角色设定' }}
             </button>
           </div>
         </div>
@@ -87,10 +84,7 @@
         <div class="panel panel-pad stack persona-story-panel">
           <div class="persona-panel-head">
             <div>
-              <div class="hero-kicker">
-                Core Profile
-              </div>
-              <div class="section-title">
+<div class="section-title">
                 人物叙述
               </div>
             </div>
@@ -109,7 +103,7 @@
             <span>描述</span>
             <textarea
               v-model="form.description"
-              placeholder="一句话写清这张人格卡的核心气质、关系张力和适用场景。"
+              placeholder="一句话写清这个角色的气质和适用场景。"
             />
           </label>
 
@@ -219,15 +213,12 @@
         <div class="panel panel-pad stack persona-meta-panel">
           <div class="persona-panel-head">
             <div>
-              <div class="hero-kicker">
-                Behavior Envelope
-              </div>
-              <div class="section-title">
+<div class="section-title">
                 行为约束
               </div>
             </div>
             <div class="muted">
-              控制篇幅、强度、禁忌与词典边界，让人格卡保持可重复使用。
+              控制篇幅、强度、禁忌与用词边界。
             </div>
           </div>
           <label class="field">
@@ -250,7 +241,7 @@
             <span>禁忌（每行一条）</span>
             <textarea
               v-model="taboosText"
-              placeholder="输入这个人格设定不希望出现的词、表达或套路。"
+              placeholder="输入这个角色不希望出现的词或表达。"
             />
           </label>
 
@@ -270,17 +261,14 @@
       <div class="panel panel-pad stack persona-lexicon-panel">
         <div class="split persona-lexicon-head">
           <div>
-            <div class="hero-kicker">
-              Sensory Lexicon
-            </div>
-            <div class="section-title">
+<div class="section-title">
               感知词典
             </div>
             <div class="muted">
               当系统感知到某些环境词时，会优先借用你设定的意象来写作。
             </div>
             <div class="muted">
-              左边填环境词，右边填这个人格更常使用的意象、措辞或联想。
+              左边填环境词，右边填这个角色更常用的说法。
             </div>
           </div>
           <div class="button-row">
@@ -375,10 +363,7 @@
       <div class="panel panel-pad stack persona-scene-panel">
         <div class="split persona-scene-head">
           <div>
-            <div class="hero-kicker">
-              Scene Dice
-            </div>
-            <div class="section-title">
+<div class="section-title">
               场景骰子
             </div>
             <div class="muted">
@@ -778,7 +763,7 @@ async function load() {
     setLexiconRows(data.sensory_lexicon || {})
     setSceneRows(data.scene_pool || [])
   } catch (error) {
-    loadError.value = describeError(error, '加载人格设定失败。')
+    loadError.value = describeError(error, '加载角色设定失败。')
   } finally {
     isLoading.value = false
   }
@@ -806,11 +791,11 @@ async function save() {
     }
     await unwrap(api.put(`/personas/${route.params.id}`, form))
     messageType.value = 'success'
-    message.value = '人格设定已保存。'
+    message.value = '角色设定已保存。'
     formDirty.value = false
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, '保存人格设定失败。')
+    message.value = describeError(error, '保存角色设定失败。')
   } finally {
     isSaving.value = false
   }
@@ -823,10 +808,10 @@ async function activate() {
   try {
     await unwrap(api.post(`/personas/${route.params.id}/activate`))
     messageType.value = 'success'
-    message.value = '已切换为默认人格设定。'
+    message.value = '已切换为默认角色设定。'
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, '切换默认人格设定失败。')
+    message.value = describeError(error, '切换默认角色设定失败。')
   } finally {
     isActivating.value = false
   }
@@ -834,7 +819,7 @@ async function activate() {
 
 async function removePersona() {
   if (isDeleting.value) return
-  if (!window.confirm('确认删除当前人格设定？此操作不可撤销。')) return
+  if (!window.confirm('确认删除当前角色设定？此操作不可撤销。')) return
 
   isDeleting.value = true
   message.value = ''
@@ -843,7 +828,7 @@ async function removePersona() {
     router.push('/admin/personas')
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, '删除人格设定失败。')
+    message.value = describeError(error, '删除角色设定失败。')
   } finally {
     isDeleting.value = false
   }

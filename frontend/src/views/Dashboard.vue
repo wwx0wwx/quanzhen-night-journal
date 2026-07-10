@@ -2,199 +2,82 @@
   <section class="stack">
     <AppLoading
       v-if="isLoading"
-      title="正在加载总览"
-      description="正在汇总最近文章、任务风险和成本信息。"
+      title="正在加载首页"
+      description="正在汇总发文状态、待办和最近文章。"
     />
 
     <AppError
       v-else-if="loadError"
-      title="总览加载失败"
+      title="首页加载失败"
       :message="loadError"
       action-label="重新加载"
       @retry="load"
     />
 
     <template v-else>
-      <div class="hero dashboard-hero">
+      <div class="page-header">
         <div>
-          <div class="hero-kicker">
-            Night Watch Console
-          </div>
-          <h1>运营总览</h1>
-          <p>把今夜的站点、任务、风险与生成状态收束在同一处，先看夜况是否安稳，再决定是否继续发文。</p>
+          <h1>首页</h1>
+          <p>一眼看清：现在能不能发文、有没有需要你处理的事。</p>
         </div>
-        <div class="dashboard-hero-aside">
+        <div class="page-header-actions">
+          <button
+            class="btn ghost btn-small"
+            type="button"
+            :disabled="isLoading"
+            @click="load"
+          >
+            刷新
+          </button>
+        </div>
+      </div>
+
+      <div class="status-hero">
+        <div class="status-hero-main">
           <span
             class="tag"
             :class="configConclusionTagClass"
           >{{ systemState.label }}</span>
-          <div class="muted">
-            建议动作：{{ nextStep.title }}
-          </div>
-        </div>
-      </div>
-
-      <div class="panel panel-pad stack dashboard-overview-card">
-        <div class="dashboard-overview-grid">
-          <div class="dashboard-overview-main">
-            <div class="dashboard-overview-label">
-              今夜状态
-            </div>
-            <h2>{{ systemState.label }}</h2>
-            <p>{{ systemState.description }}</p>
-          </div>
-          <div class="dashboard-overview-side">
-            <div class="dashboard-overview-label">
-              下一步
-            </div>
-            <strong>{{ nextStep.title }}</strong>
-            <div class="muted">
-              {{ nextStep.description }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel panel-pad stack">
-        <div class="settings-section-head">
-          <div>
-            <h2>运行自检</h2>
-            <p class="muted">
-              这里合并展示真实运行态：服务、数据库、调度器、Hugo、模型连通性和公网入口。配置页只负责修改参数。
-            </p>
-          </div>
-          <div class="button-row">
-            <button
-              class="btn ghost btn-small"
-              type="button"
-              :disabled="healthProbe.busy"
-              @click="probeHealth"
-            >
-              {{ healthProbe.busy ? '自检中…' : '重新自检' }}
-            </button>
-            <span
-              class="tag"
-              :class="healthStatusClass"
-            >
-              {{ healthStatusLabel }}
-            </span>
-          </div>
-        </div>
-
-        <div class="card-row">
+          <h2>{{ systemState.label }}</h2>
+          <p>{{ systemState.description }}</p>
           <div
-            v-for="item in healthCards"
-            :key="item.key"
-            class="metric"
+            class="quick-actions"
+            style="margin-top: 16px"
           >
-            <div class="muted">
-              {{ item.label }}
-            </div>
-            <strong>{{ item.statusLabel }}</strong>
-            <div class="muted">
-              {{ item.detail }}
-            </div>
-          </div>
-        </div>
-
-        <div
-          v-if="healthProbe.error"
-          class="status-banner warning"
-        >
-          {{ healthProbe.error }}
-        </div>
-      </div>
-
-      <div class="panel panel-pad stack">
-        <div class="settings-section-head">
-          <div>
-            <h2>域名配置诊断</h2>
-            <p class="muted">
-              检查域名绑定与 DNS 配置是否就绪，不代表公网可达性。实际访问状态请以浏览器验证为准。
-            </p>
-          </div>
-          <div class="button-row">
-            <span
-              class="tag"
-              :class="data.domain_status.enabled ? 'tag-success' : 'tag-warning'"
+            <RouterLink
+              class="btn primary"
+              to="/admin/posts"
             >
-              {{ data.domain_status.enabled ? '配置就绪' : '博客未公开' }}
-            </span>
-            <span class="tag">{{ data.domain_status.status || 'unknown' }}</span>
+              立即写一篇
+            </RouterLink>
+            <RouterLink
+              v-if="Number(data.risk_overview.waiting_human_signoff || 0) > 0"
+              class="btn ghost"
+              to="/admin/tasks?status=waiting_human_signoff"
+            >
+              查看待确认（{{ data.risk_overview.waiting_human_signoff }}）
+            </RouterLink>
+            <RouterLink
+              v-else
+              class="btn ghost"
+              to="/admin/tasks"
+            >
+              查看发文任务
+            </RouterLink>
+            <RouterLink
+              class="btn ghost"
+              to="/admin/settings"
+            >
+              检查设置
+            </RouterLink>
           </div>
         </div>
-
-        <div class="card-row">
-          <div class="metric">
-            <div class="muted">
-              绑定域名
-            </div>
-            <strong>{{ data.domain_status.domain || '未配置' }}</strong>
-            <div class="muted">
-              当前配置的域名。
-            </div>
+        <div class="status-hero-side">
+          <div class="muted">建议下一步</div>
+          <strong>{{ nextStep.title }}</strong>
+          <div class="muted">
+            {{ nextStep.description }}
           </div>
-          <div class="metric">
-            <div class="muted">
-              Hugo 基准地址
-            </div>
-            <strong>{{ data.domain_status.base_url || '/' }}</strong>
-            <div class="muted">
-              Hugo 构建使用的 base_url。
-            </div>
-          </div>
-          <div class="metric">
-            <div class="muted">
-              最近检查
-            </div>
-            <strong>{{ formatCheckedAt(data.domain_status.checked_at) }}</strong>
-            <div class="muted">
-              域名配置诊断刷新时间。
-            </div>
-          </div>
-          <div class="metric">
-            <div class="muted">
-              当日点击
-            </div>
-            <strong>{{ Number(data.click_stats.today_page_views || 0) }}</strong>
-            <div class="muted">
-              今日累计页面访问。
-            </div>
-          </div>
-        </div>
-
-        <div class="status-banner info">
-          {{ data.domain_status.reason || '尚未生成域名配置诊断。' }}
-        </div>
-
-        <div class="split">
-          <button
-            v-if="data.domain_status.enabled"
-            class="btn ghost btn-small"
-            :disabled="blogProbe.busy"
-            data-tooltip="向博客公开地址发起 HTTP 请求，验证读者是否能正常访问"
-            @click="probeBlog"
-          >
-            {{ blogProbe.busy ? '检测中…' : '检测公网可达性' }}
-          </button>
-          <span
-            v-else
-            class="muted"
-          >未启用域名，无需检测公网可达性。</span>
-          <span
-            v-if="blogProbe.done"
-            class="tag"
-            :class="blogProbe.reachable ? 'tag-success' : 'tag-danger'"
-          >
-            {{ blogProbe.reachable ? '可达' : '不可达' }}
-          </span>
-        </div>
-        <div
-          v-if="blogProbe.done"
-          class="status-banner"
-          :class="blogProbe.reachable ? 'success' : 'error'"
-        >
-          {{ blogProbe.reason }}
         </div>
       </div>
 
@@ -212,96 +95,34 @@
       </div>
 
       <div class="card-row">
-        <div class="metric dashboard-state-metric">
-          <div class="muted">
-            当前系统状态
-          </div>
-          <strong>{{ systemState.label }}</strong>
-          <div class="muted">
-            {{ systemState.description }}
-          </div>
-        </div>
-        <StabilityGauge
-          label="人格稳定度"
-          :score="Number(data.persona_stability || 0)"
-        />
-        <StabilityGauge
-          label="记忆一致性"
-          :score="Number(data.memory_coherence || 0)"
-        />
-        <CostChart
-          title="今日精力消耗"
-          subtitle="模型调用费用"
-          :cost="Number(data.cost?.cost || 0)"
-          :limit="Number(data.cost?.limit || 1)"
-        />
-        <div class="metric dashboard-state-metric">
-          <div class="muted">
-            推荐下一步
-          </div>
-          <strong>{{ nextStep.title }}</strong>
-          <div class="muted">
-            {{ nextStep.description }}
-          </div>
-        </div>
-      </div>
-
-      <div class="card-row">
         <div class="metric">
-          <div class="muted">
-            待处理风险
-          </div>
+          <div class="muted">待你处理</div>
           <strong>{{ pendingRiskCount }}</strong>
+          <div class="muted">失败 / 待确认 / 质量拦截</div>
         </div>
         <div class="metric">
-          <div class="muted">
-            失败任务
-          </div>
+          <div class="muted">失败任务</div>
           <strong>{{ unackedFailed }}</strong>
-          <div
-            v-if="Number(data.risk_overview.failed_acknowledged || 0) > 0"
-            class="muted"
-          >
-            含 {{ data.risk_overview.failed_acknowledged }} 已知悉
-          </div>
         </div>
         <div class="metric">
-          <div class="muted">
-            QA 熔断
-          </div>
-          <strong>{{ unackedCircuitOpen }}</strong>
-          <div
-            v-if="Number(data.risk_overview.circuit_open_acknowledged || 0) > 0"
-            class="muted"
-          >
-            含 {{ data.risk_overview.circuit_open_acknowledged }} 已知悉
-          </div>
-        </div>
-        <div class="metric">
-          <div class="muted">
-            待人工签发
-          </div>
+          <div class="muted">待人工确认</div>
           <strong>{{ data.risk_overview.waiting_human_signoff }}</strong>
         </div>
         <div class="metric">
-          <div class="muted">
-            最近任务数
-          </div>
-          <strong>{{ data.recent_tasks.length }}</strong>
+          <div class="muted">今日费用</div>
+          <strong>{{ Number(data.cost?.cost || 0).toFixed(4) }}</strong>
+          <div class="muted">限额 {{ Number(data.cost?.limit || 0) }}</div>
         </div>
       </div>
 
       <div class="grid two dashboard-columns">
         <div class="panel panel-pad stack">
           <div class="split">
-            <div class="section-title">
-              近期风险提醒
-            </div>
+            <div class="section-title">待办（最多 5 条）</div>
             <button
               v-if="hasFailedAttention"
               class="btn ghost btn-small"
               :disabled="dismissBusy"
-              data-tooltip="将所有失败任务标记为已知悉，清除风险提醒"
               @click="dismissAll"
             >
               {{ dismissBusy ? '处理中…' : '全部已知悉' }}
@@ -311,8 +132,8 @@
           <AppEmpty
             v-if="!attentionCards.length"
             inline
-            title="近期没有明显风险"
-            description="最近任务里没有失败、熔断或待人工签发的记录。"
+            title="目前没有需要处理的事"
+            description="没有失败任务、质量拦截或待确认文稿。"
           />
 
           <div
@@ -320,7 +141,7 @@
             class="list"
           >
             <div
-              v-for="item in attentionCards"
+              v-for="item in attentionCards.slice(0, 5)"
               :key="`${item.kind}-${item.id}`"
               class="list-item stack"
             >
@@ -329,7 +150,7 @@
                   class="tag"
                   :class="item.severity === 'error' ? 'tag-danger' : 'tag-warning'"
                 >
-                  {{ item.severity === 'error' ? '风险' : '提醒' }}
+                  {{ item.severity === 'error' ? '需要处理' : '提醒' }}
                 </span>
                 <span class="tag">{{ attentionLabel(item.label) }}</span>
               </div>
@@ -346,7 +167,6 @@
                 <button
                   class="btn ghost btn-small"
                   :disabled="dismissBusy"
-                  data-tooltip="标记为已知悉，不再提示"
                   @click="dismissTask(item.id)"
                 >
                   忽略
@@ -354,7 +174,6 @@
                 <button
                   class="btn ghost btn-small"
                   :disabled="dismissBusy"
-                  data-tooltip="用同一人格重新触发写作任务"
                   @click="retryTask(item.personaId)"
                 >
                   重试
@@ -365,15 +184,13 @@
         </div>
 
         <div class="panel panel-pad stack">
-          <div class="section-title">
-            最近任务
-          </div>
+          <div class="section-title">最近文章</div>
 
           <AppEmpty
-            v-if="!data.recent_tasks.length"
+            v-if="!data.recent_posts.length"
             inline
-            title="还没有任务记录"
-            description="触发一次生成后，这里会显示最近的任务状态和失败原因。"
+            title="还没有文章"
+            description="点「立即写一篇」或去文章页新建，就会出现在这里。"
           />
 
           <div
@@ -381,50 +198,23 @@
             class="list"
           >
             <RouterLink
-              v-for="task in data.recent_tasks"
-              :key="task.id"
+              v-for="post in data.recent_posts.slice(0, 5)"
+              :key="post.id"
               class="list-item stack"
-              :to="`/admin/tasks/${task.id}`"
+              :to="`/admin/posts/${post.id}`"
             >
               <div class="split">
-                <strong>任务 #{{ task.id }}</strong>
+                <strong>{{ post.title }}</strong>
                 <span
                   class="tag"
-                  :class="getStatusClass('task', task.status)"
-                >{{
-                  getStatusLabel('task', task.status)
-                }}</span>
+                  :class="getStatusClass('post', post.status)"
+                >{{ getStatusLabel('post', post.status) }}</span>
               </div>
               <div class="muted">
-                {{ formatDateTimeWithRelative(task.started_at) }}
+                {{ post.summary || '暂无摘要' }}
               </div>
               <div class="muted">
-                {{ taskPrimaryMessage(task) }}
-              </div>
-              <div class="button-row">
-                <span
-                  v-if="showTaskPublishDecision(task)"
-                  class="tag"
-                  :class="getPublishDecisionClass(task)"
-                >{{
-                  getPublishDecisionLabel(task)
-                }}</span>
-                <span
-                  v-if="task.error_code"
-                  class="tag tag-danger"
-                >{{
-                  describeErrorCode(task.error_code) || task.error_code
-                }}</span>
-                <span
-                  v-if="task.qa_risk_level && task.qa_risk_level !== 'unknown'"
-                  class="tag"
-                >{{
-                  task.qa_risk_level
-                }}</span>
-                <span
-                  v-if="task.queue_wait_ms"
-                  class="tag"
-                >{{ formatDurationMs(task.queue_wait_ms) }}</span>
+                {{ formatDateTimeWithRelative(post.updated_at || post.published_at || post.created_at) }}
               </div>
             </RouterLink>
           </div>
@@ -432,48 +222,152 @@
       </div>
 
       <div class="panel panel-pad stack">
-        <div class="section-title">
-          最近文章
-        </div>
-
+        <div class="section-title">最近任务</div>
         <AppEmpty
-          v-if="!data.recent_posts.length"
+          v-if="!data.recent_tasks.length"
           inline
-          title="还没有文章"
-          description="去文章页手动发文或新建文章后，这里会显示最近内容。"
+          title="还没有任务记录"
+          description="触发一次自动写作后，这里会显示进度。"
         />
-
         <div
           v-else
           class="list"
         >
           <RouterLink
-            v-for="post in data.recent_posts"
-            :key="post.id"
+            v-for="task in data.recent_tasks.slice(0, 5)"
+            :key="task.id"
             class="list-item stack"
-            :to="`/admin/posts/${post.id}`"
+            :to="`/admin/tasks/${task.id}`"
           >
             <div class="split">
-              <strong>{{ post.title }}</strong>
+              <strong>任务 #{{ task.id }}</strong>
               <span
                 class="tag"
-                :class="getStatusClass('post', post.status)"
-              >{{
-                getStatusLabel('post', post.status)
-              }}</span>
+                :class="getStatusClass('task', task.status)"
+              >{{ getStatusLabel('task', task.status) }}</span>
             </div>
             <div class="muted">
-              Slug: {{ post.slug }}
+              {{ formatDateTimeWithRelative(task.started_at) }}
             </div>
             <div class="muted">
-              {{ post.summary || '暂无摘要' }}
-            </div>
-            <div class="muted">
-              {{ formatDateTimeWithRelative(post.updated_at || post.published_at || post.created_at) }}
+              {{ taskPrimaryMessage(task) }}
             </div>
           </RouterLink>
         </div>
       </div>
+
+      <details class="panel collapsible-panel">
+        <summary>
+          <span>系统健康与域名（一般不用看）</span>
+          <span
+            class="tag"
+            :class="healthStatusClass"
+          >{{ healthStatusLabel }}</span>
+        </summary>
+        <div class="collapsible-body stack">
+          <div class="split">
+            <p class="muted" style="margin: 0">
+              服务、数据库、调度、构建与模型连通性。域名配置是否就绪不代表读者一定能打开。
+            </p>
+            <button
+              class="btn ghost btn-small"
+              type="button"
+              :disabled="healthProbe.busy"
+              @click="probeHealth"
+            >
+              {{ healthProbe.busy ? '自检中…' : '重新自检' }}
+            </button>
+          </div>
+
+          <div class="card-row">
+            <div
+              v-for="item in healthCards"
+              :key="item.key"
+              class="metric"
+            >
+              <div class="muted">{{ item.label }}</div>
+              <strong>{{ item.statusLabel }}</strong>
+              <div class="muted">{{ item.detail }}</div>
+            </div>
+          </div>
+
+          <div
+            v-if="healthProbe.error"
+            class="status-banner warning"
+          >
+            {{ healthProbe.error }}
+          </div>
+
+          <div class="card-row">
+            <div class="metric">
+              <div class="muted">绑定域名</div>
+              <strong>{{ data.domain_status.domain || '未配置' }}</strong>
+            </div>
+            <div class="metric">
+              <div class="muted">博客基准地址</div>
+              <strong>{{ data.domain_status.base_url || '/' }}</strong>
+            </div>
+            <div class="metric">
+              <div class="muted">今日访问</div>
+              <strong>{{ Number(data.click_stats.today_page_views || 0) }}</strong>
+            </div>
+            <div class="metric">
+              <div class="muted">域名状态</div>
+              <strong>{{ data.domain_status.enabled ? '已启用' : '未公开' }}</strong>
+            </div>
+          </div>
+
+          <div class="status-banner info">
+            {{ data.domain_status.reason || '尚未生成域名配置诊断。' }}
+          </div>
+
+          <div class="split">
+            <button
+              v-if="data.domain_status.enabled"
+              class="btn ghost btn-small"
+              :disabled="blogProbe.busy"
+              @click="probeBlog"
+            >
+              {{ blogProbe.busy ? '检测中…' : '检测公网是否能打开' }}
+            </button>
+            <span
+              v-else
+              class="muted"
+            >未启用域名，无需检测公网。</span>
+            <span
+              v-if="blogProbe.done"
+              class="tag"
+              :class="blogProbe.reachable ? 'tag-success' : 'tag-danger'"
+            >
+              {{ blogProbe.reachable ? '可达' : '不可达' }}
+            </span>
+          </div>
+          <div
+            v-if="blogProbe.done"
+            class="status-banner"
+            :class="blogProbe.reachable ? 'success' : 'error'"
+          >
+            {{ blogProbe.reason }}
+          </div>
+
+          <div class="card-row">
+            <StabilityGauge
+              label="角色稳定度"
+              :score="Number(data.persona_stability || 0)"
+            />
+            <StabilityGauge
+              label="记忆一致性"
+              :score="Number(data.memory_coherence || 0)"
+            />
+            <CostChart
+              title="今日模型费用"
+              subtitle="相对日限额"
+              :cost="Number(data.cost?.cost || 0)"
+              :limit="Number(data.cost?.limit || 1)"
+            />
+          </div>
+        </div>
+      </details>
     </template>
   </section>
 </template>
@@ -489,19 +383,16 @@ import CostChart from '../components/CostChart.vue'
 import StabilityGauge from '../components/StabilityGauge.vue'
 import { describeError, describeErrorCode } from '../utils/errors'
 import {
-  getPublishDecisionClass,
   getPublishDecisionDescription,
-  getPublishDecisionLabel,
 } from '../utils/publishDecision'
 import { getStatusClass, getStatusDescription, getStatusLabel } from '../utils/statusMeta'
-import { formatDateTimeWithRelative, formatDateTime, formatDurationMs } from '../utils/time'
+import { formatDateTimeWithRelative, formatDateTime } from '../utils/time'
 import {
   buildHealthCards,
   createDashboardState,
   deriveNextStep,
   deriveSystemState,
 } from '../utils/dashboardHealth'
-
 
 const data = reactive(createDashboardState())
 const health = reactive({ status: 'unknown', checks: {} })
@@ -555,10 +446,10 @@ const nextStep = computed(() =>
 
 const configWarnings = computed(() => {
   const warnings = []
-  if (!data.config_status.system_initialized) warnings.push('系统尚未完成初始化。')
-  if (!data.config_status.llm_ready) warnings.push('大脑接入配置未完成，自动写作会失败。')
-  if (!data.config_status.embedding_ready) warnings.push('记忆检索配置未完成，检索与去重会退化。')
-  if (!data.config_status.domain_enabled) warnings.push('未配置域名，博客公开入口未启用，仅后台管理可用。')
+  if (!data.config_status.system_initialized) warnings.push('系统还没完成初始化，请先走完设置向导。')
+  if (!data.config_status.llm_ready) warnings.push('AI 模型还没配好，自动写作会失败。请到「系统设置」填写。')
+  if (!data.config_status.embedding_ready) warnings.push('记忆检索还没配好，找记忆和去重会变弱。')
+  if (!data.config_status.domain_enabled) warnings.push('还没配置域名：读者看不到博客，但后台仍可正常使用。')
   return warnings
 })
 
@@ -598,8 +489,8 @@ const attentionCards = computed(() => {
       id: 'llm',
       severity: 'warning',
       label: '配置缺口',
-      title: '大脑接入尚未就绪',
-      message: '请在设置页补齐接口地址、访问密钥和模型名称。',
+      title: 'AI 模型尚未就绪',
+      message: '请到系统设置填写接口地址、密钥和模型名称。',
     })
   }
   if (!data.config_status.embedding_ready) {
@@ -609,7 +500,7 @@ const attentionCards = computed(() => {
       severity: 'warning',
       label: '配置缺口',
       title: '记忆检索尚未就绪',
-      message: '请在设置页补齐向量服务配置，避免检索和去重退化。',
+      message: '请到系统设置补齐向量服务配置。',
     })
   }
 
@@ -618,18 +509,10 @@ const attentionCards = computed(() => {
 
 const hasFailedAttention = computed(() => attentionCards.value.some((c) => c.kind === 'task' && c.severity === 'error'))
 
-function taskSummary(status) {
-  return getStatusDescription('task', status)
-}
-
 function attentionLabel(label) {
   if (label === 'legacy_publish_decision') return '历史签发待复核'
-  if (label === 'waiting_human_signoff') return '待人工签发'
+  if (label === 'waiting_human_signoff') return '待人工确认'
   return describeErrorCode(label) || label
-}
-
-function formatCheckedAt(value) {
-  return formatDateTime(value)
 }
 
 function taskPrimaryMessage(task) {
@@ -638,16 +521,7 @@ function taskPrimaryMessage(task) {
   if (task.publish_decision_path && !['manual_post', 'pending', 'blocked'].includes(task.publish_decision_path)) {
     return getPublishDecisionDescription(task)
   }
-  return taskSummary(task.status)
-}
-
-const TERMINAL_STATES = ['published', 'failed', 'circuit_open', 'aborted', 'draft_saved']
-
-function showTaskPublishDecision(task) {
-  const path = task.publish_decision_path
-  if (!path || path === 'pending') return false
-  if (path === 'blocked' && TERMINAL_STATES.includes(task.status)) return false
-  return true
+  return getStatusDescription('task', task.status)
 }
 
 async function dismissTask(taskId) {
@@ -739,7 +613,7 @@ async function load(showLoading = !hasLoadedOnce.value) {
     hasLoadedOnce.value = true
     loadError.value = ''
   } catch (error) {
-    loadError.value = describeError(error, '加载总览失败，请稍后重试。')
+    loadError.value = describeError(error, '加载首页失败，请稍后重试。')
   } finally {
     if (showLoading) isLoading.value = false
   }
@@ -747,93 +621,3 @@ async function load(showLoading = !hasLoadedOnce.value) {
 
 onMounted(load)
 </script>
-
-<style scoped>
-.dashboard-hero {
-  align-items: end;
-}
-
-.dashboard-hero-aside {
-  display: grid;
-  gap: 10px;
-  justify-items: end;
-  text-align: right;
-}
-
-.dashboard-overview-card {
-  gap: 22px;
-}
-
-.dashboard-overview-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.8fr);
-  gap: 20px;
-  align-items: stretch;
-}
-
-.dashboard-overview-main,
-.dashboard-overview-side {
-  position: relative;
-  display: grid;
-  gap: 12px;
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid var(--line-strong);
-  background: var(--panel);
-}
-
-.dashboard-overview-main::before,
-.dashboard-overview-side::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  background:
-    radial-gradient(circle at top right, var(--accent-glow), transparent 22%),
-    linear-gradient(135deg, var(--panel-soft), transparent 40%);
-}
-
-.dashboard-overview-main h2,
-.dashboard-overview-side strong {
-  margin: 0;
-  font-family: var(--font-display);
-  letter-spacing: 0.08em;
-}
-
-.dashboard-overview-main h2 {
-  font-size: clamp(1.6rem, 2.8vw, 2.4rem);
-}
-
-.dashboard-overview-main p,
-.dashboard-overview-side .muted {
-  margin: 0;
-  line-height: 1.8;
-}
-
-.dashboard-overview-label {
-  color: var(--accent-soft);
-  font-size: 0.76rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-}
-
-.dashboard-overview-side strong {
-  font-size: 1.14rem;
-}
-
-.dashboard-state-metric strong {
-  font-size: 1.58rem;
-}
-
-@media (max-width: 960px) {
-  .dashboard-hero-aside {
-    justify-items: start;
-    text-align: left;
-  }
-
-  .dashboard-overview-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

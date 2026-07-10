@@ -2,11 +2,8 @@
   <section class="stack">
     <div class="hero folder-hero">
       <div>
-        <div class="hero-kicker">
-          Folder Intake
-        </div>
-        <h1>目录监控</h1>
-        <p>管理投喂目录和文件类型。系统会监听这些目录，把新文件转成事件并进入生成流程。</p>
+<h1>目录监控</h1>
+        <p>监视某个文件夹的变化并触发动作（高级功能，一般不用改）。</p>
       </div>
       <div class="button-row">
         <button

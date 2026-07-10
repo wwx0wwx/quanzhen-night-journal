@@ -17,10 +17,7 @@
     <template v-else>
       <div class="hero editor-hero">
         <div>
-          <div class="hero-kicker">
-            Manuscript Workbench
-          </div>
-          <h1>{{ isNew ? '新建文章' : `编辑文章 #${route.params.id}` }}</h1>
+<h1>{{ isNew ? '新建文章' : `编辑文章 #${route.params.id}` }}</h1>
           <p>正文、元信息、版本和发布动作都在这张工作台上完成。保持语言冷静、结构清晰，再决定是否送它进入前台。</p>
         </div>
         <div class="button-row">

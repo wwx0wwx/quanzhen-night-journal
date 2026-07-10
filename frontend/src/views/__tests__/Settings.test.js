@@ -95,7 +95,7 @@ describe('Settings view', () => {
     const wrapper = mount(Settings)
     await flushPromises()
 
-    expect(wrapper.text()).toContain('当前发文结论')
+    expect(wrapper.text()).toContain('现在能不能发文')
     expect(wrapper.text()).toContain('发文能力受限')
     expect(wrapper.text()).toContain('博客信息')
     expect(wrapper.text()).toContain('面板设置')

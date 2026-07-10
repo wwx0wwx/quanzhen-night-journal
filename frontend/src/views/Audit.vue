@@ -2,13 +2,13 @@
   <section class="stack">
     <AppLoading
       v-if="isLoading"
-      title="正在加载系统日志"
+      title="正在加载运行日志"
       description="正在获取审计日志与筛选结果。"
     />
 
     <AppError
       v-else-if="loadError"
-      title="系统日志加载失败"
+      title="运行日志加载失败"
       :message="loadError"
       action-label="重新加载"
       @retry="load"
@@ -17,11 +17,8 @@
     <template v-else>
       <div class="hero audit-hero">
         <div>
-          <div class="hero-kicker">
-            Night Trace Archive
-          </div>
-          <h1>系统日志</h1>
-          <p>把登录、初始化、发布、异常这些痕迹按时间归档。这里不只是日志表，更像夜巡留下的事件卷宗。</p>
+<h1>运行日志</h1>
+          <p>登录、发文、报错等操作记录。平时很少需要看；出问题时再来查。</p>
         </div>
         <div class="button-row">
           <button
@@ -226,7 +223,7 @@ async function load() {
     items.value = data.items || []
     total.value = Number(data.total || 0)
   } catch (error) {
-    loadError.value = describeError(error, '加载系统日志失败。')
+    loadError.value = describeError(error, '加载运行日志失败。')
   } finally {
     isLoading.value = false
   }

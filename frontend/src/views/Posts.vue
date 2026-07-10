@@ -2,21 +2,18 @@
   <section class="stack">
     <div class="hero posts-hero">
       <div>
-        <div class="hero-kicker">
-          Manuscript Registry
-        </div>
-        <h1>文章管理</h1>
-        <p>这里像夜间卷宗台一样整理稿件、生成任务与发布动作，先判断每篇稿件的状态，再决定是否继续推进。</p>
+<h1>文章</h1>
+        <p>查看、编辑和发布博客文章。也可以让系统自动写一篇。</p>
       </div>
       <div class="button-row posts-hero-actions">
         <button
           class="btn primary"
           type="button"
           :disabled="actionBusy"
-          data-tooltip="运行一次 AI 创作流程"
+          data-tooltip="让系统自动写一篇文章"
           @click="triggerTask"
         >
-          {{ isTriggering ? '创作中…' : '立即创作' }}
+          {{ isTriggering ? '写作中…' : '立即写一篇' }}
         </button>
         <button
           class="btn ghost"
@@ -37,19 +34,19 @@
           class="btn ghost"
           type="button"
           :disabled="actionBusy"
-          data-tooltip="暂停自动创作，不再触发定时任务"
+          data-tooltip="暂停定时自动写作"
           @click="hibernate"
         >
-          {{ isHibernating ? '处理中…' : '立即休眠' }}
+          {{ isHibernating ? '处理中…' : '暂停自动写作' }}
         </button>
         <button
           class="btn ghost"
           type="button"
           :disabled="actionBusy"
-          data-tooltip="恢复自动创作调度"
+          data-tooltip="恢复定时自动写作"
           @click="wakeUp"
         >
-          {{ isWakingUp ? '处理中…' : '解除休眠' }}
+          {{ isWakingUp ? '处理中…' : '恢复自动写作' }}
         </button>
       </div>
     </div>
@@ -156,10 +153,7 @@
     <template v-else>
       <div class="panel panel-pad posts-ledger-meta">
         <div>
-          <div class="hero-kicker">
-            Registry Count
-          </div>
-          <strong>共 {{ total }} 篇，第 {{ page }} / {{ totalPages }} 页，当前显示 {{ posts.length }} 篇。</strong>
+<strong>共 {{ total }} 篇，第 {{ page }} / {{ totalPages }} 页，当前显示 {{ posts.length }} 篇。</strong>
         </div>
         <div class="muted">
           主操作优先处理“待审核 / 可发布 / 失败待排查”的稿件，其余状态可延后整理。
@@ -236,7 +230,7 @@
                   <dd>{{ post.task_id ? '自动生成' : '手动创建' }}</dd>
                 </div>
                 <div>
-                  <dt>人格设定</dt>
+                  <dt>角色设定</dt>
                   <dd>{{ personaName(post.persona_id) }}</dd>
                 </div>
                 <div>
@@ -543,7 +537,7 @@ async function wakeUp() {
     await unwrap(api.post('/cost/wake-up'))
     actionSuccess.value = '系统已恢复写作。'
   } catch (error) {
-    actionError.value = describeError(error, '解除休眠失败，请稍后重试。')
+    actionError.value = describeError(error, '恢复自动写作失败，请稍后重试。')
   } finally {
     isWakingUp.value = false
   }

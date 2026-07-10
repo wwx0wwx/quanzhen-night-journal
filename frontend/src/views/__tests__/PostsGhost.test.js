@@ -79,10 +79,10 @@ describe('Posts and Ghost views', () => {
     expect(wrapper.text()).toContain('发布判定')
     expect(wrapper.text()).toContain('历史记录推断')
     expect(wrapper.text()).toContain('默认风格')
-    expect(wrapper.text()).toContain('立即创作')
-    expect(wrapper.text()).toContain('立即休眠')
-    expect(wrapper.text()).toContain('解除休眠')
-    expect(wrapper.find('button[data-tooltip="运行一次 AI 创作流程"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('立即写一篇')
+    expect(wrapper.text()).toContain('暂停自动写作')
+    expect(wrapper.text()).toContain('恢复自动写作')
+    expect(wrapper.find('button[data-tooltip="让系统自动写一篇文章"]').exists()).toBe(true)
     expect(wrapper.findComponent(RouterLinkStub).attributes('data-tooltip')).toBe('手动新建一篇文章草稿')
   })
 
@@ -108,11 +108,11 @@ describe('Posts and Ghost views', () => {
     await flushPromises()
 
     const buttons = wrapper.findAll('button')
-    await buttons.find((button) => button.text().includes('立即创作')).trigger('click')
+    await buttons.find((button) => button.text().includes('立即写一篇')).trigger('click')
     await flushPromises()
-    await buttons.find((button) => button.text().includes('立即休眠')).trigger('click')
+    await buttons.find((button) => button.text().includes('暂停自动写作')).trigger('click')
     await flushPromises()
-    await buttons.find((button) => button.text().includes('解除休眠')).trigger('click')
+    await buttons.find((button) => button.text().includes('恢复自动写作')).trigger('click')
     await flushPromises()
 
     expect(api.post).toHaveBeenNthCalledWith(1, '/tasks/trigger', {

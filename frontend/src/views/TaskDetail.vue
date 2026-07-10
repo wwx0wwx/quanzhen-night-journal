@@ -17,10 +17,7 @@
     <template v-else>
       <div class="hero task-hero">
         <div>
-          <div class="hero-kicker">
-            Execution Trace
-          </div>
-          <h1>任务 #{{ route.params.id }}</h1>
+<h1>任务 #{{ route.params.id }}</h1>
           <p>这里查看一次写作任务从触发到结束的全部轨迹。先判断是否稳，再决定是人工签发还是直接中止。</p>
         </div>
         <div class="button-row">
@@ -55,7 +52,7 @@
             v-if="isFailedOrCircuitOpen"
             class="btn ghost"
             :disabled="actionBusy"
-            data-tooltip="用同一人格重新发起一次写作任务"
+            data-tooltip="用同一角色设定重新写一次"
             @click="retry"
           >
             {{ activeAction === 'retry' ? '处理中…' : '重新触发' }}
@@ -105,7 +102,7 @@
               <dd>{{ task.trigger_source || 'manual' }}</dd>
             </div>
             <div>
-              <dt>人格设定</dt>
+              <dt>角色设定</dt>
               <dd>{{ task.persona_id ? `#${task.persona_id}` : '-' }}</dd>
             </div>
             <div>

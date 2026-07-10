@@ -2,15 +2,12 @@
   <section class="stack">
     <div class="hero ghost-hero">
       <div>
-        <div class="hero-kicker">
-          Archive Transfer
-        </div>
-        <h1>迁移与备份</h1>
-        <p>管理 .ghost 导出、预览和导入，明确看到文件、冲突和恢复结果。这里更像档案转运台，而不是单纯的上传窗口。</p>
+        <h1>备份与迁移</h1>
+        <p>两件常用事：快速备份数据库，或导出完整搬家包（方便换服务器）。导入前建议先备份。</p>
       </div>
       <div class="ghost-hero-actions">
         <div class="muted">
-          建议在较大导入前先做一次导出，保留当前状态的回退包。
+          导入会合并数据；同名角色和重复文章地址会保留，不会直接覆盖。
         </div>
         <button
           class="btn primary"
@@ -18,7 +15,7 @@
           :disabled="isExporting"
           @click="exportGhost"
         >
-          {{ isExporting ? '导出中…' : '导出 .ghost' }}
+          {{ isExporting ? '导出中…' : '导出完整搬家包' }}
         </button>
         <button
           class="btn ghost"
@@ -26,7 +23,7 @@
           :disabled="isBackingUp"
           @click="backupDatabase"
         >
-          {{ isBackingUp ? '备份中…' : '备份数据库' }}
+          {{ isBackingUp ? '备份中…' : '快速快速备份数据库' }}
         </button>
       </div>
     </div>
@@ -51,13 +48,13 @@
 
     <AppLoading
       v-if="isLoading"
-      title="正在加载 Ghost 记录"
+      title="正在加载备份记录"
       description="正在读取导出历史和当前迁移状态。"
     />
 
     <AppError
       v-else-if="loadError"
-      title="Ghost 页面加载失败"
+      title="备份页加载失败"
       :message="loadError"
       action-label="重试"
       @retry="loadExports"
@@ -170,7 +167,7 @@
               v-if="!preview.conflicts?.length"
               inline
               title="没有发现冲突"
-              description="当前包中的人格名和文章 slug 没有与现有数据重复。"
+              description="当前包中的角色名和文章地址没有与现有数据重复。"
             />
             <div
               v-else
@@ -420,7 +417,7 @@ async function loadExports() {
     exports.value = ghostExports
     databaseBackups.value = databaseSnapshotList
   } catch (error) {
-    loadError.value = describeError(error, '加载 Ghost 记录失败，请稍后重试。')
+    loadError.value = describeError(error, '加载备份记录失败，请稍后重试。')
   } finally {
     isLoading.value = false
   }
@@ -455,7 +452,7 @@ async function exportGhost() {
     actionSuccess.value = `导出完成：${result.filename}`
     await loadExports()
   } catch (error) {
-    actionError.value = describeError(error, '导出 Ghost 失败，请稍后重试。')
+    actionError.value = describeError(error, '导出完整备份失败，请稍后重试。')
   } finally {
     isExporting.value = false
   }
@@ -493,7 +490,7 @@ async function deleteExport(filename) {
     actionSuccess.value = `已删除导出包：${filename}`
     await loadExports()
   } catch (error) {
-    actionError.value = describeError(error, '删除 Ghost 导出包失败，请稍后重试。')
+    actionError.value = describeError(error, '删除备份包失败，请稍后重试。')
   } finally {
     deletingExportFilename.value = ''
   }
@@ -511,7 +508,7 @@ async function pruneExports() {
     actionSuccess.value = `已清理 ${result.deleted} 个旧导出包。`
     await loadExports()
   } catch (error) {
-    actionError.value = describeError(error, '清理旧 Ghost 导出包失败，请稍后重试。')
+    actionError.value = describeError(error, '清理旧备份失败，请稍后重试。')
   } finally {
     isPruningExports.value = false
   }
@@ -567,7 +564,7 @@ async function previewGhost() {
     preview.value = await unwrap(api.post('/ghost/preview', form))
     actionSuccess.value = '预览完成，可以确认是否导入。'
   } catch (error) {
-    actionError.value = describeError(error, '预览 Ghost 文件失败，请检查文件是否完整。')
+    actionError.value = describeError(error, '预览备份文件失败，请检查文件是否完整。')
   } finally {
     isPreviewing.value = false
   }
@@ -575,7 +572,7 @@ async function previewGhost() {
 
 async function importGhost() {
   if (!selectedFile.value || isImporting.value) return
-  if (!window.confirm('确认导入这个 .ghost 包吗？现有同名人格和重复 slug 会被保留。')) return
+  if (!window.confirm('确认导入这个完整搬家包吗？同名角色和重复文章地址会被保留、不会覆盖。')) return
 
   actionError.value = ''
   actionSuccess.value = ''
@@ -585,10 +582,10 @@ async function importGhost() {
     form.append('file', selectedFile.value)
     form.append('confirm', 'true')
     preview.value = await unwrap(api.post('/ghost/import', form))
-    actionSuccess.value = 'Ghost 导入完成。'
+    actionSuccess.value = '备份导入完成。'
     await loadExports()
   } catch (error) {
-    actionError.value = describeError(error, '导入 Ghost 失败，请稍后重试。')
+    actionError.value = describeError(error, '导入备份失败，请稍后重试。')
   } finally {
     isImporting.value = false
   }

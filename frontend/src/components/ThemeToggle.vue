@@ -2,7 +2,7 @@
   <button
     class="theme-toggle"
     type="button"
-    :title="isDark ? '切换亮色' : '切换暗色'"
+    :title="isDark ? '切换浅色' : '切换深色'"
     @click="toggle"
   >
     <svg
@@ -89,9 +89,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
-const STORAGE_KEY = 'qz-admin-theme'
+const STORAGE_KEY = 'qz-admin-v2-theme'
 
-const isDark = ref(true)
+const isDark = ref(false)
 
 function applyTheme(dark) {
   isDark.value = dark
@@ -105,12 +105,13 @@ function toggle() {
 
 onMounted(() => {
   const saved = localStorage.getItem(STORAGE_KEY)
-  if (saved === 'light') {
-    applyTheme(false)
-  } else if (saved === 'dark') {
+  if (saved === 'dark') {
     applyTheme(true)
+  } else if (saved === 'light') {
+    applyTheme(false)
   } else {
-    applyTheme(!window.matchMedia('(prefers-color-scheme: light)').matches)
+    // v2 default: light SaaS
+    applyTheme(false)
   }
 })
 </script>
@@ -122,20 +123,20 @@ onMounted(() => {
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 999px;
+  border-radius: 10px;
   border: 1px solid var(--line-strong);
-  background: var(--panel-soft);
+  background: var(--panel);
   color: var(--muted);
   cursor: pointer;
   transition:
-    color 0.22s ease,
-    border-color 0.22s ease,
-    background 0.22s ease;
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
 .theme-toggle:hover {
   color: var(--ink);
-  border-color: var(--accent-strong);
-  background: var(--accent-glow);
+  border-color: var(--accent);
+  background: var(--panel-soft);
 }
 </style>

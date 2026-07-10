@@ -2,13 +2,13 @@
   <section class="stack">
     <AppLoading
       v-if="isLoading"
-      title="正在加载人格"
-      description="正在获取人格列表与默认人格状态。"
+      title="正在加载角色设定"
+      description="正在读取角色列表。"
     />
 
     <AppError
       v-else-if="loadError"
-      title="人格列表加载失败"
+      title="角色列表加载失败"
       :message="loadError"
       action-label="重新加载"
       @retry="load"
@@ -17,23 +17,20 @@
     <template v-else>
       <div class="hero personas-hero">
         <div>
-          <div class="hero-kicker">
-            Persona Register
-          </div>
-          <h1>人格设定（写作风格）</h1>
+<h1>角色设定</h1>
           <p>
-            维护不同人格设定、默认人格，以及对应的语言习惯和感知词典。每一张人格卡都应该像一份可长期复用的夜间角色档案。
+            决定文章用什么口吻写。可以建多个角色，并指定一个默认。
           </p>
         </div>
         <div class="personas-hero-actions">
           <div class="muted">
-            默认人格决定当前系统主要写作口吻，其余人格更适合作为分支风格或专题语气。
+            默认角色用于日常自动写作；其他角色可以在需要时选用。
           </div>
           <RouterLink
             class="btn primary"
             to="/admin/personas/new"
           >
-            新建人格设定
+            新建角色
           </RouterLink>
         </div>
       </div>
@@ -48,11 +45,11 @@
       <div class="card-row">
         <div class="metric">
           <div class="muted">
-            人格总数
+            角色数量
           </div>
           <strong>{{ personas.length }}</strong>
           <div class="muted">
-            包含当前默认人格在内的全部已建档风格。
+            已创建的全部角色。
           </div>
         </div>
         <div class="metric">
@@ -61,24 +58,24 @@
           </div>
           <strong>{{ activeCount }}</strong>
           <div class="muted">
-            仍可被编辑、切换和用于生成任务的人格卡。
+            仍可编辑和使用的角色。
           </div>
         </div>
         <div class="metric">
           <div class="muted">
-            默认人格
+            默认角色
           </div>
           <strong>{{ defaultPersonaName }}</strong>
           <div class="muted">
-            默认人格会优先参与写作与记忆读取。
+            默认角色会优先参与写作与记忆读取。
           </div>
         </div>
       </div>
 
       <AppEmpty
         v-if="!personas.length"
-        title="还没有额外人格设定"
-        description="当前只有默认人格。可以先新建一个人格设定，再按写作需求切换使用。"
+        title="还没有其他角色"
+        description="当前只有默认角色。可以再建几个不同风格的角色。"
       />
 
       <div
@@ -199,7 +196,7 @@ async function load() {
   try {
     personas.value = await store.load()
   } catch (error) {
-    loadError.value = describeError(error, '加载人格列表失败。')
+    loadError.value = describeError(error, '加载角色列表失败。')
   } finally {
     isLoading.value = false
   }
@@ -207,14 +204,14 @@ async function load() {
 
 async function removePersona(persona) {
   if (isDeleting.value || persona.is_default) return
-  if (!window.confirm(`确认删除人格设定「${persona.name}」？此操作不可撤销。`)) return
+  if (!window.confirm(`确认删除角色「${persona.name}」？此操作不可撤销。`)) return
 
   actionError.value = ''
   isDeleting.value = persona.id
   try {
     personas.value = await store.remove(persona.id)
   } catch (error) {
-    actionError.value = describeError(error, '删除人格设定失败。')
+    actionError.value = describeError(error, '删除角色失败。')
   } finally {
     isDeleting.value = null
   }

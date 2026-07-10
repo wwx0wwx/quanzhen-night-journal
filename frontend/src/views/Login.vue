@@ -1,19 +1,13 @@
 <template>
-  <section class="login-stage panel panel-pad">
-    <div class="login-atmosphere">
-      <div class="hero-kicker">
-        Silent Entry
-      </div>
-      <h1>登录后台</h1>
-      <p>穿过值守台的夜色后，才能继续配置、巡检与发文。这里不需要热闹，只需要稳定、安静和可控。</p>
-      <div class="login-atmosphere-note">
-        <span class="tag">清冷幽夜</span>
-        <span class="muted">本页先建立夜间控制台的第一印象。</span>
-      </div>
+  <section class="login-card panel panel-pad">
+    <div class="login-head">
+      <div class="login-logo">夜</div>
+      <h1>登录管理后台</h1>
+      <p>登录后可以写文章、查看发文任务、修改设置和备份。</p>
     </div>
 
     <form
-      class="stack login-form"
+      class="stack"
       @submit.prevent="submit"
     >
       <label class="field">
@@ -21,7 +15,7 @@
         <input
           v-model="form.username"
           autocomplete="username"
-          placeholder="默认管理员账号为 admin"
+          placeholder="默认是 admin"
         >
       </label>
 
@@ -35,17 +29,19 @@
         >
       </label>
 
-      <div class="button-row">
-        <button
-          class="btn primary"
-          type="submit"
-          :disabled="isSubmitting"
-        >
-          {{ isSubmitting ? '登录中…' : '登录' }}
-        </button>
-      </div>
+      <button
+        class="btn primary"
+        type="submit"
+        :disabled="isSubmitting"
+        style="width: 100%"
+      >
+        {{ isSubmitting ? '登录中…' : '登录' }}
+      </button>
 
-      <div class="muted">
+      <div
+        class="muted"
+        :class="{ 'login-error': isError }"
+      >
         {{ message }}
       </div>
     </form>
@@ -63,17 +59,20 @@ import { describeError } from '../utils/errors'
 const auth = useAuthStore()
 const router = useRouter()
 const isSubmitting = ref(false)
-const message = ref('默认管理员账号为 admin。生产环境不要使用弱口令。')
+const isError = ref(false)
+const message = ref('默认账号是 admin。请使用你自己设置的密码登录。')
 const form = reactive({ username: 'admin', password: '' })
 
 async function submit() {
   if (isSubmitting.value) return
 
   isSubmitting.value = true
+  isError.value = false
   try {
     const data = await auth.login(form)
     router.push(getPostLoginRoute(Boolean(data.system_initialized ?? data.is_initialized)))
   } catch (error) {
+    isError.value = true
     message.value = describeError(error, '登录失败，请检查账号密码或稍后重试。')
   } finally {
     isSubmitting.value = false
@@ -82,80 +81,42 @@ async function submit() {
 </script>
 
 <style scoped>
-.login-stage {
-  max-width: 940px;
-  margin: 8vh auto 0;
+.login-card {
+  width: min(420px, 100%);
+  margin: 0 auto;
+}
+
+.login-head {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.login-logo {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 14px;
+  border-radius: 14px;
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
-  gap: 28px;
-  overflow: hidden;
+  place-items: center;
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
 }
 
-.login-atmosphere {
-  position: relative;
-  display: grid;
-  align-content: start;
-  gap: 16px;
-  min-height: 360px;
-  padding: 8px 6px 8px 0;
-}
-
-.login-atmosphere::after {
-  content: '';
-  position: absolute;
-  right: 8%;
-  top: 14px;
-  width: 180px;
-  height: 180px;
-  border-radius: 999px;
-  background: radial-gradient(circle, var(--accent-glow), var(--panel-soft) 44%, transparent 68%);
-  filter: blur(3px);
-  opacity: 0.9;
-}
-
-.login-atmosphere h1 {
-  position: relative;
-  z-index: 1;
+.login-head h1 {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 3rem);
-  letter-spacing: 0.12em;
+  font-size: 1.4rem;
+  letter-spacing: -0.02em;
 }
 
-.login-atmosphere p {
-  position: relative;
-  z-index: 1;
-  max-width: 42ch;
-  margin: 0;
-  line-height: 1.9;
+.login-head p {
+  margin: 8px 0 0;
   color: var(--muted);
+  line-height: 1.6;
 }
 
-.login-atmosphere-note {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  gap: 10px;
-  align-content: start;
-}
-
-.login-form {
-  position: relative;
-  padding: 22px;
-  border-radius: 16px;
-  border: 1px solid var(--line);
-  background: var(--panel);
-}
-
-@media (max-width: 900px) {
-  .login-stage {
-    margin-top: 3vh;
-    grid-template-columns: 1fr;
-  }
-
-  .login-atmosphere {
-    min-height: auto;
-    padding-right: 0;
-  }
+.login-error {
+  color: var(--danger);
 }
 </style>

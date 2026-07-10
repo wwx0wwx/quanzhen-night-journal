@@ -2,11 +2,8 @@
   <section class="stack">
     <div class="hero sensory-hero">
       <div>
-        <div class="hero-kicker">
-          Sensory Console
-        </div>
-        <h1>感知状态</h1>
-        <p>查看当前运行环境、人格化翻译和最近采样曲线。默认采样是容器视角；若挂载宿主机根目录并配置 host 模式，可读取宿主机内存/磁盘等指标。</p>
+<h1>环境状态</h1>
+        <p>机器运行状态会翻译成文风线索（一般不用改）。默认看容器内指标。</p>
       </div>
       <div class="button-row">
         <button
@@ -38,13 +35,13 @@
 
     <AppLoading
       v-if="isLoading"
-      title="正在读取感知状态"
+      title="正在读取环境状态"
       description="正在获取最新采样和历史曲线。"
     />
 
     <AppError
       v-else-if="loadError"
-      title="感知状态加载失败"
+      title="环境状态加载失败"
       :message="loadError"
       action-label="重试"
       @retry="load"
@@ -93,7 +90,7 @@
       <div class="grid two sensory-grid">
         <div class="panel panel-pad stack">
           <div class="section-title">
-            人格化翻译
+            文风翻译
           </div>
           <div class="status-banner info">
             {{ current?.translated_text || '当前采样没有触发明显环境意象。' }}
@@ -178,7 +175,7 @@
               </div>
             </div>
             <div class="muted">
-              {{ item.translated_text || '无明显人格化翻译。' }}
+              {{ item.translated_text || '无明显文风翻译。' }}
             </div>
           </div>
         </div>
@@ -251,7 +248,7 @@ async function load() {
     const [currentSnapshot] = await Promise.all([unwrap(api.get('/sensory/current')), loadHistory()])
     current.value = currentSnapshot
   } catch (error) {
-    loadError.value = describeError(error, '加载感知状态失败，请稍后重试。')
+    loadError.value = describeError(error, '加载环境状态失败，请稍后重试。')
   } finally {
     isLoading.value = false
   }

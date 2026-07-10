@@ -156,7 +156,7 @@ describe('Memories and PersonaEdit views', () => {
     const wrapper = mount(Sensory)
     await flushPromises()
 
-    expect(wrapper.text()).toContain('感知状态')
+    expect(wrapper.text()).toContain('环境状态')
     expect(wrapper.text()).toContain('夜色安稳')
     expect(wrapper.text()).toContain('12.0%')
   })
@@ -180,6 +180,6 @@ describe('Memories and PersonaEdit views', () => {
     const wrapper = mount(PersonaEdit)
     await flushPromises()
 
-    expect(wrapper.text()).toContain('人格设定加载失败')
+    expect(wrapper.text()).toContain('角色设定加载失败')
   })
 })

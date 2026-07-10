@@ -3,7 +3,7 @@
     <AppLoading
       v-if="isLoading"
       title="正在加载素材"
-      description="正在读取记忆列表、人格设定和当前分页。"
+      description="正在读取长期记忆列表。"
     />
 
     <AppError
@@ -17,17 +17,14 @@
     <template v-else>
       <div class="hero memories-hero">
         <div>
-          <div class="hero-kicker">
-            Memory Ledger
-          </div>
-          <h1>记忆碎片（素材）</h1>
+<h1>长期记忆</h1>
           <p>
-            按人格设定维护长期设定、检索结果和手动补充的关键素材。先确认该写作人格记得什么，再决定应该继续补写哪一层。
+            给写作角色准备的背景与素材。写文章时系统会参考这些内容。
           </p>
         </div>
         <div class="memories-hero-aside">
           <div class="button-row">
-            <span class="tag">{{ personas.length }} 组人格</span>
+            <span class="tag">{{ personas.length }} 个角色</span>
             <span class="tag">总计 {{ total }} 条</span>
             <span class="tag">当前 {{ memories.length }} 条</span>
           </div>
@@ -48,11 +45,11 @@
       <div class="card-row">
         <div class="metric">
           <div class="muted">
-            当前检索人格
+            当前角色
           </div>
           <strong>{{ currentPersonaName }}</strong>
           <div class="muted">
-            检索时会优先使用该人格对应的长期设定与近期线索。
+            会在该角色下查找相关记忆。
           </div>
         </div>
         <div class="metric">
@@ -79,14 +76,11 @@
         <div class="panel panel-pad stack memory-search-card">
           <div class="memory-card-head">
             <div>
-              <div class="hero-kicker">
-                Recall Desk
-              </div>
-              <div class="section-title">
+<div class="section-title">
                 快速搜索
               </div>
               <p class="muted">
-                输入场景、意象或动作词，检索当前人格下最接近的记忆条目。
+                输入关键词，查找相关记忆。
               </p>
             </div>
             <div
@@ -99,7 +93,7 @@
           </div>
           <div class="form-grid">
             <label class="field">
-              <span>人格设定（写作风格）</span>
+              <span>角色设定</span>
               <select v-model.number="search.persona_id">
                 <option
                   v-for="persona in personas"
@@ -172,10 +166,7 @@
         <div class="panel panel-pad stack memory-create-card">
           <div class="memory-card-head">
             <div>
-              <div class="hero-kicker">
-                Manual Entry
-              </div>
-              <div class="section-title">
+<div class="section-title">
                 新增长期设定
               </div>
               <p class="muted">
@@ -191,7 +182,7 @@
             </div>
           </div>
           <label class="field">
-            <span>人格设定（写作风格）</span>
+            <span>角色设定</span>
             <select v-model.number="form.persona_id">
               <option
                 v-for="persona in personas"
@@ -565,7 +556,7 @@ async function load() {
 async function runSearch() {
   if (!search.persona_id || !search.query.trim()) {
     messageType.value = 'warning'
-    message.value = '请先选择人格设定并输入搜索语句。'
+    message.value = '请先选择角色并输入搜索内容。'
     return
   }
   message.value = ''
@@ -591,7 +582,7 @@ async function runSearch() {
 async function createMemory() {
   if (!form.persona_id || !form.content.trim()) {
     messageType.value = 'warning'
-    message.value = '请先选择人格设定并填写内容。'
+    message.value = '请先选择角色并填写内容。'
     return
   }
   message.value = ''

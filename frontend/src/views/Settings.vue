@@ -17,11 +17,8 @@
     <template v-else>
       <div class="hero settings-hero">
         <div>
-          <div class="hero-kicker">
-            Configuration Ledger
-          </div>
-          <h1>系统设置</h1>
-          <p>把站点、面板、大脑接入与发文节奏统一收束在这本配置簿里。优先确保结论清晰，其次才是字段本身。</p>
+<h1>系统设置</h1>
+          <p>改站点名称、模型密钥、发文节奏等。不确定的选项可以先不动。</p>
         </div>
         <div class="settings-toolbar">
           <div class="button-row">
@@ -90,9 +87,9 @@
         <div class="panel panel-pad config-summary-card settings-summary-card">
           <div class="settings-section-head">
             <div>
-              <h2>当前发文结论</h2>
+              <h2>现在能不能发文</h2>
               <p class="muted">
-                根据当前表单内容判断系统是否具备发文能力。
+                根据当前填写内容判断系统是否准备好自动写作。
               </p>
             </div>
             <div class="button-row">
