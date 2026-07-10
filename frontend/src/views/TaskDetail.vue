@@ -25,7 +25,7 @@
             v-if="task.status === 'waiting_human_signoff'"
             class="btn primary"
             :disabled="actionBusy"
-            data-tooltip="确认高风险内容安全后放行发布"
+            :data-tooltip="t('taskDetail.tipApprove')"
             @click="approve"
           >
             {{ activeAction === 'approve' ? t('common.busy') : t('taskDetail.approve') }}
@@ -34,7 +34,7 @@
             v-if="canAbort"
             class="btn ghost"
             :disabled="actionBusy"
-            data-tooltip="强制中止当前任务，需重新触发才能继续"
+            :data-tooltip="t('taskDetail.tipAbort')"
             @click="abort"
           >
             {{ activeAction === 'abort' ? t('common.busy') : t('taskDetail.abort') }}
@@ -43,7 +43,7 @@
             v-if="isFailedOrCircuitOpen"
             class="btn ghost"
             :disabled="actionBusy"
-            data-tooltip="标记为已知悉，总览页将不再提示此任务"
+            :data-tooltip="t('taskDetail.tipAck')"
             @click="dismiss"
           >
             {{ activeAction === 'dismiss' ? t('common.busy') : t('taskDetail.dismiss') }}
@@ -52,7 +52,7 @@
             v-if="isFailedOrCircuitOpen"
             class="btn ghost"
             :disabled="actionBusy"
-            data-tooltip="用同一角色设定重新写一次"
+            :data-tooltip="t('taskDetail.tipRetry')"
             @click="retry"
           >
             {{ activeAction === 'retry' ? t('common.busy') : t('taskDetail.retry') }}
@@ -209,7 +209,7 @@ async function load() {
   try {
     Object.assign(task, await unwrap(api.get(`/tasks/${route.params.id}`)))
   } catch (error) {
-    loadError.value = describeError(error, '任务加载失败，请稍后重试。')
+    loadError.value = describeError(error, t('taskDetail.loadFailed'))
   } finally {
     isLoading.value = false
   }
@@ -233,11 +233,11 @@ async function approveInner() {
   try {
     await unwrap(api.post(`/tasks/${route.params.id}/approve`, { publish_immediately: true }))
     messageType.value = 'success'
-    message.value = '任务已人工签发。'
+    message.value = t('taskDetail.approved')
     await load()
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, '人工签发失败。')
+    message.value = describeError(error, t('taskDetail.approveFailed'))
   } finally {
     activeAction.value = ''
   }
@@ -251,11 +251,11 @@ async function abort() {
   try {
     await unwrap(api.post(`/tasks/${route.params.id}/abort`))
     messageType.value = 'success'
-    message.value = '任务已终止。'
+    message.value = t('taskDetail.aborted')
     await load()
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, '终止任务失败。')
+    message.value = describeError(error, t('taskDetail.abortFailed'))
   } finally {
     activeAction.value = ''
   }
@@ -268,11 +268,11 @@ async function dismiss() {
   try {
     await unwrap(api.post(`/tasks/${route.params.id}/dismiss`))
     messageType.value = 'success'
-    message.value = '已标记为已知悉，总览页将不再提示此任务。'
+    message.value = t('taskDetail.acked')
     await load()
   } catch (err) {
     messageType.value = 'error'
-    message.value = describeError(err, '操作失败。')
+    message.value = describeError(err, t('taskDetail.ackFailed'))
   } finally {
     activeAction.value = ''
   }
@@ -289,7 +289,7 @@ async function retry() {
     message.value = `已重新触发任务 #${result.id}。`
   } catch (err) {
     messageType.value = 'error'
-    message.value = describeError(err, '重新触发失败。')
+    message.value = describeError(err, t('taskDetail.retryFailed'))
   } finally {
     activeAction.value = ''
   }

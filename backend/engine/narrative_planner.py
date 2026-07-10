@@ -8,10 +8,16 @@ Design goals
   chapter-novel plot dumps.
 - Fight homogenization via forced relation-tone / scene-bucket rotation,
   opening/title avoid lists, and phase-aware pressure notes.
+
+Note: phase/scene/egg catalogs are oriented to the default **全真** preset
+(王爷/姐姐/密令). Multi-persona packs should override via persona
+``scene_pool`` or future preset-level narrative data (P2-23).
 """
 
 from __future__ import annotations
 
+# Narrative catalogs (phases/scenes/eggs) are oriented to the default 全真 preset.
+# Multi-persona deployments should override via persona scene_pool / future preset packs.
 import hashlib
 import random
 import re

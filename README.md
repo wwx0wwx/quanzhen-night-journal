@@ -119,7 +119,10 @@ cp .env.example .env
 - `ENVIRONMENT=production`：生产部署默认按生产模式启动
 - `JWT_SECRET`：必须替换成随机长密钥；生产环境下如果仍是默认值，`core` 会拒绝启动
 - `DATABASE_URL`：默认 SQLite 即可，生产建议保留到 `/app/data/quanzhen.db`
-- `SITE_BASE_URL`：未接域名时填 `http://<服务器IP>:5210`（此时仅后台可用，博客需配置域名后才公开）
+- `ENCRYPTION_KEY`：推荐设置 Fernet 主密钥（见 `.env.example`）；未设时使用数据库旁 `.encryption_key` 文件
+- `ALLOW_FAKE_LLM`：生产必须为 `false`（`ENVIRONMENT=production` 时若为 true 会拒绝启动）
+
+**关于 `:5210` 与博客：** 控制台端口（`Caddyfile` 的 `qz_console`）在 `/admin` 与 `/api` 之外会 fallthrough 到 Hugo 静态目录。若 volume 中已有构建产物，**同一主机上可能读到博客 HTML**。对外公开博客请使用域名站点片段（域名路径对 `/admin`/`/api` 返回 404）。预览主题 qz-ink / `:5211` / `:5212` **不在**默认 compose 中，见 `doc/博客展示页优化方案-预览站.md`（已决定生产保留 PaperMod）。
 - `PUBLIC_SERVER_IP`：服务器公网 IP，用于域名诊断与 HTTPS 启用判断
 - `ACME_EMAIL`：可选，启用 HTTPS 时建议填写
 - `CADDY_RELOAD_ENABLED=true`：允许 Core 在域名配置变更后热重载 Caddy
@@ -142,7 +145,7 @@ docker compose up -d --build
 - HTTPS：`443`
 - 目录投喂：仓库内 `./inbox` 默认挂载到后端容器 `/app/inbox`，可在后台“目录监控”页直接监听该路径。
 
-> **域名与博客公开访问**：未配置域名时，`:5210` 端口仅提供后台管理和 API；博客公开入口需要配置域名后才会启用。文章仍可正常生成、预览和写入 Hugo 内容目录，但不承诺通过 IP 直接访问博客首页。
+> **域名与博客公开访问**：正式对外博客请配置域名（域名站点不暴露 `/admin`/`/api`）。`:5210` 是管理台网关；其路径 fallthrough 到 Hugo 时，若本机已有静态构建产物，**可能**直接看到博客页，但这不是推荐的公开方式。文章仍会写入 Hugo 内容目录并按信号构建。
 
 ## 生产部署提示
 

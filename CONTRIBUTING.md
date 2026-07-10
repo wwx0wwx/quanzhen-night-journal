@@ -25,10 +25,15 @@ uv run ruff format backend/
 ```bash
 cd frontend
 npm install
-npm run dev      # 开发服务器
-npm test         # 运行测试
-npm run build    # 生产构建
+npm run dev         # 开发服务器
+npm run typecheck   # vue-tsc（与 CI 一致）
+npm run lint        # eslint，--max-warnings=0
+npm test            # vitest
+npm run build       # 生产构建
 ```
+
+CI 见 `.github/workflows/ci.yml`：后端 ruff + pytest，前端 typecheck/lint/build/test，以及 `docker compose build core caddy`。  
+完整问题台账：`doc/待修复问题清单-P1-P2.md`。
 
 ### Docker 部署
 

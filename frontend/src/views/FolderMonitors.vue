@@ -12,7 +12,7 @@
           :disabled="isLoading"
           @click="load"
         >
-          刷新
+          {{ t('common.refresh') }}
         </button>
       </div>
     </div>
@@ -27,15 +27,15 @@
 
     <AppLoading
       v-if="isLoading"
-      title="正在加载目录监控"
-      description="正在读取当前监听目录。"
+      :title="t('folderMonitors.loadingTitle')"
+      :description="t('folderMonitors.loadingDesc')"
     />
 
     <AppError
       v-else-if="loadError"
-      title="目录监控加载失败"
+      :title="t('folderMonitors.loadError')"
       :message="loadError"
-      action-label="重试"
+      :action-label="t('folderMonitors.retry')"
       @retry="load"
     />
 
@@ -46,7 +46,7 @@
             新增监听目录
           </div>
           <label class="field">
-            <span>目录路径</span>
+            <span>{{ t('folderMonitors.path') }}</span>
             <input
               v-model="form.path"
               placeholder="/app/inbox"
@@ -65,7 +65,7 @@
             :disabled="isSaving"
             @click="createMonitor"
           >
-            {{ isSaving ? '保存中…' : '开始监听' }}
+            {{ isSaving ? t('folderMonitors.saving') : t('folderMonitors.save') }}
           </button>
         </div>
 
@@ -109,8 +109,8 @@
         <AppEmpty
           v-if="!monitors.length"
           inline
-          title="还没有监听目录"
-          description="新增目录后，系统会把新文件作为外部事件处理。"
+          :title="t('folderMonitors.emptyTitle')"
+          :description="t('folderMonitors.emptyDesc')"
         />
 
         <div
@@ -140,7 +140,7 @@
                   class="tag"
                   :class="item.is_active ? 'tag-success' : 'tag-warning'"
                 >
-                  {{ item.is_active ? '启用中' : '已停用' }}
+                  {{ item.is_active ? t('folderMonitors.active') : t('folderMonitors.inactive') }}
                 </span>
                 <button
                   class="btn ghost btn-small"
@@ -148,7 +148,7 @@
                   :disabled="deletingId === item.id"
                   @click="deleteMonitor(item)"
                 >
-                  {{ deletingId === item.id ? '删除中…' : '删除' }}
+                  {{ deletingId === item.id ? t('folderMonitors.deleting') : t('folderMonitors.delete') }}
                 </button>
               </div>
             </div>
@@ -196,7 +196,7 @@ async function load() {
   try {
     monitors.value = await unwrap(api.get('/folder-monitors'))
   } catch (error) {
-    loadError.value = describeError(error, '加载目录监控失败，请稍后重试。')
+    loadError.value = describeError(error, t('folderMonitors.loadFailed'))
   } finally {
     isLoading.value = false
   }
@@ -205,7 +205,7 @@ async function load() {
 async function createMonitor() {
   if (!form.path.trim()) {
     messageType.value = 'warning'
-    message.value = '请先填写目录路径。'
+    message.value = t('folderMonitors.needPath')
     return
   }
   isSaving.value = true
@@ -214,11 +214,11 @@ async function createMonitor() {
     await unwrap(api.post('/folder-monitors', { path: form.path.trim(), file_types: parseFileTypes() }))
     form.path = '/app/inbox'
     messageType.value = 'success'
-    message.value = '监听目录已添加。'
+    message.value = t('folderMonitors.added')
     await load()
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, '添加监听目录失败。')
+    message.value = describeError(error, t('folderMonitors.addFailed'))
   } finally {
     isSaving.value = false
   }
@@ -232,11 +232,11 @@ async function deleteMonitor(item) {
   try {
     await unwrap(api.delete(`/folder-monitors/${item.id}`))
     messageType.value = 'success'
-    message.value = '监听目录已删除。'
+    message.value = t('folderMonitors.deleted')
     await load()
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, '删除监听目录失败。')
+    message.value = describeError(error, t('folderMonitors.deleteFailed'))
   } finally {
     deletingId.value = null
   }

@@ -76,7 +76,30 @@ def run() -> int:
             method="POST",
             payload={"username": USERNAME, "password": PASSWORD},
         )
-        assert_ok(login_status == 200 and '"is_logged_in":true' in login_body.replace(" ", "").lower(), "auth login")
+        body_norm = login_body.replace(" ", "").lower()
+        if login_status == 200 and '"requires_2fa":true' in body_norm:
+            totp = env("QZ_TOTP_CODE")
+            recovery = env("QZ_RECOVERY_CODE")
+            if not totp and not recovery:
+                if env("QZ_SKIP_2FA", "0") == "1":
+                    print("[SKIP] auth login 2FA (QZ_SKIP_2FA=1)")
+                else:
+                    raise RuntimeError("2FA enabled: set QZ_TOTP_CODE or QZ_RECOVERY_CODE (or QZ_SKIP_2FA=1)")
+            else:
+                payload = {"pre_auth_token": __import__('json').loads(login_body)["data"]["pre_auth_token"]}
+                if totp:
+                    payload["code"] = totp
+                else:
+                    payload["recovery_code"] = recovery
+                login_status, login_body = request(
+                    f"{ADMIN_BASE}/api/auth/2fa/verify",
+                    method="POST",
+                    payload=payload,
+                )
+                body_norm = login_body.replace(" ", "").lower()
+                assert_ok(login_status == 200 and '"is_logged_in":true' in body_norm, "auth 2fa verify")
+        else:
+            assert_ok(login_status == 200 and '"is_logged_in":true' in body_norm, "auth login")
 
         system_status, system_body = request(f"{ADMIN_BASE}/api/health/system")
         assert_ok(system_status == 200 and '"checks"' in system_body, "system health")

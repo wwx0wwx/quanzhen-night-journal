@@ -27,7 +27,13 @@ function flatSettingsValue(key: string): string | undefined {
 function tr(key: string, fallback?: string) {
   const flat = flatSettingsValue(key)
   if (flat) return flat
-  if (!i18n.global.te(key)) return fallback
+  if (!i18n.global.te(key)) {
+    // P2-16: missing locale keys fall back to schema Chinese; warn in dev.
+    if (import.meta.env?.DEV && fallback) {
+      console.warn(`[i18n] missing key ${key}, using schema fallback`)
+    }
+    return fallback
+  }
   const value = tGlobal(key)
   return value !== key ? value : fallback
 }

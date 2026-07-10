@@ -62,3 +62,6 @@ jobs:
       - run: docker compose build core caddy
         env:
           JWT_SECRET: ci-test-secret-not-for-production
+      # Optional live smoke is not run in CI (needs secrets + running stack).
+      # After deploy: QZ_PASSWORD=... python3 scripts/smoke_test.py
+      # With 2FA: QZ_TOTP_CODE=... or QZ_SKIP_2FA=1

@@ -34,12 +34,12 @@
         </div>
         <div class="form-grid">
           <label class="field">
-            <span>管理员密码</span>
+            <span>{{ t('setup.password') }}</span>
             <input
               v-model="form.new_password"
               type="password"
               autocomplete="new-password"
-              placeholder="设置一个至少 8 位、自己能妥善保管的新密码"
+              :placeholder="t('setup.passwordPlaceholder')"
             >
             <div class="field-help-list">
               <small class="field-help">初始化成功后会自动用 `admin` 账号登录。</small>
@@ -62,26 +62,26 @@
         </div>
         <div class="form-grid">
           <label class="field">
-            <span>站点标题</span>
+            <span>{{ t('setup.siteTitle') }}</span>
             <input
               v-model="form.site_title"
-              placeholder="例如：全真夜记"
+              :placeholder="t('setup.siteTitlePlaceholder')"
             >
           </label>
 
           <label class="field">
-            <span>副标题</span>
+            <span>{{ t('setup.siteSubtitle') }}</span>
             <input
               v-model="form.site_subtitle"
-              placeholder="例如：记录深夜、感知与缓慢校准"
+              :placeholder="t('setup.siteSubtitlePlaceholder')"
             >
           </label>
 
           <label class="field">
-            <span>域名</span>
+            <span>{{ t('setup.domain') }}</span>
             <input
               v-model="form.site_domain"
-              placeholder="例如：journal.example.com"
+              :placeholder="t('setup.domainPlaceholder')"
             >
             <div class="field-help-list">
               <small class="field-help">只填写域名本身，不要带 `http://` 或 `https://`。</small>
@@ -118,7 +118,7 @@
               <span>LLM Base URL</span>
               <input
                 v-model="form.llm_base_url"
-                placeholder="例如：https://api.openai.com/v1 或你的中转地址"
+                :placeholder="t('setup.llmBasePlaceholder')"
               >
             </label>
 
@@ -128,7 +128,7 @@
                 v-model="form.llm_api_key"
                 type="password"
                 autocomplete="off"
-                placeholder="输入模型服务分配给你的密钥"
+                :placeholder="t('setup.llmKeyPlaceholder')"
               >
               <div class="field-help-list">
                 <small class="field-help">如何获取？去你正在使用的模型服务后台创建 API Key，再复制到这里。</small>
@@ -139,7 +139,7 @@
               <span>LLM Model ID</span>
               <input
                 v-model="form.llm_model_id"
-                placeholder="例如：gpt-4.1-mini、qwen-max、deepseek-chat"
+                :placeholder="t('setup.llmModelPlaceholder')"
               >
             </label>
           </div>
@@ -152,7 +152,7 @@
           type="submit"
           :disabled="isSubmitting"
         >
-          {{ isSubmitting ? '初始化中…' : '完成初始化' }}
+          {{ isSubmitting ? t('setup.submitting') : t('setup.submit') }}
         </button>
       </div>
 
@@ -179,7 +179,7 @@ const { t } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
 const isSubmitting = ref(false)
-const message = ref('完成后会自动生成默认写作角色。')
+const message = ref(t('setup.successHint'))
 const form = reactive({
   new_password: '',
   site_title: '',
@@ -197,11 +197,11 @@ async function submit() {
   if (isSubmitting.value) return
 
   if (form.new_password.length < 8) {
-    message.value = '密码至少 8 位。'
+    message.value = t('setup.passwordShort')
     return
   }
   if (form.site_domain && /^https?:\/\//.test(form.site_domain)) {
-    message.value = '域名只填写域名本身，不要带 http:// 或 https://。'
+    message.value = t('setup.domainInvalid')
     return
   }
 
@@ -212,7 +212,7 @@ async function submit() {
     const loginData = await auth.login({ username: 'admin', password: form.new_password })
     router.push(getPostLoginRoute(Boolean(loginData.system_initialized ?? loginData.is_initialized)))
   } catch (error) {
-    message.value = describeError(error, '初始化失败，请检查填写内容后重试。')
+    message.value = describeError(error, t('setup.failed'))
   } finally {
     isSubmitting.value = false
   }

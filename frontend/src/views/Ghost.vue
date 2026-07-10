@@ -70,14 +70,14 @@
     <AppLoading
       v-if="isLoading"
       :title="t('ghost.loadingTitle')"
-      description="正在读取导出历史和当前迁移状态。"
+      :description="t('ghost.loadingDesc')"
     />
 
     <AppError
       v-else-if="loadError"
       :title="t('ghost.loadError')"
       :message="loadError"
-      action-label="重试"
+      :action-label="t('ghost.retry')"
       @retry="loadExports"
     />
 
@@ -113,7 +113,7 @@
             :disabled="!selectedFile || isPreviewing"
             @click="previewGhost"
           >
-            {{ isPreviewing ? '预览中…' : '预览' }}
+            {{ isPreviewing ? t('ghost.previewing') : t('ghost.preview') }}
           </button>
           <button
             class="btn primary"
@@ -121,7 +121,7 @@
             :disabled="!selectedFile || isImporting"
             @click="importGhost"
           >
-            {{ isImporting ? '导入中…' : '确认导入' }}
+            {{ isImporting ? t('ghost.importing') : t('ghost.importConfirmBtn') }}
           </button>
         </div>
 

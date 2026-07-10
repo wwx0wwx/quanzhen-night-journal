@@ -98,7 +98,7 @@ class FolderMonitorManager:
             encryptor = await self._get_encryptor(db)
             (
                 _config_store,
-                _persona_engine,
+                persona_engine,
                 _memory_engine,
                 _qa_engine,
                 _cost_monitor,

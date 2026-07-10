@@ -10,7 +10,7 @@
       v-else-if="loadError"
       :title="t('personas.loadError')"
       :message="loadError"
-      action-label="重新加载"
+      :action-label="t('personas.reload')"
       @retry="load"
     />
 
@@ -74,8 +74,8 @@
 
       <AppEmpty
         v-if="!personas.length"
-        title="还没有其他角色"
-        description="当前只有默认角色。可以再建几个不同风格的角色。"
+        :title="t('personas.emptyTitle')"
+        :description="t('personas.emptyDesc')"
       />
 
       <div
@@ -94,7 +94,7 @@
               </div>
               <strong>{{ persona.name }}</strong>
               <div class="muted">
-                {{ persona.description || '暂无描述' }}
+                {{ persona.description || t('personas.noDescription') }}
               </div>
             </div>
             <div class="button-row">
@@ -107,7 +107,7 @@
                 class="tag"
                 :class="persona.is_active ? 'tag-success' : 'tag-warning'"
               >
-                {{ persona.is_active ? '启用中' : '已停用' }}
+                {{ persona.is_active ? t('personas.enabled') : t('personas.disabled') }}
               </span>
             </div>
           </div>
@@ -139,7 +139,7 @@
               :disabled="isDeleting === persona.id || persona.is_default"
               @click="removePersona(persona)"
             >
-              {{ isDeleting === persona.id ? '删除中...' : '删除' }}
+              {{ isDeleting === persona.id ? t('personas.deleting') : t('personas.delete') }}
             </button>
           </div>
         </div>
@@ -168,25 +168,25 @@ const loadError = ref('')
 const actionError = ref('')
 const isDeleting = ref(null)
 const activeCount = computed(() => personas.value.filter((item) => item.is_active).length)
-const defaultPersonaName = computed(() => personas.value.find((item) => item.is_default)?.name || '未设')
+const defaultPersonaName = computed(() => personas.value.find((item) => item.is_default)?.name || t('personas.unset'))
 
 function structureLabel(value) {
   return (
     {
-      short: '短篇',
-      medium: '中篇',
-      long: '长篇',
-    }[value] || '未设'
+      short: t('personas.structureShort'),
+      medium: t('personas.structureMedium'),
+      long: t('personas.structureLong'),
+    }[value] || t('personas.unset')
   )
 }
 
 function intensityLabel(value) {
   return (
     {
-      calm: '克制',
-      moderate: '适中',
-      intense: '强烈',
-    }[value] || '未设'
+      calm: t('personas.intensityCalm'),
+      moderate: t('personas.intensityModerate'),
+      intense: t('personas.intensityIntense'),
+    }[value] || t('personas.unset')
   )
 }
 
@@ -200,7 +200,7 @@ async function load() {
   try {
     personas.value = await store.load()
   } catch (error) {
-    loadError.value = describeError(error, '加载角色列表失败。')
+    loadError.value = describeError(error, t('personas.loadError'))
   } finally {
     isLoading.value = false
   }
@@ -215,7 +215,7 @@ async function removePersona(persona) {
   try {
     personas.value = await store.remove(persona.id)
   } catch (error) {
-    actionError.value = describeError(error, '删除角色失败。')
+    actionError.value = describeError(error, t('personas.deleteFailed'))
   } finally {
     isDeleting.value = null
   }

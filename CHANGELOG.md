@@ -2,6 +2,24 @@
 
 本文件记录全真夜记各版本的主要变更。
 
+## [1.4.3] - 2026-07-10
+
+### Security / Reliability
+- 加密主密钥优先 `ENCRYPTION_KEY` 或 DB 旁 `.encryption_key` 文件，迁移出 `system_config` 明文。
+- 生产拒绝 `ALLOW_FAKE_LLM`；生产关闭 OpenAPI `/docs`。
+- Cookie 会话 CSRF：Origin/Referer 校验中间件；Webhook 鉴权失败不落库；HMAC 支持 `X-Timestamp` 绑定。
+- telemetry 限流收紧；Setup 预算恢复为 1/20 USD 默认。
+
+### Fixed
+- 目录监控与调度/API 共用 `runtime_factory`，修复 folder_monitor 漏传 `config_store` 导致叙事失效。
+- QA 长度不足改为硬失败（重写/拒绝签发），避免短文经高风险签发绕过。
+- 非法 `publish_target` 返回 400；Caddy 镜像 Caddyfile 变更时刷新 runtime 配置。
+- Ghost「快速快速」错别字；次要页 i18n 补强。
+
+### Docs / Ops
+- 审阅报告与 P1/P2 台账；总纲/工程实施同步 1.4；版本号统一 1.4.2→1.4.3 本版。
+- smoke 支持 2FA / `QZ_SKIP_2FA`；hugo-builder healthcheck；AGENTS 产品不变量。
+
 ## [1.4.2] - 2026-07-10
 
 ### Fixed
