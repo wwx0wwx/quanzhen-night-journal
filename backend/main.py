@@ -16,6 +16,7 @@ from backend.engine.config_store import ConfigStore
 from backend.engine.folder_monitor_manager import FolderMonitorManager
 from backend.engine.persona_engine import PersonaEngine
 from backend.engine.site_runtime import SiteRuntimeManager
+from backend.middleware.csrf_origin import CsrfOriginMiddleware
 from backend.middleware.rate_limit import RateLimitMiddleware
 from backend.models import Event, GenerationTask, Persona, PublicPageView
 from backend.scheduler.jobs import ensure_seed_persona
@@ -270,13 +271,18 @@ async def lifespan(_app: FastAPI):
     await close_database()
 
 
+_boot_settings = get_settings()
 app = FastAPI(
     title="全真夜记 Core",
-    version=get_settings().app_version,
+    version=_boot_settings.app_version,
     lifespan=lifespan,
+    docs_url=None if _boot_settings.is_production else "/docs",
+    redoc_url=None if _boot_settings.is_production else "/redoc",
+    openapi_url=None if _boot_settings.is_production else "/openapi.json",
 )
 app.include_router(api_router, prefix="/api")
 app.add_middleware(RateLimitMiddleware)
+app.add_middleware(CsrfOriginMiddleware)
 
 _settings = get_settings()
 _cors_origins = [
@@ -310,4 +316,9 @@ async def http_exception_handler(_request, exc: HTTPException):
 
 @app.get("/")
 async def root():
-    return {"name": "全真夜记 Core", "version": get_settings().app_version, "docs": "/docs"}
+    settings = get_settings()
+    return {
+        "name": "全真夜记 Core",
+        "version": settings.app_version,
+        "docs": None if settings.is_production else "/docs",
+    }

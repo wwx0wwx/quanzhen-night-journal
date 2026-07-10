@@ -563,11 +563,10 @@ def test_embedding_fallback_requires_manual_review(monkeypatch, authed_client):
 
     async def stable_chat(self, **_kwargs):  # noqa: ANN001
         # Different opening (avoid opening-fingerprint rewrite), still body-similar for fallback overlap.
-        content = (
-            "# 新夜\n\n"
-            "渡口潮气贴着衣摆上来，我把伞柄握紧。"
-            "我靠在廊柱边，看雪落在剑鞘上。" + " 夜色很深。" * 40
-        )
+        # Must clear default qa.min_length=900 so length hard-fail does not mask high-risk signoff.
+        filler = "我靠在廊柱边，看雪落在剑鞘上。夜里风从门缝里进来，属下没有动。夜色很深。"
+        content = "# 新夜\n\n" + "渡口潮气贴着衣摆上来，我把伞柄握紧。" + filler * 30
+        assert len(content) >= 900
         return content, {"prompt_tokens": 12, "completion_tokens": 120}, 5
 
     async def missing_embeddings(self, **_kwargs):  # noqa: ANN001

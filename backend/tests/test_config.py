@@ -205,25 +205,53 @@ def test_production_requires_custom_jwt_secret():
 
 
 def test_production_allows_custom_jwt_secret():
-    settings = Settings(_env_file=None, ENVIRONMENT="production", JWT_SECRET="custom-prod-secret-123456789")
+    settings = Settings(
+        _env_file=None,
+        ENVIRONMENT="production",
+        JWT_SECRET="custom-prod-secret-123456789",
+        ALLOW_FAKE_LLM="false",
+    )
     settings.validate_runtime()
 
 
-def test_get_encryptor_backfills_empty_encryption_key(client):
+def test_production_rejects_fake_llm():
+    settings = Settings(
+        _env_file=None,
+        ENVIRONMENT="production",
+        JWT_SECRET="custom-prod-secret-123456789",
+        ALLOW_FAKE_LLM="true",
+    )
+    try:
+        settings.validate_runtime()
+    except RuntimeError as exc:
+        assert "ALLOW_FAKE_LLM" in str(exc)
+    else:
+        raise AssertionError("production runtime should reject ALLOW_FAKE_LLM")
+
+
+def test_get_encryptor_backfills_empty_encryption_key(client, tmp_path, monkeypatch):
     async def exercise() -> None:
+        from backend.security.encryption import _key_file_path
+
         session_factory = get_sessionmaker()
+        # Clear any legacy DB key and key file so ensure_encryptor must mint a new one.
+        key_path = _key_file_path()
+        if key_path.exists():
+            key_path.unlink()
         async with session_factory() as db:
             entry = await db.get(SystemConfig, "system.encryption_key")
-            assert entry is not None
-            entry.value = ""
-            await db.commit()
+            if entry is not None:
+                entry.value = ""
+                await db.commit()
 
         async with session_factory() as db:
             encryptor = await get_encryptor(db)
-            refreshed = await db.get(SystemConfig, "system.encryption_key")
             assert encryptor is not None
-            assert refreshed is not None
-            assert refreshed.value
-            assert refreshed.updated_at
+            # Master key lives next to DB (file), not plaintext in system_config.
+            assert _key_file_path().is_file()
+            assert _key_file_path().read_text(encoding="utf-8").strip()
+            refreshed = await db.get(SystemConfig, "system.encryption_key")
+            if refreshed is not None:
+                assert not (refreshed.value or "").strip()
 
     asyncio.run(exercise())

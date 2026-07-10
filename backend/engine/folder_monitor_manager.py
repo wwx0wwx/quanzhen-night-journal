@@ -9,23 +9,9 @@ from sqlalchemy import select
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers.polling import PollingObserver
 
-from backend.adapters.embedding_adapter import EmbeddingAdapter
-from backend.adapters.llm_adapter import LLMAdapter
 from backend.database import get_sessionmaker
-from backend.engine.anti_perfection import AntiPerfectionEngine
-from backend.engine.config_store import ConfigStore
-from backend.engine.context_builder import ContextBuilder
-from backend.engine.cost_monitor import CostMonitor
-from backend.engine.digital_stamp import DigitalStampGenerator
-from backend.engine.event_engine import EventEngine
-from backend.engine.generation_orchestrator import GenerationOrchestrator
-from backend.engine.memory_engine import MemoryEngine
-from backend.engine.notification_manager import NotificationManager
-from backend.engine.persona_engine import PersonaEngine
-from backend.engine.prompt_builder import PromptBuilder
-from backend.engine.qa_engine import QAEngine
+from backend.engine.runtime_factory import build_generation_runtime
 from backend.models import FolderMonitor
-from backend.publisher.registry import PublisherRegistry
 from backend.security.encryption import ConfigEncryptor, ensure_encryptor
 
 
@@ -110,28 +96,16 @@ class FolderMonitorManager:
         session_factory = get_sessionmaker()
         async with session_factory() as db:
             encryptor = await self._get_encryptor(db)
-            config_store = ConfigStore(db, encryptor)
-            persona_engine = PersonaEngine(db)
-            memory_engine = MemoryEngine(db, config_store, EmbeddingAdapter(), LLMAdapter())
-            qa_engine = QAEngine(db, config_store, EmbeddingAdapter())
-            cost_monitor = CostMonitor(db, config_store)
-            anti = AntiPerfectionEngine(db, config_store)
-            context_builder = ContextBuilder(db, memory_engine, persona_engine, anti)
-            orchestrator = GenerationOrchestrator(
-                db=db,
-                config_store=config_store,
-                persona_engine=persona_engine,
-                memory_engine=memory_engine,
-                context_builder=context_builder,
-                prompt_builder=PromptBuilder(),
-                qa_engine=qa_engine,
-                cost_monitor=cost_monitor,
-                llm_adapter=LLMAdapter(),
-                notification_manager=NotificationManager(config_store),
-                publisher_registry=PublisherRegistry(),
-                digital_stamp_generator=DigitalStampGenerator(),
-            )
-            event_engine = EventEngine(db, config_store)
+            (
+                _config_store,
+                _persona_engine,
+                _memory_engine,
+                _qa_engine,
+                _cost_monitor,
+                _sensory_engine,
+                event_engine,
+                orchestrator,
+            ) = build_generation_runtime(db, encryptor)
             payload = {"monitor_path": monitor_path, "file_path": file_path}
             event = await event_engine.create_event(
                 "folder_monitor",

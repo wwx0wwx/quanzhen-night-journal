@@ -11,10 +11,8 @@ from backend.utils.time import utcnow_iso
 
 
 def _long_body(seed: str) -> str:
-    # Ensure min_length=900 path can still be tested by lowering min in test.
-    chunk = f"属下立在风里，王爷的灯还亮着。{seed}袖中手指慢慢收紧。夜色 thrift。"
-    # Use Chinese-heavy filler
-    filler = "这一夜很静，静到只能听见檐角的风。我把话压回去，只留下半步距离。"
+    # Tests lower qa.min_length; keep body Chinese-heavy for language QA.
+    filler = f"这一夜很静，静到只能听见檐角的风。我把话压回去，只留下半步距离。{seed}"
     body = filler * 20
     return f"# {seed}\n\n{body}"
 

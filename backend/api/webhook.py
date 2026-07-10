@@ -27,7 +27,8 @@ async def trigger_webhook(
         payload,
         auth_header=request.headers.get("Authorization"),
         raw_body=raw_body,
-        signature_header=request.headers.get("X-Signature"),
+        signature_header=request.headers.get("X-Signature") or request.headers.get("X-Hub-Signature-256"),
+        timestamp_header=request.headers.get("X-Timestamp") or request.headers.get("X-Webhook-Timestamp"),
     )
     if event is None:
         return error(2001, "Webhook 未通过鉴权、去重或冷却检查", status_code=401)

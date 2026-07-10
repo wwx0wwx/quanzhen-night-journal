@@ -4,26 +4,14 @@ from datetime import UTC
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.adapters.embedding_adapter import EmbeddingAdapter
-from backend.adapters.llm_adapter import LLMAdapter
 from backend.api.deps import get_encryptor
 from backend.database import get_sessionmaker
-from backend.engine.anti_perfection import AntiPerfectionEngine
 from backend.engine.config_store import ConfigStore
-from backend.engine.context_builder import ContextBuilder
-from backend.engine.cost_monitor import CostMonitor
-from backend.engine.digital_stamp import DigitalStampGenerator
-from backend.engine.event_engine import EventEngine
-from backend.engine.generation_orchestrator import GenerationOrchestrator
 from backend.engine.ghost_manager import GhostManager
-from backend.engine.memory_engine import MemoryEngine
 from backend.engine.notification_manager import NotificationManager
 from backend.engine.persona_engine import PersonaEngine
-from backend.engine.prompt_builder import PromptBuilder
-from backend.engine.qa_engine import QAEngine
-from backend.engine.sensory_engine import SensoryEngine
+from backend.engine.runtime_factory import build_generation_runtime
 from backend.models import AuditLog
-from backend.publisher.registry import PublisherRegistry
 from backend.utils.audit import log_audit
 from backend.utils.default_persona import (
     apply_default_persona_update,
@@ -37,29 +25,16 @@ async def _runtime():
     session_factory = get_sessionmaker()
     async with session_factory() as db:
         encryptor = await get_encryptor(db)
-        config_store = ConfigStore(db, encryptor)
-        persona_engine = PersonaEngine(db)
-        memory_engine = MemoryEngine(db, config_store, EmbeddingAdapter(), LLMAdapter())
-        qa_engine = QAEngine(db, config_store, EmbeddingAdapter())
-        cost_monitor = CostMonitor(db, config_store)
-        anti = AntiPerfectionEngine(db, config_store)
-        context_builder = ContextBuilder(
-            db, memory_engine, persona_engine, anti, config_store=config_store
-        )
-        orchestrator = GenerationOrchestrator(
-            db=db,
-            config_store=config_store,
-            persona_engine=persona_engine,
-            memory_engine=memory_engine,
-            context_builder=context_builder,
-            prompt_builder=PromptBuilder(),
-            qa_engine=qa_engine,
-            cost_monitor=cost_monitor,
-            llm_adapter=LLMAdapter(),
-            notification_manager=NotificationManager(config_store),
-            publisher_registry=PublisherRegistry(),
-            digital_stamp_generator=DigitalStampGenerator(),
-        )
+        (
+            config_store,
+            persona_engine,
+            memory_engine,
+            qa_engine,
+            cost_monitor,
+            sensory_engine,
+            event_engine,
+            orchestrator,
+        ) = build_generation_runtime(db, encryptor)
         yield (
             db,
             config_store,
@@ -67,8 +42,8 @@ async def _runtime():
             memory_engine,
             qa_engine,
             cost_monitor,
-            SensoryEngine(db, config_store),
-            EventEngine(db, config_store),
+            sensory_engine,
+            event_engine,
             orchestrator,
         )
 

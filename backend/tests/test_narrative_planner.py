@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from backend.engine.narrative_planner import NarrativePlanner, NarrativeState, WORLD_PHASES
+from backend.engine.narrative_planner import WORLD_PHASES, NarrativePlanner, NarrativeState
 
 
 def test_phase_progression_covers_prime_years():

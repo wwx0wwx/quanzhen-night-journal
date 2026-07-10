@@ -27,6 +27,8 @@ data/Caddyfile
 data/hugo.toml
 data/ghosts/
 data/quanzhen.db
+data/.encryption_key
+**/.encryption_key
 inbox/*
 !inbox/.gitkeep
 

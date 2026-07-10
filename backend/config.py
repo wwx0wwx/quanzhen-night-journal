@@ -19,12 +19,14 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "全真夜记 Core"
-    app_version: str = "1.0.10"
+    app_version: str = "1.4.2"
     environment: str = Field(default="development", alias="ENVIRONMENT")
     jwt_secret: str = Field(
         default=DEFAULT_JWT_SECRET,
         alias="JWT_SECRET",
     )
+    # Preferred Fernet master key (url-safe base64). Prefer env over DB/file.
+    encryption_key: str = Field(default="", alias="ENCRYPTION_KEY")
     jwt_expire_hours: int = Field(default=24, alias="JWT_EXPIRE_HOURS")
     cookie_name: str = Field(default="qz_token", alias="COOKIE_NAME")
     database_url: str = Field(
@@ -161,6 +163,8 @@ class Settings(BaseSettings):
     def validate_runtime(self) -> None:
         if self.is_production and self.jwt_secret.strip() == DEFAULT_JWT_SECRET:
             raise RuntimeError("production environment requires a custom JWT_SECRET")
+        if self.is_production and self.allow_fake_llm:
+            raise RuntimeError("production environment forbids ALLOW_FAKE_LLM=true")
 
 
 @lru_cache(maxsize=1)

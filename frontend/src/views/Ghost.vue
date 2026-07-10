@@ -23,7 +23,7 @@
           :disabled="isBackingUp"
           @click="backupDatabase"
         >
-          {{ isBackingUp ? '备份中…' : '快速快速备份数据库' }}
+          {{ isBackingUp ? t('ghost.backingUp') : t('ghost.backupDb') }}
         </button>
       </div>
     </div>

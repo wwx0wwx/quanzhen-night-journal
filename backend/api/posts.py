@@ -11,7 +11,7 @@ from backend.engine.digital_stamp import DigitalStampGenerator
 from backend.engine.generation_orchestrator import GenerationOrchestrator
 from backend.engine.qa_engine import QAEngine
 from backend.models import GenerationTask, Post, PostRevision
-from backend.publisher.registry import PublisherRegistry
+from backend.publisher.registry import PublisherRegistry, UnknownPublishTarget
 from backend.schemas.post import PostCreate, PostUpdate
 from backend.security.auth import get_current_user
 from backend.utils.audit import log_audit
@@ -244,7 +244,15 @@ async def publish_post(
         await log_audit(db, "user", "post.publish", "post", str(post.id), {"mode": "task_linked"})
         await db.commit()
         return success(_serialize_post(post, task))
-    publisher = PublisherRegistry().get(post.publish_target)
+    try:
+        publisher = PublisherRegistry().get(post.publish_target)
+    except UnknownPublishTarget:
+        return error(
+            2002,
+            f"未知发布目标: {post.publish_target}",
+            {"known": PublisherRegistry().known_targets()},
+            status_code=400,
+        )
     post.status = "publishing"
     post.updated_at = utcnow_iso()
     await db.commit()

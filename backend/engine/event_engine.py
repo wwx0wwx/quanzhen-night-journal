@@ -54,21 +54,12 @@ class EventEngine:
         auth_header: str | None,
         raw_body: bytes,
         signature_header: str | None = None,
+        timestamp_header: str | None = None,
     ) -> Event | None:
-        if not await self._verify_auth(auth_header, raw_body, signature_header):
-            event = Event(
-                event_type="webhook",
-                source=payload.get("source", "webhook"),
-                raw_payload=json_dumps(payload),
-                normalized_semantic=self._normalize(payload),
-                auth_status="failed",
-                dedup_key=None,
-                cooldown_status="ready",
-                created_at=utcnow_iso(),
-                task_id=None,
-            )
-            self.db.add(event)
-            await self.db.flush()
+        if not await self._verify_auth(
+            auth_header, raw_body, signature_header, timestamp_header=timestamp_header
+        ):
+            # Do not persist auth-failed webhook noise (avoids unbounded table growth).
             return None
 
         dedup_key = self._compute_dedup_key(payload)
@@ -95,13 +86,21 @@ class EventEngine:
         auth_header: str | None,
         raw_body: bytes,
         signature_header: str | None,
+        *,
+        timestamp_header: str | None = None,
     ) -> bool:
         mode = await self.config_store.get("webhook.auth_mode", "bearer")
         token = await self.config_store.get("webhook.auth_token", "")
         if not token:
             return False
         if mode == "hmac":
-            return verify_hmac(signature_header, raw_body, token)
+            # Prefer timestamp-bound HMAC when client sends X-Timestamp (anti-replay).
+            return verify_hmac(
+                signature_header,
+                raw_body,
+                token,
+                timestamp_header=timestamp_header,
+            )
         return verify_bearer(auth_header, token)
 
     async def _is_duplicate(self, dedup_key: str) -> bool:

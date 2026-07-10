@@ -10,11 +10,17 @@ from backend.models import CostRecord
 from backend.schemas.cost import BudgetStatus
 from backend.utils.time import UTC, utcnow, utcnow_iso
 
-PRICING = {
+# Fallback table; runtime may override via config budget.pricing_json
+# shape: {"model-id": [input_per_m_tokens_usd, output_per_m_tokens_usd], "default": [...]}
+DEFAULT_PRICING: dict[str, tuple[float, float]] = {
     "default": (0.50, 1.50),
     "gpt-4o-mini": (0.15, 0.60),
     "gpt-4.1-mini": (0.40, 1.60),
+    "gpt-4o": (2.50, 10.00),
+    "deepseek-chat": (0.14, 0.28),
+    "qwen-plus": (0.40, 1.20),
 }
+PRICING = DEFAULT_PRICING
 
 
 class CostMonitor:
@@ -76,8 +82,25 @@ class CostMonitor:
         status = await self.check_budget()
         await self.config_store.set("budget.is_hibernating", "1" if status.is_hibernating else "0", category="budget")
 
+    async def _pricing_table(self) -> dict[str, tuple[float, float]]:
+        raw = await self.config_store.get("budget.pricing_json", "") or ""
+        table = dict(DEFAULT_PRICING)
+        if raw.strip():
+            from backend.utils.serde import json_loads
+
+            data = json_loads(raw, {})
+            if isinstance(data, dict):
+                for key, value in data.items():
+                    if isinstance(value, (list, tuple)) and len(value) >= 2:
+                        try:
+                            table[str(key)] = (float(value[0]), float(value[1]))
+                        except (TypeError, ValueError):
+                            continue
+        return table
+
     async def estimate_cost(self, token_in: int, token_out: int, model_id: str) -> float:
-        input_price, output_price = PRICING.get(model_id, PRICING["default"])
+        table = await self._pricing_table()
+        input_price, output_price = table.get(model_id, table.get("default", DEFAULT_PRICING["default"]))
         total = (token_in / 1_000_000) * input_price + (token_out / 1_000_000) * output_price
         return round(total, 6)
 

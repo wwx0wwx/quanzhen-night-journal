@@ -30,10 +30,18 @@ class AntiPerfectionEngine:
         return len(recent_tags) == 3 and all("high_cpu" in entry for entry in recent_tags)
 
     def modify_generation_params(self, persona: Persona) -> dict:
+        return self.static_modify_params(persona)
+
+    @staticmethod
+    def static_modify_params(persona: Persona) -> dict:
         params = json_loads(persona.stability_params, {"temperature_base": 0.7, "temperature_range": [0.3, 1.2]})
         upper = params.get("temperature_range", [0.3, 1.2])[-1]
+        try:
+            temperature = float(upper)
+        except (TypeError, ValueError):
+            temperature = 1.2
         return {
-            "temperature": upper,
-            "max_tokens_scale": 0.35,
+            "temperature": temperature,
+            "max_tokens_scale": 0.85,
             "extra_prompt": "允许出现轻微碎片化、不稳定、意识流式跳接，但仍保持人格一致。",
         }

@@ -54,6 +54,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         ("/api/auth/login", RateLimitRule(limit=10, window_seconds=300)),
         ("/api/setup/complete", RateLimitRule(limit=5, window_seconds=3600)),
         ("/api/webhook", RateLimitRule(limit=30, window_seconds=60)),
+        ("/api/telemetry", RateLimitRule(limit=60, window_seconds=60)),
         ("/api/config/test-llm", RateLimitRule(limit=20, window_seconds=60)),
         ("/api/config/test-embedding", RateLimitRule(limit=20, window_seconds=60)),
     )

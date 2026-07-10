@@ -8,6 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.adapters.llm_adapter import LLMAdapter
+from backend.engine.anti_perfection import AntiPerfectionEngine
 from backend.engine.config_store import ConfigStore
 from backend.engine.context_builder import ContextBuilder
 from backend.engine.cost_monitor import CostMonitor
@@ -225,12 +226,14 @@ class GenerationOrchestrator:
                     )
                     await self.db.commit()
 
+                    # Hard fails: rewrite or hard-fail — never auto-publish / never signoff-bypass.
                     if (
                         not qa_result.get("integrity_ok", True)
                         or not qa_result.get("perspective_ok", True)
                         or not qa_result.get("format_ok", True)
                         or not qa_result.get("title_ok", True)
                         or not qa_result.get("opening_ok", True)
+                        or not qa_result.get("length_ok", True)
                     ):
                         reason, error_code = self._qa_rewrite_failure(qa_result)
                         if task.retry_count >= task.max_retries:
@@ -361,7 +364,14 @@ class GenerationOrchestrator:
         if task.status != "waiting_human_signoff":
             raise InvalidTransition(f"task {task.id} is not waiting_human_signoff")
         qa_result = json_loads(task.qa_result, {})
-        if not qa_result.get("integrity_ok", True) or not qa_result.get("perspective_ok", True):
+        if (
+            not qa_result.get("integrity_ok", True)
+            or not qa_result.get("perspective_ok", True)
+            or not qa_result.get("length_ok", True)
+            or not qa_result.get("title_ok", True)
+            or not qa_result.get("opening_ok", True)
+            or not qa_result.get("format_ok", True)
+        ):
             reason, error_code = self._qa_rewrite_failure(qa_result)
             self._append_trace(task, "approval_blocked", reason=reason)
             return await self._transition(
@@ -555,8 +565,13 @@ class GenerationOrchestrator:
         model_id = await self.config_store.get("llm.model_id", "")
         temperature = self._generation_temperature(persona, anti_perfection=anti_perfection)
         max_tokens = self._safe_int(await self.config_store.get("llm.max_tokens", "2400"), default=2400)
+        system_extra = ""
         if anti_perfection:
+            anti_params = AntiPerfectionEngine.static_modify_params(persona)
+            temperature = float(anti_params.get("temperature", temperature))
+            # Keep a full token budget; anti-perfection injects style via extra_prompt.
             max_tokens = max(max_tokens, 2400)
+            system_extra = str(anti_params.get("extra_prompt") or "")
         return await self.llm_adapter.chat(
             base_url=base_url or "",
             api_key=api_key or "",
@@ -568,6 +583,7 @@ class GenerationOrchestrator:
                         f"以人格 {persona.name} 的第一人称写作。"
                         "正文叙述者只能自称“我”或人格设定中的自称，禁止用“你”“您”“你们”作为叙事视角。"
                         "保持克制、具体、人格一致。"
+                        + (f" {system_extra}" if system_extra else "")
                     ),
                 },
                 {"role": "user", "content": prompt},
@@ -708,7 +724,8 @@ class GenerationOrchestrator:
             "Use strict first-person narration in the article body: write as 我/属下, "
             "and do not address the reader, 王爷, or any narration target as 你/您/你们. "
             "The first non-empty line must be a Markdown H1 like '# 具体题目', followed by one blank line. "
-            "Title must not duplicate any historical title. Opening ~40 characters must not near-copy prior posts."
+            "Title must not duplicate any historical title. Opening ~40 characters must not near-copy prior posts. "
+            "Respect length limits (default min about 900 Chinese characters of body)."
         )
 
     def _build_truncation_retry_prompt(self, prompt: str, content: str) -> str:
@@ -734,6 +751,8 @@ class GenerationOrchestrator:
             return qa_result.get("title_reason") or "title must be unique", "title_duplicate"
         if not qa_result.get("opening_ok", True):
             return qa_result.get("opening_reason") or "opening near-duplicate", "opening_near_duplicate"
+        if not qa_result.get("length_ok", True):
+            return "content length outside qa.min_length/qa.max_length", "length_out_of_range"
         return "generated content needs rewrite", "qa_rewrite_required"
 
     def _narrative_meta_from_context(self, context) -> dict | None:  # noqa: ANN001

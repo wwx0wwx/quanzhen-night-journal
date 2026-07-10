@@ -1,6 +1,6 @@
 -- ============================================================
 -- 全真夜记 (Quanzhen Night Journal) — 完整数据库 Schema
--- 版本: 2026-04-19
+-- 版本: 2026-07-10
 -- 数据库: SQLite (WAL 模式)
 -- 说明: 当前实现使用普通表存储 JSON embedding，由应用层完成相似度计算
 -- ============================================================
@@ -82,6 +82,12 @@ INSERT OR IGNORE INTO system_config (key, value, category) VALUES
     ('qa.template_phrases',       '["首先","其次","总之","综上所述","值得注意的是"]', 'qa'),
     ('narrative.enabled',         '1',             'narrative'),
     ('narrative.posts_per_world_year', '15',       'narrative'),
+    ('backup.auto_enabled',        '0',                'backup'),
+    ('backup.auto_cron',           '0 3 * * 0',        'backup'),
+    ('backup.keep_count',          '8',                'backup'),
+    ('backup.ghost_weekly_enabled','0',                'backup'),
+    ('budget.pricing_json',        '{}',               'budget'),
+
     ('anti_perfection.enabled',          '1',      'anti_perfection'),
     ('anti_perfection.consecutive_max',  '3',      'anti_perfection'),
     ('anti_perfection.cooldown_hours',   '24',     'anti_perfection'),
@@ -273,6 +279,7 @@ CREATE TABLE IF NOT EXISTS generation_tasks (
     trace_json          TEXT    NOT NULL DEFAULT '[]',
     error_code          TEXT,
     error_message       TEXT,
+    acknowledged_at     TEXT,
     started_at          TEXT    NOT NULL DEFAULT (datetime('now')),
     finished_at         TEXT,
     post_id             INTEGER,

@@ -80,8 +80,9 @@ async def setup_complete(
         await config_store.set("schedule.posts_per_cycle", "1", category="schedule")
         await config_store.set("schedule.publish_time", "21:02", category="schedule")
         await config_store.set("schedule.cycle_anchor_date", date.today().isoformat(), category="schedule")
-        await config_store.set("budget.daily_limit_usd", "99999", category="budget")
-        await config_store.set("budget.monthly_limit_usd", "99999", category="budget")
+        # Keep protective defaults (schema: 1.00 / 20.00); operators raise in Settings.
+        await config_store.set("budget.daily_limit_usd", "1.00", category="budget")
+        await config_store.set("budget.monthly_limit_usd", "20.00", category="budget")
         await config_store.set("qa.duplicate_threshold", "0.75", category="qa")
         await config_store.set("qa.duplicate_block_threshold", "0.92", category="qa")
         await config_store.set("panel.status_text", "{user} 正在守夜", category="panel")
