@@ -87,8 +87,51 @@ def test_state_roundtrip_json():
         world_year=0.66,
         last_relation_tones=["守护", "占有"],
         sister_in_residence=True,
+        posts_since_easter_egg=3,
+        last_easter_egg_ids=["rouge_market"],
     )
     restored = NarrativeState.from_json(state.to_json())
     assert restored.posts_published == 10
     assert restored.sister_in_residence is True
     assert restored.last_relation_tones == ["守护", "占有"]
+    assert restored.posts_since_easter_egg == 3
+    assert restored.last_easter_egg_ids == ["rouge_market"]
+
+
+def test_easter_egg_fires_after_gap_and_includes_idle_beats():
+    planner = NarrativePlanner()
+    state = NarrativeState(posts_published=20, world_year=1.3, posts_since_easter_egg=14)
+    card = planner.build_task_card(
+        persona_id=1,
+        scene_pool=[{"时间": "深夜", "地点": "廊下", "天气": "雪", "方向": "守夜"}],
+        state=state,
+        seed="egg-force",
+    )
+    assert card.scene_bucket == "闲笔彩蛋"
+    assert card.easter_egg_id
+    assert "小彩蛋" in " ".join(card.requirements) or card.easter_egg_id
+    block = planner.format_task_card_block(card)
+    assert "小彩蛋" in block
+    # Advance resets counter.
+    new_state = planner.advance_after_publish(
+        state, card, title="粉", content="# 粉\n\n午后香粉气淡淡的，我把瓷盒按进袖里。", posts_per_world_year=15
+    )
+    assert new_state.posts_since_easter_egg == 0
+    assert card.easter_egg_id in new_state.last_easter_egg_ids
+
+
+def test_easter_egg_suppressed_within_min_gap():
+    planner = NarrativePlanner()
+    state = NarrativeState(posts_published=5, posts_since_easter_egg=2)
+    # Even with many seeds, min gap should block eggs.
+    eggs = 0
+    for i in range(20):
+        card = planner.build_task_card(
+            persona_id=1,
+            scene_pool=[{"时间": "深夜", "地点": "廊下", "天气": "雪", "方向": "守夜"}],
+            state=state,
+            seed=f"no-egg-{i}",
+        )
+        if card.easter_egg_id:
+            eggs += 1
+    assert eggs == 0

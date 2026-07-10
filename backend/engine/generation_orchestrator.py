@@ -759,6 +759,8 @@ class GenerationOrchestrator:
                 requirements=list(data.get("requirements") or []),
                 relation_state_notes=list(data.get("relation_state_notes") or []),
                 enabled=bool(data.get("enabled", True)),
+                easter_egg_id=str(data.get("easter_egg_id") or ""),
+                easter_egg_label=str(data.get("easter_egg_label") or ""),
             )
         except (TypeError, ValueError, KeyError):
             return None

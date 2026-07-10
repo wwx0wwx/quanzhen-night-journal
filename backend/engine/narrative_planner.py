@@ -101,10 +101,177 @@ WORLD_PHASES: list[dict[str, Any]] = [
 ]
 
 RELATION_TONES = ("主从", "守护", "占有", "暗火")
-SCENE_BUCKETS = ("府内夜", "江湖路", "姐姐线", "密令", "白日闲笔")
+SCENE_BUCKETS = ("府内夜", "江湖路", "姐姐线", "密令", "白日闲笔", "闲笔彩蛋")
+
+# Sparse slice-of-life easter eggs (~once every 10–14 posts). Still in-character:
+# dry, restrained, never 撒娇; often ends with a quiet complaint about 位份/任务.
+EASTER_EGG_CATALOG: list[dict[str, Any]] = [
+    {
+        "id": "rouge_market",
+        "title_hint": "胭脂 / 水粉 / 粉铺",
+        "scene": {
+            "时间": "午后",
+            "地点": "城中胭脂铺或香粉摊",
+            "天气": "晴暖",
+            "方向": (
+                "今日无差遣，独自去采买喜欢的胭脂水粉；认真挑色、问价、藏进袖里，"
+                "回府后既有一点隐秘的高兴，末尾却淡淡抱怨王爷居然不给自己安排任务"
+            ),
+        },
+        "relation_tone": "主从",
+        "beats": [
+            "写具体物件（色泽、瓷盒、纸包、指尖气味），不要空喊「开心」。",
+            "收束必须落到一句克制的抱怨：虽有片刻轻快，却仍介意王爷今日不派事——像被闲置。",
+            "禁止撒娇哭闹；高兴要藏着写，抱怨要淡、要有骨头。",
+        ],
+    },
+    {
+        "id": "sweet_soup",
+        "title_hint": "糖水 / 糕点",
+        "scene": {
+            "时间": "黄昏",
+            "地点": "街角糖水摊或糕点铺",
+            "天气": "微风",
+            "方向": (
+                "无事可做时买一碗不常吃的甜食；吃完又觉得自己不像个正经属下，"
+                "回去把碗洗净，心里嘀咕王爷怎么能让她闲成这样"
+            ),
+        },
+        "relation_tone": "主从",
+        "beats": [
+            "写味道与吞咽时的迟疑（她很少允许自己「浪费时间」）。",
+            "末尾淡刺：闲着比受伤更别扭——王爷难道不需要她了？",
+        ],
+    },
+    {
+        "id": "new_hairpin",
+        "title_hint": "发簪 / 小饰",
+        "scene": {
+            "时间": "上午",
+            "地点": "首饰摊或银匠铺外",
+            "天气": "薄云",
+            "方向": (
+                "看中一只朴素发簪，纠结很久才买下；回府对镜试戴又摘下收起，"
+                "想王爷大概不会注意，又因今日无任务而莫名烦"
+            ),
+        },
+        "relation_tone": "占有",
+        "beats": [
+            "簪子是「给自己」还是「想被看见」写含糊，点到为止。",
+            "收束：无差遣的空白让她更在意有没有被需要。",
+        ],
+    },
+    {
+        "id": "stray_cat",
+        "title_hint": "猫 / 檐下",
+        "scene": {
+            "时间": "午后",
+            "地点": "王府后墙外或巷口",
+            "天气": "懒阳",
+            "方向": (
+                "无巡可走时与一只野猫对峙半日；丢了半块干粮，又觉得自己多余，"
+                "最后抱怨府里太安稳、王爷太不派活"
+            ),
+        },
+        "relation_tone": "守护",
+        "beats": [
+            "猫与人的距离感要像她自己——近不得、远不得。",
+            "闲得发慌写成克制的别扭，不是卖萌。",
+        ],
+    },
+    {
+        "id": "mending_sleeve",
+        "title_hint": "缝补 / 线",
+        "scene": {
+            "时间": "入夜",
+            "地点": "自己的窄房灯下",
+            "天气": "静",
+            "方向": (
+                "白日无命，夜里补一件磨破的白衣袖口；针脚细密，补完却觉得手空，"
+                "小声腹诽王爷今日连密令都不给"
+            ),
+        },
+        "relation_tone": "主从",
+        "beats": [
+            "缝补动作要具体（线、针、指腹的茧）。",
+            "结尾：闲暇像不被信任，或像不被需要——二选一，淡写。",
+        ],
+    },
+    {
+        "id": "bookstall_browse",
+        "title_hint": "书摊 / 话本",
+        "scene": {
+            "时间": "上午",
+            "地点": "城东书摊",
+            "天气": "阴",
+            "方向": (
+                "没事时翻到一本荒唐话本，读了两页又合上；觉得自己荒唐，"
+                "更荒唐的是王爷竟让属下闲到去读闲书"
+            ),
+        },
+        "relation_tone": "主从",
+        "beats": [
+            "话本内容只露一句，不要写成读书笔记。",
+            "抱怨要冷幽默、短，像对自己说的。",
+        ],
+    },
+    {
+        "id": "rain_eaves_idle",
+        "title_hint": "躲雨 / 空闲",
+        "scene": {
+            "时间": "午后",
+            "地点": "城中茶棚檐下",
+            "天气": "急雨初歇",
+            "方向": (
+                "本想出门找点事做，被雨困在茶棚；听别人闲聊武林八卦，自己一句不接，"
+                "雨停后才意识到今天王爷真的什么也没吩咐"
+            ),
+        },
+        "relation_tone": "守护",
+        "beats": [
+            "八卦只作背景声，她不信大话。",
+            "空闲的不安收在最后一两句。",
+        ],
+    },
+    {
+        "id": "flower_market",
+        "title_hint": "买花 / 折枝",
+        "scene": {
+            "时间": "清晨",
+            "地点": "花市或担花人摊前",
+            "天气": "露重",
+            "方向": (
+                "买一枝不名贵的花带回自己房里，插进粗瓷瓶；看了一会儿又觉得浪费，"
+                "末了仍抱怨无任务比刀伤更磨人"
+            ),
+        },
+        "relation_tone": "主从",
+        "beats": [
+            "花的香要极淡，符合她不外放的气息。",
+            "高兴与自责并置，最后落到「王爷不差遣」。",
+        ],
+    },
+]
 
 # Keywords for bucket classification of scene_pool entries.
 _BUCKET_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "闲笔彩蛋": (
+        "胭脂",
+        "水粉",
+        "香粉",
+        "糖水",
+        "糕点",
+        "发簪",
+        "野猫",
+        "缝补",
+        "话本",
+        "书摊",
+        "花市",
+        "无差遣",
+        "没事",
+        "闲暇",
+        "采买",
+    ),
     "姐姐线": ("姐姐", "西厢", "送姐姐", "接姐姐", "回府"),
     "密令": ("密令", "密林", "暗巷", "伏击", "边关", "脏活", "夜行", "追踪"),
     "江湖路": ("客栈", "驿", "渡口", "码头", "山道", "酒馆", "茶楼", "药铺", "铁匠", "武器铺", "回府的路上", "马厩"),
@@ -147,6 +314,8 @@ class NarrativeState:
     wound_known: bool | None = None
     lord_warm_line: str = ""
     plot_pressure: str = ""
+    posts_since_easter_egg: int = 99  # high so first window can fire after min gap
+    last_easter_egg_ids: list[str] = field(default_factory=list)
 
     def to_json(self) -> str:
         return json_dumps(asdict(self))
@@ -169,6 +338,8 @@ class NarrativeState:
             wound_known=data.get("wound_known"),
             lord_warm_line=str(data.get("lord_warm_line") or ""),
             plot_pressure=str(data.get("plot_pressure") or ""),
+            posts_since_easter_egg=int(data.get("posts_since_easter_egg") or 99),
+            last_easter_egg_ids=[str(x) for x in (data.get("last_easter_egg_ids") or [])][-12:],
         )
 
 
@@ -188,6 +359,8 @@ class NarrativeTaskCard:
     requirements: list[str]
     relation_state_notes: list[str]
     enabled: bool = True
+    easter_egg_id: str = ""
+    easter_egg_label: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -205,6 +378,8 @@ class NarrativeTaskCard:
             "requirements": self.requirements,
             "relation_state_notes": self.relation_state_notes,
             "enabled": self.enabled,
+            "easter_egg_id": self.easter_egg_id,
+            "easter_egg_label": self.easter_egg_label,
         }
 
 
@@ -216,6 +391,10 @@ class NarrativePlanner:
     OPENING_FINGERPRINT_CHARS = 40
     RECENT_BUCKET_WINDOW = 5
     RECENT_TONE_WINDOW = 7
+    # Easter eggs: min gap then soft chance → roughly every 10–14 posts (~2 weeks daily).
+    EASTER_EGG_MIN_GAP = 8
+    EASTER_EGG_FORCE_GAP = 14
+    EASTER_EGG_CHANCE = 0.22
 
     def state_key(self, persona_id: int) -> str:
         return f"{self.STATE_KEY_PREFIX}{persona_id}"
@@ -324,6 +503,21 @@ class NarrativePlanner:
         scene, bucket = max(bucket_scenes, key=score)
         return scene, bucket
 
+    def should_fire_easter_egg(self, state: NarrativeState, *, rng: random.Random) -> bool:
+        gap = int(state.posts_since_easter_egg)
+        if gap < self.EASTER_EGG_MIN_GAP:
+            return False
+        if gap >= self.EASTER_EGG_FORCE_GAP:
+            return True
+        return rng.random() < self.EASTER_EGG_CHANCE
+
+    def pick_easter_egg(self, state: NarrativeState, *, rng: random.Random) -> dict[str, Any]:
+        recent = set(state.last_easter_egg_ids[-6:])
+        pool = [egg for egg in EASTER_EGG_CATALOG if egg["id"] not in recent]
+        if not pool:
+            pool = list(EASTER_EGG_CATALOG)
+        return rng.choice(pool)
+
     def build_task_card(
         self,
         *,
@@ -341,21 +535,43 @@ class NarrativePlanner:
         rng = random.Random(int(hashlib.sha256(seed_material.encode()).hexdigest()[:16], 16))
 
         phase = self.phase_for_year(state.world_year)
-        tone = self.pick_relation_tone(state, rng=rng) if enabled else "守护"
-        scene, bucket = self.pick_scene(scene_pool, state, rng=rng)
+        easter_egg: dict[str, Any] | None = None
+        easter_egg_id = ""
+        easter_egg_label = ""
 
-        # Align bucket with 占有 sometimes → prefer 姐姐线 if available.
-        if tone == "占有" and "姐姐线" not in state.last_scene_buckets[-3:]:
-            sister_scenes = [
-                s
-                for s in scene_pool
-                if isinstance(s, dict) and self.classify_scene_bucket(s) == "姐姐线"
-            ]
-            if sister_scenes:
-                scene, bucket = self.pick_scene(sister_scenes, state, rng=rng, forced_bucket="姐姐线")
+        if enabled and self.should_fire_easter_egg(state, rng=rng):
+            easter_egg = self.pick_easter_egg(state, rng=rng)
+            easter_egg_id = str(easter_egg["id"])
+            easter_egg_label = str(easter_egg.get("title_hint") or easter_egg_id)
+            tone = str(easter_egg.get("relation_tone") or "主从")
+            scene = {str(k): str(v) for k, v in (easter_egg.get("scene") or {}).items()}
+            bucket = "闲笔彩蛋"
+            # Soften long-arc pressure so the day can breathe.
+            phase_pressure = (
+                f"今日局势退后一步：无密令、无急差。长线仍在（{phase['name']}），"
+                f"但本篇只写「没事可做」的缝隙——轻、短、有骨头，不要写成轻松日常番。"
+            )
+            diary_hint = "闲暇里的一点真喜欢，与不被差遣的淡淡别扭"
+        else:
+            tone = self.pick_relation_tone(state, rng=rng) if enabled else "守护"
+            scene, bucket = self.pick_scene(scene_pool, state, rng=rng)
 
-        if tone == "暗火" and bucket == "府内夜" and rng.random() < 0.5:
-            scene, bucket = self.pick_scene(scene_pool, state, rng=rng, forced_bucket="密令")
+            # Align bucket with 占有 sometimes → prefer 姐姐线 if available.
+            if tone == "占有" and "姐姐线" not in state.last_scene_buckets[-3:]:
+                sister_scenes = [
+                    s
+                    for s in scene_pool
+                    if isinstance(s, dict) and self.classify_scene_bucket(s) == "姐姐线"
+                ]
+                if sister_scenes:
+                    scene, bucket = self.pick_scene(sister_scenes, state, rng=rng, forced_bucket="姐姐线")
+
+            if tone == "暗火" and bucket == "府内夜" and rng.random() < 0.5:
+                scene, bucket = self.pick_scene(scene_pool, state, rng=rng, forced_bucket="密令")
+
+            phase_pressure = str(phase["pressure"])
+            diary_hints = phase.get("diary_hints") or ["一处可感细节"]
+            diary_hint = rng.choice(list(diary_hints))
 
         avoid_titles = list(dict.fromkeys((recent_titles or state.last_titles)[-20:]))
         avoid_openings = list(dict.fromkeys((recent_openings or state.last_openings)[-14:]))
@@ -369,11 +585,21 @@ class NarrativePlanner:
                 "世界线压力只作背景渗入日记，不要写成章回体密谋大纲。",
             ]
         )
-        diary_hints = phase.get("diary_hints") or ["一处可感细节"]
-        diary_hint = rng.choice(list(diary_hints))
+        if easter_egg is not None:
+            requirements.append("【小彩蛋篇】允许一点生活气，但声口仍须克制、清冷，禁止外放撒娇与网感。")
+            for beat in easter_egg.get("beats") or []:
+                requirements.append(str(beat))
+            requirements.append(
+                "彩蛋要自然嵌进夜记，不要自我解释「这是轻松日常」；读者只感到今夜不同寻常地闲。"
+            )
         requirements.append(f"情绪落点建议：{diary_hint}（点到为止，不解释）。")
 
         relation_notes = self._relation_state_notes(state, phase)
+        if easter_egg is not None:
+            relation_notes = [
+                "今日无差遣——闲是真的，介意「不被需要」也是真的。",
+                *relation_notes[:2],
+            ]
 
         year_label = self._year_label(state.world_year)
         return NarrativeTaskCard(
@@ -384,13 +610,15 @@ class NarrativePlanner:
             world_year_label=year_label,
             phase_id=str(phase["id"]),
             phase_name=str(phase["name"]),
-            phase_pressure=str(phase["pressure"]),
+            phase_pressure=phase_pressure,
             diary_hint=str(diary_hint),
             avoid_titles=avoid_titles,
             avoid_openings=avoid_openings,
             requirements=requirements,
             relation_state_notes=relation_notes,
             enabled=enabled,
+            easter_egg_id=easter_egg_id,
+            easter_egg_label=easter_egg_label,
         )
 
     def advance_after_publish(
@@ -417,6 +645,8 @@ class NarrativePlanner:
             wound_known=state.wound_known,
             lord_warm_line=state.lord_warm_line,
             plot_pressure=state.plot_pressure,
+            posts_since_easter_egg=int(state.posts_since_easter_egg) + 1,
+            last_easter_egg_ids=list(state.last_easter_egg_ids),
         )
         if card is not None:
             new_state.last_relation_tones = (new_state.last_relation_tones + [card.relation_tone])[-12:]
@@ -432,6 +662,9 @@ class NarrativePlanner:
                 new_state.last_secret_order = f"{card.world_year_label}密令于{place}"
             if card.relation_tone == "占有" and "偏爱" in card.phase_pressure:
                 new_state.lord_warm_line = new_state.lord_warm_line or "王爷似有一句未说尽的话"
+            if card.easter_egg_id:
+                new_state.posts_since_easter_egg = 0
+                new_state.last_easter_egg_ids = (new_state.last_easter_egg_ids + [card.easter_egg_id])[-12:]
             phase = self.phase_for_year(new_state.world_year)
             new_state.plot_pressure = str(phase["pressure"])[:120]
             new_state.phase_id = str(phase["id"])
@@ -455,8 +688,13 @@ class NarrativePlanner:
             f"- 局势渗入（日记级，勿写成阴谋大纲）：{card.phase_pressure}",
             f"- 关系主音：{card.relation_tone}（另两层最多点到为止）",
             f"- 场景大类：{card.scene_bucket}",
-            "- 场景方向：",
         ]
+        if card.easter_egg_id:
+            lines.append(
+                f"- 小彩蛋：{card.easter_egg_label or card.easter_egg_id}"
+                "（生活缝隙，仍须克制；可有一点真喜欢，收束常带「不被差遣」的淡刺）"
+            )
+        lines.append("- 场景方向：")
         for key, value in card.scene.items():
             lines.append(f"  · {key}：{value}")
         if card.relation_state_notes:
@@ -498,6 +736,9 @@ class NarrativePlanner:
             lines.append("近篇关系主音：" + " → ".join(state.last_relation_tones[-7:]))
         if state.last_scene_buckets:
             lines.append("近篇场景大类：" + " → ".join(state.last_scene_buckets[-7:]))
+        if state.last_easter_egg_ids:
+            lines.append("近次小彩蛋：" + "、".join(state.last_easter_egg_ids[-4:]))
+        lines.append(f"距上一则闲笔彩蛋：约 {int(state.posts_since_easter_egg)} 篇")
         return "\n".join(lines)
 
     def format_worldline_memory_summary(self, state: NarrativeState) -> str:

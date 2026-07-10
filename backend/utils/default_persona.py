@@ -182,11 +182,11 @@ def is_legacy_default_persona(persona: Persona) -> bool:
         and persona.language_style in LEGACY_LANGUAGE_VALUES
     ):
         return True
-    # Soft upgrade: default 全真 missing the 2026-07 narrative hard rules.
+    # Soft upgrade: default 全真 missing the 2026-07 narrative hard rules / easter eggs.
     if persona.is_default and persona.name == "全真":
         style = persona.language_style or ""
         world = persona.worldview_setting or ""
-        if "夜记写法硬约束" not in style or "长线世界" not in world:
+        if "夜记写法硬约束" not in style or "长线世界" not in world or "小彩蛋" not in style:
             return True
     return False
 
