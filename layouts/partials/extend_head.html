@@ -10,3 +10,30 @@ if ('serviceWorker' in navigator) {
   }, { once: true })
 }
 </script>
+{{/* 保留 PaperMod 极简米色风格，仅给卡片类元素加圆角 */}}
+<style>
+  .post-entry,
+  .first-entry,
+  .home-info,
+  .post-single,
+  .page-header,
+  .terms-tags a,
+  .paginav a,
+  .toc,
+  .highlight,
+  pre:not(.chroma) {
+    border-radius: 14px;
+  }
+  .post-entry,
+  .first-entry,
+  .home-info,
+  .post-single {
+    overflow: hidden;
+  }
+  /* 列表卡片间距时圆角更自然 */
+  .post-entry,
+  .first-entry {
+    margin-bottom: 0.35rem;
+  }
+</style>
+
