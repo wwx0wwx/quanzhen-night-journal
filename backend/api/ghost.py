@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -158,6 +158,33 @@ async def list_database_backups(
 ) -> object:
     manager = _manager(db, config_store)
     return success(await manager.list_database_backups())
+
+
+@router.get("/backup-status")
+async def backup_status(
+    request: Request,
+    db: AsyncSession = Depends(get_session),
+    config_store: ConfigStore = Depends(get_config_store),
+    _user=Depends(get_current_user),
+) -> object:
+    manager = _manager(db, config_store)
+    backups = await manager.list_database_backups()
+    recent_auto = [item for item in backups if item.get("automatic")]
+    scheduler = getattr(request.app.state, "scheduler", None)
+    job = scheduler.get_job("auto_database_backup") if scheduler is not None else None
+    next_run = job.next_run_time.isoformat() if job and job.next_run_time else ""
+    return success(
+        {
+            "enabled": (await config_store.get("backup.auto_enabled", "0")) == "1",
+            "cron": await config_store.get("backup.auto_cron", "0 3 * * *"),
+            "keep_count": int(await config_store.get("backup.keep_count", "7") or "7"),
+            "last_auto_at": await config_store.get("backup.last_auto_at", ""),
+            "last_auto_ok": (await config_store.get("backup.last_auto_ok", "")) == "1",
+            "last_auto_filename": await config_store.get("backup.last_auto_filename", ""),
+            "next_run_at": next_run,
+            "recent": recent_auto[:5],
+        }
+    )
 
 
 @router.get("/download/{filename}")

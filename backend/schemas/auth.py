@@ -13,6 +13,21 @@ class ChangePasswordRequest(BaseModel):
     new_password: str = Field(min_length=8)
 
 
+class TwoFactorConfirmRequest(BaseModel):
+    code: str = Field(min_length=6, max_length=12)
+
+
+class TwoFactorDisableRequest(BaseModel):
+    password: str
+    code: str = ""
+
+
+class TwoFactorLoginRequest(BaseModel):
+    pre_auth_token: str
+    code: str = ""
+    recovery_code: str = ""
+
+
 class SetupCompleteRequest(BaseModel):
     new_password: str = Field(min_length=8)
     site_title: str = ""

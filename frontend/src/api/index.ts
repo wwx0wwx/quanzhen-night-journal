@@ -3,6 +3,7 @@ import axios, { type AxiosInstance, type AxiosResponse } from 'axios'
 export type ApiEnvelope<T = unknown> = {
   code?: number
   message?: string
+  message_key?: string
   data?: T
 }
 

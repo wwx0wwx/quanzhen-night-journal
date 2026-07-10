@@ -2,46 +2,46 @@
   <section class="stack">
     <AppLoading
       v-if="isLoading"
-      title="正在加载角色设定"
-      description="正在读取角色详情。"
+      :title="t('personaEdit.loadingTitle')"
+      :description="t('personaEdit.loadingDesc')"
     />
 
     <AppError
       v-else-if="loadError"
-      title="角色设定加载失败"
+      :title="t('personaEdit.loadError')"
       :message="loadError"
-      action-label="重试"
+      :action-label="t('common.retry')"
       @retry="load"
     />
 
     <template v-else>
       <div class="hero persona-edit-hero">
         <div>
-<h1>{{ isNew ? '新建角色设定' : `编辑角色设定 #${route.params.id}` }}</h1>
-          <p>先定她是谁、如何看待王爷与江湖、说话时如何藏锋，再补禁忌与感知词典。默认不需要直接写 JSON。</p>
+<h1>{{ isNew ? t('personaEdit.newTitle') : t('personaEdit.editTitle', { id: route.params.id }) }}</h1>
+          <p>{{ t('personaEdit.subtitle') }}</p>
         </div>
         <div class="persona-edit-hero-side">
           <div class="persona-edit-summary-card">
             <div class="persona-edit-summary-grid">
               <div>
-                <span>禁忌条目</span>
+                <span>{{ t('personaEdit.summary.taboos') }}</span>
                 <strong>{{ tabooCount }}</strong>
               </div>
               <div>
-                <span>感知词典</span>
+                <span>{{ t('personaEdit.summary.lexicon') }}</span>
                 <strong>{{ lexiconCount }}</strong>
               </div>
               <div>
-                <span>场景骰子</span>
+                <span>{{ t('personaEdit.summary.scenes') }}</span>
                 <strong>{{ sceneCount }}</strong>
               </div>
               <div>
-                <span>当前篇幅</span>
+                <span>{{ t('personaEdit.summary.length') }}</span>
                 <strong>{{ structureLabel }}</strong>
               </div>
             </div>
             <div class="muted">
-              {{ form.description || '用一句话说明这个角色的气质。' }}
+              {{ form.description || t('personaEdit.descriptionFallback') }}
             </div>
           </div>
           <div class="button-row">
@@ -50,7 +50,7 @@
               :disabled="isSaving"
               @click="save"
             >
-              {{ isSaving ? '保存中...' : '保存' }}
+              {{ isSaving ? t('common.saving') : t('common.save') }}
             </button>
             <button
               v-if="!isNew"
@@ -58,7 +58,7 @@
               :disabled="isActivating || isDeleting"
               @click="activate"
             >
-              {{ isActivating ? '切换中...' : '设为默认' }}
+              {{ isActivating ? t('common.busy') : t('personaEdit.actions.setDefault') }}
             </button>
             <button
               v-if="!isNew"
@@ -66,7 +66,7 @@
               :disabled="isDeleting || isActivating"
               @click="removePersona"
             >
-              {{ isDeleting ? '删除中...' : '删除角色设定' }}
+              {{ isDeleting ? t('common.busy') : t('personaEdit.actions.delete') }}
             </button>
           </div>
         </div>
@@ -85,48 +85,48 @@
           <div class="persona-panel-head">
             <div>
 <div class="section-title">
-                人物叙述
+                {{ t('personaEdit.sections.story') }}
               </div>
             </div>
             <div class="muted">
-              先写身份、世界观与说话方式，这三块决定了后续风格是否稳定。
+              {{ t('personaEdit.sections.storyDesc') }}
             </div>
           </div>
           <label class="field">
-            <span>名称</span>
+            <span>{{ t('personaEdit.fields.name') }}</span>
             <input
               v-model="form.name"
-              placeholder="例如：全真、守夜白影、廊下执灯人"
+              :placeholder="t('personaEdit.placeholders.name')"
             >
           </label>
           <label class="field">
-            <span>描述</span>
+            <span>{{ t('personaEdit.fields.description') }}</span>
             <textarea
               v-model="form.description"
-              placeholder="一句话写清这个角色的气质和适用场景。"
+              :placeholder="t('personaEdit.placeholders.description')"
             />
           </label>
 
           <label class="field">
             <div class="field-head">
-              <span>核心身份</span>
+              <span>{{ t('personaEdit.fields.identity') }}</span>
               <button
                 class="btn ghost btn-small"
                 type="button"
                 @click="toggleTemplateField('identity_setting')"
               >
-                {{ activeTemplateField === 'identity_setting' ? '收起灵感' : '灵感模板' }}
+                {{ activeTemplateField === 'identity_setting' ? t('personaEdit.actions.hideTemplates') : t('personaEdit.actions.showTemplates') }}
               </button>
             </div>
             <textarea
               v-model="form.identity_setting"
-              placeholder="说明她是谁，她与王爷、姐姐是什么关系，她写字时站在什么位置。"
+              :placeholder="t('personaEdit.placeholders.identity')"
             />
             <div
               v-if="activeTemplateField === 'identity_setting'"
               class="field-template-box"
             >
-              <div class="field-template-hint">点击任一模板即可填入。如果当前已有内容，会先询问是覆盖还是追加。</div>
+              <div class="field-template-hint">{{ t('personaEdit.templateHint') }}</div>
               <div class="button-row">
                 <button
                   v-for="template in inspirationProfiles"
@@ -143,24 +143,24 @@
 
           <label class="field">
             <div class="field-head">
-              <span>世界观</span>
+              <span>{{ t('personaEdit.fields.worldview') }}</span>
               <button
                 class="btn ghost btn-small"
                 type="button"
                 @click="toggleTemplateField('worldview_setting')"
               >
-                {{ activeTemplateField === 'worldview_setting' ? '收起灵感' : '灵感模板' }}
+                {{ activeTemplateField === 'worldview_setting' ? t('personaEdit.actions.hideTemplates') : t('personaEdit.actions.showTemplates') }}
               </button>
             </div>
             <textarea
               v-model="form.worldview_setting"
-              placeholder="说明她如何看待江湖、王府、光与影、守护与误解。"
+              :placeholder="t('personaEdit.placeholders.worldview')"
             />
             <div
               v-if="activeTemplateField === 'worldview_setting'"
               class="field-template-box"
             >
-              <div class="field-template-hint">优先挑一个接近的气质，再按你的世界观继续改写。</div>
+              <div class="field-template-hint">{{ t('personaEdit.worldviewTemplateHint') }}</div>
               <div class="button-row">
                 <button
                   v-for="template in inspirationProfiles"
@@ -177,24 +177,24 @@
 
           <label class="field">
             <div class="field-head">
-              <span>说话方式</span>
+              <span>{{ t('personaEdit.fields.language') }}</span>
               <button
                 class="btn ghost btn-small"
                 type="button"
                 @click="toggleTemplateField('language_style')"
               >
-                {{ activeTemplateField === 'language_style' ? '收起灵感' : '灵感模板' }}
+                {{ activeTemplateField === 'language_style' ? t('personaEdit.actions.hideTemplates') : t('personaEdit.actions.showTemplates') }}
               </button>
             </div>
             <textarea
               v-model="form.language_style"
-              placeholder="描述她常用的称呼、句式、节奏、留白方式，以及妒意与温柔如何显出来。"
+              :placeholder="t('personaEdit.placeholders.language')"
             />
             <div
               v-if="activeTemplateField === 'language_style'"
               class="field-template-box"
             >
-              <div class="field-template-hint">这些模板只负责起笔，后续仍建议按你的项目气质细调。</div>
+              <div class="field-template-hint">{{ t('personaEdit.languageTemplateHint') }}</div>
               <div class="button-row">
                 <button
                   v-for="template in inspirationProfiles"
@@ -214,44 +214,44 @@
           <div class="persona-panel-head">
             <div>
 <div class="section-title">
-                行为约束
+                {{ t('personaEdit.sections.constraints') }}
               </div>
             </div>
             <div class="muted">
-              控制篇幅、强度、禁忌与用词边界。
+              {{ t('personaEdit.sections.constraintsDesc') }}
             </div>
           </div>
           <label class="field">
-            <span>文章长度偏好</span>
+            <span>{{ t('personaEdit.fields.structure') }}</span>
             <select v-model="form.structure_preference">
-              <option value="short">短篇</option>
-              <option value="medium">中篇</option>
-              <option value="long">长篇</option>
+              <option value="short">{{ t('personaEdit.structure.short') }}</option>
+              <option value="medium">{{ t('personaEdit.structure.medium') }}</option>
+              <option value="long">{{ t('personaEdit.structure.long') }}</option>
             </select>
           </label>
           <label class="field">
-            <span>情绪强度</span>
+            <span>{{ t('personaEdit.fields.intensity') }}</span>
             <select v-model="form.expression_intensity">
-              <option value="calm">克制</option>
-              <option value="moderate">适中</option>
-              <option value="intense">强烈</option>
+              <option value="calm">{{ t('personaEdit.intensity.calm') }}</option>
+              <option value="moderate">{{ t('personaEdit.intensity.moderate') }}</option>
+              <option value="intense">{{ t('personaEdit.intensity.intense') }}</option>
             </select>
           </label>
           <label class="field">
-            <span>禁忌（每行一条）</span>
+            <span>{{ t('personaEdit.fields.taboos') }}</span>
             <textarea
               v-model="taboosText"
-              placeholder="输入这个角色不希望出现的词或表达。"
+              :placeholder="t('personaEdit.placeholders.taboos')"
             />
           </label>
 
           <div class="persona-tone-note">
             <div class="persona-tone-item">
-              <span>情绪档位</span>
+              <span>{{ t('personaEdit.summary.intensity') }}</span>
               <strong>{{ intensityLabel }}</strong>
             </div>
             <div class="persona-tone-item">
-              <span>写作节奏</span>
+              <span>{{ t('personaEdit.summary.rhythm') }}</span>
               <strong>{{ structureLabel }}</strong>
             </div>
           </div>
@@ -262,13 +262,13 @@
         <div class="split persona-lexicon-head">
           <div>
 <div class="section-title">
-              感知词典
+              {{ t('personaEdit.sections.lexicon') }}
             </div>
             <div class="muted">
-              当系统感知到某些环境词时，会优先借用你设定的意象来写作。
+              {{ t('personaEdit.sections.lexiconDesc1') }}
             </div>
             <div class="muted">
-              左边填环境词，右边填这个角色更常用的说法。
+              {{ t('personaEdit.sections.lexiconDesc2') }}
             </div>
           </div>
           <div class="button-row">
@@ -277,14 +277,14 @@
               type="button"
               @click="insertLexiconExamples"
             >
-              插入示例
+              {{ t('personaEdit.actions.insertExamples') }}
             </button>
             <button
               class="btn ghost btn-small"
               type="button"
               @click="addLexiconRow"
             >
-              新增条目
+              {{ t('personaEdit.actions.addItem') }}
             </button>
           </div>
         </div>
@@ -293,7 +293,7 @@
           v-if="!lexiconRows.length"
           class="status-banner info"
         >
-          还没有词典条目。可以先插入示例，再按项目语气继续扩充。
+          {{ t('personaEdit.emptyLexicon') }}
         </div>
 
         <div
@@ -307,18 +307,18 @@
           >
             <input
               v-model="row.key"
-              placeholder="环境词，例如 rain、server_room、midnight"
+              :placeholder="t('personaEdit.placeholders.lexiconKey')"
             >
             <input
               v-model="row.value"
-              placeholder="写作意象，例如 雨脚、潮气、机柜低鸣"
+              :placeholder="t('personaEdit.placeholders.lexiconValue')"
             >
             <button
               class="btn ghost btn-small"
               type="button"
               @click="removeLexiconRow(row.id)"
             >
-              删除
+              {{ t('common.delete') }}
             </button>
           </div>
         </div>
@@ -326,15 +326,15 @@
         <details class="panel panel-pad lexicon-advanced">
           <summary class="settings-section-summary">
             <div>
-              <h2>高级 JSON</h2>
+              <h2>{{ t('personaEdit.advancedJson') }}</h2>
               <p class="muted">
-                只在需要批量粘贴或高级编辑时使用，基础配置直接看上面的表单即可。
+                {{ t('personaEdit.lexiconJsonDesc') }}
               </p>
             </div>
           </summary>
           <div class="settings-section-body stack">
             <label class="field">
-              <span>JSON 内容</span>
+              <span>{{ t('personaEdit.jsonContent') }}</span>
               <textarea
                 v-model="advancedLexiconText"
                 style="min-height: 200px"
@@ -346,14 +346,14 @@
                 type="button"
                 @click="syncAdvancedLexicon"
               >
-                从当前表单生成 JSON
+                {{ t('personaEdit.actions.syncJson') }}
               </button>
               <button
                 class="btn ghost btn-small"
                 type="button"
                 @click="applyAdvancedLexicon"
               >
-                用 JSON 覆盖当前词典
+                {{ t('personaEdit.actions.applyLexiconJson') }}
               </button>
             </div>
           </div>
@@ -364,13 +364,13 @@
         <div class="split persona-scene-head">
           <div>
 <div class="section-title">
-              场景骰子
+              {{ t('personaEdit.sections.scenes') }}
             </div>
             <div class="muted">
-              每次生成时，系统从池中随机抽取一个场景方向，作为文章的叙事骨架。
+              {{ t('personaEdit.sections.scenesDesc1') }}
             </div>
             <div class="muted">
-              留空时使用系统默认场景池。可按自己的世界观自定义。
+              {{ t('personaEdit.sections.scenesDesc2') }}
             </div>
           </div>
           <div class="button-row">
@@ -379,14 +379,14 @@
               type="button"
               @click="insertDefaultScenes"
             >
-              插入默认武侠场景
+              {{ t('personaEdit.actions.insertDefaultScenes') }}
             </button>
             <button
               class="btn ghost btn-small"
               type="button"
               @click="addSceneRow"
             >
-              新增场景
+              {{ t('personaEdit.actions.addScene') }}
             </button>
           </div>
         </div>
@@ -395,7 +395,7 @@
           v-if="!sceneRows.length"
           class="status-banner info"
         >
-          还没有场景骰子。可以先插入默认武侠场景，或按自己的世界观添加新场景。
+          {{ t('personaEdit.emptyScenes') }}
         </div>
 
         <div
@@ -403,10 +403,10 @@
           class="stack"
         >
           <div class="scene-header">
-            <span>时间</span>
-            <span>地点</span>
-            <span>天气/氛围</span>
-            <span>叙事方向</span>
+            <span>{{ t('personaEdit.scene.time') }}</span>
+            <span>{{ t('personaEdit.scene.place') }}</span>
+            <span>{{ t('personaEdit.scene.weather') }}</span>
+            <span>{{ t('personaEdit.scene.direction') }}</span>
             <span />
           </div>
           <div
@@ -416,26 +416,26 @@
           >
             <input
               v-model="row.time"
-              placeholder="例如：深夜子时"
+              :placeholder="t('personaEdit.placeholders.sceneTime')"
             >
             <input
               v-model="row.place"
-              placeholder="例如：王府后院"
+              :placeholder="t('personaEdit.placeholders.scenePlace')"
             >
             <input
               v-model="row.weather"
-              placeholder="例如：月明星稀"
+              :placeholder="t('personaEdit.placeholders.sceneWeather')"
             >
             <input
               v-model="row.direction"
-              placeholder="例如：独自练剑消化心事"
+              :placeholder="t('personaEdit.placeholders.sceneDirection')"
             >
             <button
               class="btn ghost btn-small"
               type="button"
               @click="removeSceneRow(row.id)"
             >
-              删除
+              {{ t('common.delete') }}
             </button>
           </div>
         </div>
@@ -443,15 +443,15 @@
         <details class="panel panel-pad scene-advanced">
           <summary class="settings-section-summary">
             <div>
-              <h2>高级 JSON</h2>
+              <h2>{{ t('personaEdit.advancedJson') }}</h2>
               <p class="muted">
-                用于批量编辑或自定义键名。基础配置直接看上面的表单即可。
+                {{ t('personaEdit.sceneJsonDesc') }}
               </p>
             </div>
           </summary>
           <div class="settings-section-body stack">
             <label class="field">
-              <span>JSON 内容</span>
+              <span>{{ t('personaEdit.jsonContent') }}</span>
               <textarea
                 v-model="advancedSceneText"
                 style="min-height: 200px"
@@ -463,14 +463,14 @@
                 type="button"
                 @click="syncAdvancedScene"
               >
-                从当前表单生成 JSON
+                {{ t('personaEdit.actions.syncJson') }}
               </button>
               <button
                 class="btn ghost btn-small"
                 type="button"
                 @click="applyAdvancedScene"
               >
-                用 JSON 覆盖当前场景池
+                {{ t('personaEdit.actions.applySceneJson') }}
               </button>
             </div>
           </div>
@@ -483,6 +483,7 @@
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 import { api, unwrap } from '../api'
 import AppError from '../components/AppError.vue'
@@ -507,6 +508,7 @@ function createLexiconRow(key = '', value = '') {
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const isNew = computed(() => !route.params.id)
 const form = reactive({
   name: '',
@@ -553,18 +555,18 @@ const sceneCount = computed(
 const structureLabel = computed(
   () =>
     ({
-      short: '短篇',
-      medium: '中篇',
-      long: '长篇',
-    })[form.structure_preference] || '未设',
+      short: t('personaEdit.structure.short'),
+      medium: t('personaEdit.structure.medium'),
+      long: t('personaEdit.structure.long'),
+    })[form.structure_preference] || t('common.none'),
 )
 const intensityLabel = computed(
   () =>
     ({
-      calm: '克制',
-      moderate: '适中',
-      intense: '强烈',
-    })[form.expression_intensity] || '未设',
+      calm: t('personaEdit.intensity.calm'),
+      moderate: t('personaEdit.intensity.moderate'),
+      intense: t('personaEdit.intensity.intense'),
+    })[form.expression_intensity] || t('common.none'),
 )
 
 function setLexiconRows(lexicon) {
@@ -591,11 +593,11 @@ function buildLexiconObject(strict = true) {
     if (!key && !value) continue
     if (!key || !value) {
       if (!strict) continue
-      throw new Error('词典条目的键和值都不能为空。')
+      throw new Error(t('personaEdit.errors.lexiconIncomplete'))
     }
     if (result[key]) {
       if (!strict) continue
-      throw new Error(`词典条目“${key}”重复，请先合并。`)
+      throw new Error(t('personaEdit.errors.lexiconDuplicate', { key }))
     }
     result[key] = value
   }
@@ -610,14 +612,14 @@ function applyAdvancedLexicon() {
   try {
     const parsed = JSON.parse(advancedLexiconText.value || '{}')
     if (typeof parsed !== 'object' || Array.isArray(parsed) || !parsed) {
-      throw new Error('高级 JSON 需要是对象格式，例如 {"rain":"雨脚"}。')
+      throw new Error(t('personaEdit.errors.lexiconJsonObject'))
     }
     setLexiconRows(parsed)
     messageType.value = 'success'
-    message.value = '已用 JSON 更新词典表单。'
+    message.value = t('personaEdit.messages.lexiconJsonApplied')
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, '解析高级 JSON 失败。')
+    message.value = describeError(error, t('personaEdit.messages.jsonParseFailed'))
   }
 }
 
@@ -631,16 +633,16 @@ function applyTemplate(fieldKey, template) {
   if (!currentValue) {
     form[fieldKey] = nextValue
     messageType.value = 'success'
-    message.value = `已填入${template.label}示例。`
+    message.value = t('personaEdit.messages.templateInserted', { label: template.label })
     return
   }
 
-  const overwrite = window.confirm('当前字段已有内容。点击“确定”覆盖当前内容；点击“取消”会把示例追加到末尾。')
+  const overwrite = window.confirm(t('personaEdit.confirmTemplateOverwrite'))
   form[fieldKey] = overwrite ? nextValue : `${String(form[fieldKey]).trim()}\n\n${nextValue}`
   messageType.value = 'success'
   message.value = overwrite
-    ? `已用${template.label}示例覆盖当前内容。`
-    : `已将${template.label}示例追加到当前内容末尾。`
+    ? t('personaEdit.messages.templateOverwritten', { label: template.label })
+    : t('personaEdit.messages.templateAppended', { label: template.label })
 }
 
 function insertLexiconExamples() {
@@ -655,7 +657,9 @@ function insertLexiconExamples() {
 
   syncAdvancedLexicon()
   messageType.value = 'success'
-  message.value = insertedCount ? `已插入 ${insertedCount} 组感知词典示例。` : '示例已存在，未重复插入。'
+  message.value = insertedCount
+    ? t('personaEdit.messages.lexiconExamplesInserted', { n: insertedCount })
+    : t('personaEdit.messages.examplesAlreadyExist')
 }
 
 function createSceneRow(time = '', place = '', weather = '', direction = '') {
@@ -700,14 +704,14 @@ function applyAdvancedScene() {
   try {
     const parsed = JSON.parse(advancedSceneText.value || '[]')
     if (!Array.isArray(parsed)) {
-      throw new Error('高级 JSON 需要是数组格式。')
+      throw new Error(t('personaEdit.errors.sceneJsonArray'))
     }
     setSceneRows(parsed)
     messageType.value = 'success'
-    message.value = '已用 JSON 更新场景池。'
+    message.value = t('personaEdit.messages.sceneJsonApplied')
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, '解析高级 JSON 失败。')
+    message.value = describeError(error, t('personaEdit.messages.jsonParseFailed'))
   }
 }
 
@@ -741,11 +745,11 @@ const defaultScenePool = [
 
 function insertDefaultScenes() {
   if (sceneRows.value.length > 0) {
-    if (!window.confirm('当前已有场景。点击"确定"会覆盖现有场景，点击"取消"放弃操作。')) return
+    if (!window.confirm(t('personaEdit.confirmDefaultScenesOverwrite'))) return
   }
   setSceneRows(defaultScenePool)
   messageType.value = 'success'
-  message.value = `已插入 ${defaultScenePool.length} 个默认武侠场景。`
+  message.value = t('personaEdit.messages.defaultScenesInserted', { n: defaultScenePool.length })
 }
 
 async function load() {
@@ -763,7 +767,7 @@ async function load() {
     setLexiconRows(data.sensory_lexicon || {})
     setSceneRows(data.scene_pool || [])
   } catch (error) {
-    loadError.value = describeError(error, '加载角色设定失败。')
+    loadError.value = describeError(error, t('personaEdit.loadFailed'))
   } finally {
     isLoading.value = false
   }
@@ -791,11 +795,11 @@ async function save() {
     }
     await unwrap(api.put(`/personas/${route.params.id}`, form))
     messageType.value = 'success'
-    message.value = '角色设定已保存。'
+    message.value = t('personaEdit.saved')
     formDirty.value = false
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, '保存角色设定失败。')
+    message.value = describeError(error, t('personaEdit.saveFailed'))
   } finally {
     isSaving.value = false
   }
@@ -808,10 +812,10 @@ async function activate() {
   try {
     await unwrap(api.post(`/personas/${route.params.id}/activate`))
     messageType.value = 'success'
-    message.value = '已切换为默认角色设定。'
+    message.value = t('personaEdit.defaultSet')
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, '切换默认角色设定失败。')
+    message.value = describeError(error, t('personaEdit.defaultSetFailed'))
   } finally {
     isActivating.value = false
   }
@@ -819,7 +823,7 @@ async function activate() {
 
 async function removePersona() {
   if (isDeleting.value) return
-  if (!window.confirm('确认删除当前角色设定？此操作不可撤销。')) return
+  if (!window.confirm(t('personaEdit.deleteConfirm'))) return
 
   isDeleting.value = true
   message.value = ''
@@ -828,7 +832,7 @@ async function removePersona() {
     router.push('/admin/personas')
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, '删除角色设定失败。')
+    message.value = describeError(error, t('personaEdit.deleteFailed'))
   } finally {
     isDeleting.value = false
   }
@@ -848,7 +852,7 @@ onMounted(async () => {
 
 onBeforeRouteLeave(() => {
   if (formDirty.value) {
-    return window.confirm('有未保存的修改，确定要离开吗？')
+    return window.confirm(t('common.unsavedLeave'))
   }
 })
 </script>

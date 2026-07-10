@@ -15,6 +15,7 @@ from backend.engine.cost_monitor import CostMonitor
 from backend.engine.digital_stamp import DigitalStampGenerator
 from backend.engine.event_engine import EventEngine
 from backend.engine.generation_orchestrator import GenerationOrchestrator
+from backend.engine.ghost_manager import GhostManager
 from backend.engine.memory_engine import MemoryEngine
 from backend.engine.notification_manager import NotificationManager
 from backend.engine.persona_engine import PersonaEngine
@@ -23,6 +24,7 @@ from backend.engine.qa_engine import QAEngine
 from backend.engine.sensory_engine import SensoryEngine
 from backend.models import AuditLog
 from backend.publisher.registry import PublisherRegistry
+from backend.utils.audit import log_audit
 from backend.utils.default_persona import (
     apply_default_persona_update,
     build_default_persona,
@@ -157,3 +159,56 @@ async def audit_cleanup_job(*, retention_days: int = 90) -> None:
     async with session_factory() as db:
         await db.execute(delete(AuditLog).where(AuditLog.timestamp < cutoff))
         await db.commit()
+
+
+async def run_auto_database_backup() -> None:
+    from backend.config import get_settings
+
+    session_factory = get_sessionmaker()
+    async with session_factory() as db:
+        encryptor = await get_encryptor(db)
+        config_store = ConfigStore(db, encryptor)
+        if (await config_store.get("backup.auto_enabled", "0")) != "1":
+            return
+        try:
+            keep_count = int(await config_store.get("backup.keep_count", "7") or "7")
+        except ValueError:
+            keep_count = 7
+        keep_count = max(1, min(keep_count, 30))
+        settings = get_settings()
+        manager = GhostManager(db, config_store, settings.ghost_path, settings.database_path.parent / "backups")
+        try:
+            path = await manager.backup_database(settings.database_path, automatic=True)
+            deleted = await manager.prune_auto_database_backups(keep_count)
+            await config_store.set("backup.last_auto_at", utcnow_iso(), category="backup")
+            await config_store.set("backup.last_auto_ok", "1", category="backup")
+            await config_store.set("backup.last_auto_filename", path.name, category="backup")
+            await log_audit(
+                db,
+                "system",
+                "backup.auto",
+                "backup",
+                path.name,
+                {"keep_count": keep_count, "deleted": [item.name for item in deleted]},
+            )
+        except Exception as exc:  # noqa: BLE001
+            await config_store.set("backup.last_auto_at", utcnow_iso(), category="backup")
+            await config_store.set("backup.last_auto_ok", "0", category="backup")
+            await log_audit(
+                db,
+                "system",
+                "backup.auto_failed",
+                "backup",
+                "database",
+                {"error": str(exc)},
+                severity="error",
+            )
+            await NotificationManager(config_store).send(
+                event_type="backup.auto_failed",
+                title="Automatic database backup failed",
+                severity="error",
+                detail={"error": str(exc)},
+            )
+            raise
+        finally:
+            await db.commit()

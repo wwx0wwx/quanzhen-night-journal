@@ -10,7 +10,7 @@
       v-else-if="loadError"
       :title="t('settings.loadError')"
       :message="loadError"
-      action-label="重新加载"
+      :action-label="t('common.retry')"
       @retry="load"
     />
 
@@ -112,7 +112,7 @@
           <div class="card-row">
             <div class="metric">
               <div class="muted">
-                当前状态
+                {{ t('settings.statusCurrent') }}
               </div>
               <strong>{{ configConclusion.label }}</strong>
               <div class="muted">
@@ -121,31 +121,138 @@
             </div>
             <div class="metric">
               <div class="muted">
-                大脑接入
+                {{ t('settings.llmAccess') }}
               </div>
-              <strong>{{ llmReady ? '已配置' : '未配置' }}</strong>
+              <strong>{{ llmReady ? t('settings.configured') : t('settings.notConfigured') }}</strong>
               <div class="muted">
-                {{ llmReady ? '可用于生成正文。' : '缺少后无法生成文章。' }}
+                {{ llmReady ? t('settings.llmReadyDesc') : t('settings.llmMissingDesc') }}
               </div>
             </div>
             <div class="metric">
               <div class="muted">
-                记忆检索
+                {{ t('settings.memorySearch') }}
               </div>
-              <strong>{{ embeddingReady ? '已配置' : '未配置' }}</strong>
+              <strong>{{ embeddingReady ? t('settings.configured') : t('settings.notConfigured') }}</strong>
               <div class="muted">
-                {{ embeddingReady ? '检索与去重可正常工作。' : '未配置会导致检索、去重与记忆能力退化。' }}
+                {{ embeddingReady ? t('settings.embeddingReadyDesc') : t('settings.embeddingMissingDesc') }}
               </div>
             </div>
             <div class="metric">
               <div class="muted">
-                自动发文
+                {{ t('settings.autoWriting') }}
               </div>
-              <strong>{{ automationReady ? '已开启' : '未开启' }}</strong>
+              <strong>{{ automationReady ? t('settings.enabled') : t('settings.disabled') }}</strong>
               <div class="muted">
-                {{ automationReady ? '可按计划自动触发。' : '当前更适合手动发文。' }}
+                {{ automationReady ? t('settings.automationReadyDesc') : t('settings.automationMissingDesc') }}
               </div>
             </div>
+          </div>
+        </div>
+
+        <div class="panel panel-pad stack">
+          <div class="settings-section-head">
+            <div>
+              <h2>{{ t('twofa.settingsTitle') }}</h2>
+              <p class="muted">{{ t('twofa.settingsDesc') }}</p>
+            </div>
+            <span
+              class="tag"
+              :class="twofaStatus.enabled ? 'tag-success' : 'tag-warning'"
+            >
+              {{ twofaStatus.enabled ? t('common.enabled') : t('common.disabled') }}
+            </span>
+          </div>
+
+          <div
+            v-if="twofaSetup"
+            class="stack"
+          >
+            <div class="status-banner info">
+              {{ t('twofa.setupInstruction') }}
+            </div>
+            <label class="field">
+              <span>{{ t('twofa.manualSecret') }}</span>
+              <input
+                :value="twofaSetup.secret"
+                readonly
+              >
+            </label>
+            <label class="field">
+              <span>{{ t('twofa.confirmCode') }}</span>
+              <input
+                v-model.trim="twofaConfirmCode"
+                inputmode="numeric"
+                :placeholder="t('twofa.codePlaceholder')"
+              >
+            </label>
+            <div class="recovery-code-grid">
+              <code
+                v-for="code in twofaSetup.recovery_codes"
+                :key="code"
+              >{{ code }}</code>
+            </div>
+            <div class="button-row">
+              <button
+                class="btn primary"
+                type="button"
+                :disabled="isTwofaBusy"
+                @click="confirmTwofa"
+              >
+                {{ t('twofa.confirmEnable') }}
+              </button>
+              <button
+                class="btn ghost"
+                type="button"
+                :disabled="isTwofaBusy"
+                @click="twofaSetup = null"
+              >
+                {{ t('common.cancel') }}
+              </button>
+            </div>
+          </div>
+
+          <div
+            v-else-if="twofaStatus.enabled"
+            class="stack"
+          >
+            <label class="field">
+              <span>{{ t('twofa.currentPassword') }}</span>
+              <input
+                v-model="twofaDisable.password"
+                type="password"
+                autocomplete="current-password"
+              >
+            </label>
+            <label class="field">
+              <span>{{ t('twofa.code') }}</span>
+              <input
+                v-model.trim="twofaDisable.code"
+                inputmode="numeric"
+                :placeholder="t('twofa.codePlaceholder')"
+              >
+            </label>
+            <button
+              class="btn ghost"
+              type="button"
+              :disabled="isTwofaBusy"
+              @click="disableTwofa"
+            >
+              {{ t('twofa.disable') }}
+            </button>
+          </div>
+
+          <div
+            v-else
+            class="button-row"
+          >
+            <button
+              class="btn primary"
+              type="button"
+              :disabled="isTwofaBusy"
+              @click="startTwofaSetup"
+            >
+              {{ t('twofa.enable') }}
+            </button>
           </div>
         </div>
 
@@ -165,7 +272,7 @@
               type="button"
               @click="testLLM"
             >
-              {{ isTestingLLM ? '测试中...' : '测试大脑接入' }}
+              {{ isTestingLLM ? t('common.busy') : t('settings.testLlm') }}
             </button>
             <button
               v-if="currentSection.id === 'embedding'"
@@ -174,7 +281,7 @@
               type="button"
               @click="testEmbedding"
             >
-              {{ isTestingEmbedding ? '测试中...' : '测试记忆检索' }}
+              {{ isTestingEmbedding ? t('common.busy') : t('settings.testEmbed') }}
             </button>
           </template>
         </SettingsSection>
@@ -204,7 +311,7 @@ const toast = useToastStore()
 const simpleMode = ref(true)
 const fieldQuery = ref('')
 
-const BASIC_SECTION_IDS = new Set(['site', 'panel', 'llm', 'embedding', 'schedule', 'quality'])
+const BASIC_SECTION_IDS = new Set(['site', 'panel', 'llm', 'embedding', 'schedule', 'backup', 'quality'])
 
 const translatedSections = computed(() => {
   const q = fieldQuery.value.trim().toLowerCase()
@@ -243,13 +350,18 @@ const saveError = ref('')
 const saveSuccess = ref('')
 const isTestingLLM = ref(false)
 const isTestingEmbedding = ref(false)
+const isTwofaBusy = ref(false)
 const testError = ref('')
 const testSuccess = ref('')
+const twofaStatus = reactive({ enabled: false, confirmed: false })
+const twofaSetup = ref(null)
+const twofaConfirmCode = ref('')
+const twofaDisable = reactive({ password: '', code: '' })
 const initialSnapshot = ref('{}')
 const hasLoaded = ref(false)
 
 const isDirty = computed(() => hasLoaded.value && createSnapshot() !== initialSnapshot.value)
-const isBusy = computed(() => isSaving.value || isTestingLLM.value || isTestingEmbedding.value)
+const isBusy = computed(() => isSaving.value || isTestingLLM.value || isTestingEmbedding.value || isTwofaBusy.value)
 const llmReady = computed(() => hasValue('llm.base_url') && hasValue('llm.model_id') && hasSecretValue('llm.api_key'))
 const embeddingReady = computed(
   () => hasValue('embedding.base_url') && hasValue('embedding.model_id') && hasSecretValue('embedding.api_key'),
@@ -263,28 +375,28 @@ const automationReady = computed(
 const configConclusion = computed(() => {
   if (!hasValue('site.title') || !llmReady.value) {
     return {
-      label: '完全不可用',
-      description: '缺少站点标题或大脑接入配置，系统无法正常生成文章。',
+      label: t('settings.unavailable'),
+      description: t('settings.unavailableDesc'),
       className: 'tag-danger',
     }
   }
   if (!automationReady.value) {
     return {
-      label: '仅可手动发文',
-      description: '当前没有自动发文计划，但仍可手动触发生成和发布。',
+      label: t('settings.manualOnly'),
+      description: t('settings.manualOnlyDesc'),
       className: 'tag-warning',
     }
   }
   if (!embeddingReady.value) {
     return {
-      label: '发文能力受限',
-      description: '自动发文仍可运行，但检索、去重和记忆相关能力会退化。',
+      label: t('settings.limited'),
+      description: t('settings.limitedDesc'),
       className: 'tag-warning',
     }
   }
   return {
-    label: '可正常自动发文',
-    description: '博客信息、大脑接入、记忆检索和发文节奏已达到自动发文要求。',
+    label: t('settings.ready'),
+    description: t('settings.readyDesc'),
     className: 'tag-success',
   }
 })
@@ -317,6 +429,7 @@ function inferCategory(key) {
     anti_perfection: 'anti_perfection',
     sensory: 'sensory',
     hugo: 'hugo',
+    backup: 'backup',
   }
   return categoryMap[prefix] || 'general'
 }
@@ -406,6 +519,7 @@ async function load() {
 
   try {
     const configData = await unwrap(api.get('/config'))
+    const securityData = await unwrap(api.get('/auth/2fa/status'))
 
     for (const field of settingFields) {
       formValues[field.key] = normalizeValue(field, configData[field.key]?.value)
@@ -416,11 +530,62 @@ async function load() {
     }
 
     initialSnapshot.value = createSnapshot()
+    Object.assign(twofaStatus, securityData)
     hasLoaded.value = true
   } catch (error) {
     loadError.value = describeError(error, '加载系统设置失败，请稍后重试。')
   } finally {
     isLoading.value = false
+  }
+}
+
+async function reloadTwofaStatus() {
+  Object.assign(twofaStatus, await unwrap(api.get('/auth/2fa/status')))
+}
+
+async function startTwofaSetup() {
+  if (isTwofaBusy.value) return
+  isTwofaBusy.value = true
+  try {
+    twofaSetup.value = await unwrap(api.post('/auth/2fa/setup'))
+    twofaConfirmCode.value = ''
+    toast.success(t('twofa.setupStarted'))
+  } catch (error) {
+    saveError.value = describeError(error, t('twofa.setupFailed'))
+  } finally {
+    isTwofaBusy.value = false
+  }
+}
+
+async function confirmTwofa() {
+  if (isTwofaBusy.value) return
+  isTwofaBusy.value = true
+  try {
+    await unwrap(api.post('/auth/2fa/confirm', { code: twofaConfirmCode.value }))
+    twofaSetup.value = null
+    twofaConfirmCode.value = ''
+    await reloadTwofaStatus()
+    toast.success(t('twofa.enabledToast'))
+  } catch (error) {
+    saveError.value = describeError(error, t('twofa.confirmFailed'))
+  } finally {
+    isTwofaBusy.value = false
+  }
+}
+
+async function disableTwofa() {
+  if (isTwofaBusy.value) return
+  isTwofaBusy.value = true
+  try {
+    await unwrap(api.post('/auth/2fa/disable', { password: twofaDisable.password, code: twofaDisable.code }))
+    twofaDisable.password = ''
+    twofaDisable.code = ''
+    await reloadTwofaStatus()
+    toast.success(t('twofa.disabledToast'))
+  } catch (error) {
+    saveError.value = describeError(error, t('twofa.disableFailed'))
+  } finally {
+    isTwofaBusy.value = false
   }
 }
 
@@ -501,5 +666,18 @@ onBeforeRouteLeave(() => {
 <style scoped>
 .settings-summary-card {
   background: var(--panel);
+}
+
+.recovery-code-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.recovery-code-grid code {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-soft);
 }
 </style>

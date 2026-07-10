@@ -59,7 +59,7 @@ async def update_config(
         await config_store.set("schedule.cycle_anchor_date", date.today().isoformat(), category="schedule")
     runtime_status = await site_runtime.apply()
     await db.commit()
-    if any(key.startswith("schedule.") for key in changed_keys):
+    if any(key.startswith(("schedule.", "backup.")) for key in changed_keys):
         scheduler = getattr(request.app.state, "scheduler", None)
         if scheduler is not None:
             await reload_scheduler(scheduler)

@@ -2,6 +2,22 @@
 
 本文件记录全真夜记各版本的主要变更。
 
+## [1.3.0] - 2026-07-10
+
+### Added
+- 管理员 TOTP 两步验证：支持启用/确认/关闭、登录二阶段校验和一次性恢复码。
+- 统一错误码目录与响应 `message_key`，前端错误描述优先按 i18n key 翻译。
+- 自动数据库备份：支持设置页开关、Cron、保留份数、自动 `auto-` 快照与状态接口。
+- 备份页展示自动备份状态、下次运行时间，并区分自动/手动数据库快照。
+
+### Changed
+- Login、Settings、Ghost、PersonaEdit、PostEdit 补全新增文案 i18n。
+- 设置字段翻译支持带点号的配置键，避免 schema 字段在英文模式下回退中文。
+
+### Tests
+- 增加 2FA 登录/恢复码、错误 `message_key`、自动备份 prune 覆盖。
+- 验证：后端全量 pytest、ruff、前端 vitest 与 production build。
+
 ## [1.2.0] - 2026-07-10
 
 ### Added

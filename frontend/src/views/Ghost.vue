@@ -46,6 +46,27 @@
       </div>
     </div>
 
+    <div
+      v-if="backupStatus"
+      class="panel panel-pad ghost-auto-status"
+    >
+      <div>
+        <div class="section-title">
+          {{ t('ghost.autoStatus') }}
+        </div>
+        <div class="muted">
+          {{ backupStatus.enabled ? t('common.enabled') : t('common.disabled') }} ·
+          {{ backupStatus.next_run_at ? t('ghost.autoNext', { time: formatDateTimeWithRelative(backupStatus.next_run_at) }) : t('ghost.autoNext', { time: '-' }) }}
+        </div>
+      </div>
+      <span
+        class="tag"
+        :class="backupStatus.last_auto_ok ? 'tag-success' : 'tag-warning'"
+      >
+        {{ backupStatus.last_auto_at ? t('ghost.autoRecent', { time: formatDateTimeWithRelative(backupStatus.last_auto_at) }) : t('ghost.autoNever') }}
+      </span>
+    </div>
+
     <AppLoading
       v-if="isLoading"
       :title="t('ghost.loadingTitle')"
@@ -245,6 +266,12 @@
                 style="gap: 6px"
               >
                 <strong>{{ item.filename }}</strong>
+                <span
+                  class="tag"
+                  :class="item.automatic ? 'tag-success' : 'tag-muted'"
+                >
+                  {{ item.automatic ? t('ghost.autoBadge') : t('ghost.manualBadge') }}
+                </span>
                 <div class="muted">
                   {{ formatBytes(item.size) }}
                 </div>
@@ -366,6 +393,7 @@ import AppEmpty from '../components/AppEmpty.vue'
 import AppError from '../components/AppError.vue'
 import AppLoading from '../components/AppLoading.vue'
 import { describeError } from '../utils/errors'
+import { formatDateTimeWithRelative } from '../utils/time'
 
 const { t } = useI18n()
 const toast = useToastStore()
@@ -376,6 +404,7 @@ const selectedFileName = ref('')
 const preview = ref(null)
 const exports = ref([])
 const databaseBackups = ref([])
+const backupStatus = ref(null)
 const isLoading = ref(true)
 const loadError = ref('')
 const isExporting = ref(false)
@@ -416,12 +445,14 @@ async function loadExports() {
   loadError.value = ''
 
   try {
-    const [ghostExports, databaseSnapshotList] = await Promise.all([
+    const [ghostExports, databaseSnapshotList, autoBackupStatus] = await Promise.all([
       unwrap(api.get('/ghost/list')),
       unwrap(api.get('/ghost/database-backups')),
+      unwrap(api.get('/ghost/backup-status')),
     ])
-    exports.value = ghostExports
-    databaseBackups.value = databaseSnapshotList
+    exports.value = Array.isArray(ghostExports) ? ghostExports : []
+    databaseBackups.value = Array.isArray(databaseSnapshotList) ? databaseSnapshotList : []
+    backupStatus.value = autoBackupStatus || null
   } catch (error) {
     loadError.value = describeError(error, '加载备份记录失败，请稍后重试。')
   } finally {

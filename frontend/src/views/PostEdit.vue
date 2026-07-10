@@ -2,59 +2,59 @@
   <section class="stack">
     <AppLoading
       v-if="isLoading"
-      title="正在加载文章"
-      description="正在读取正文、元信息和修订历史。"
+      :title="t('postEdit.loadingTitle')"
+      :description="t('postEdit.loadingDesc')"
     />
 
     <AppError
       v-else-if="loadError"
-      title="文章加载失败"
+      :title="t('postEdit.loadError')"
       :message="loadError"
-      action-label="重试"
+      :action-label="t('common.retry')"
       @retry="load"
     />
 
     <template v-else>
       <div class="hero editor-hero">
         <div>
-<h1>{{ isNew ? '新建文章' : `编辑文章 #${route.params.id}` }}</h1>
-          <p>正文、元信息、版本和发布动作都在这张工作台上完成。保持语言冷静、结构清晰，再决定是否送它进入前台。</p>
+<h1>{{ isNew ? t('postEdit.newTitle') : t('postEdit.editTitle', { id: route.params.id }) }}</h1>
+          <p>{{ t('postEdit.subtitle') }}</p>
         </div>
         <div class="button-row">
           <button
             class="btn primary"
             :disabled="actionBusy"
-            data-tooltip="仅保存当前内容为草稿，不改变发布状态"
+            :data-tooltip="t('postEdit.tooltips.save')"
             @click="save"
           >
-            {{ isSaving ? '保存中…' : '保存' }}
+            {{ isSaving ? t('common.saving') : t('common.save') }}
           </button>
           <button
             v-if="!isNew"
             class="btn ghost"
             :disabled="actionBusy"
-            data-tooltip="将文章直接发布到博客站点"
+            :data-tooltip="t('postEdit.tooltips.publish')"
             @click="runWorkflowAction('publish')"
           >
-            {{ activeAction === 'publish' ? '发布中…' : '发布' }}
+            {{ activeAction === 'publish' ? t('postEdit.publishing') : t('postEdit.actions.publish') }}
           </button>
           <button
             v-if="!isNew"
             class="btn ghost"
             :disabled="actionBusy"
-            data-tooltip="标记内容已审核，但暂不发布"
+            :data-tooltip="t('postEdit.tooltips.approve')"
             @click="runWorkflowAction('approve')"
           >
-            {{ activeAction === 'approve' ? '处理中…' : '审核通过' }}
+            {{ activeAction === 'approve' ? t('common.busy') : t('postEdit.actions.approve') }}
           </button>
           <button
             v-if="!isNew"
             class="btn ghost"
             :disabled="actionBusy"
-            data-tooltip="将文章从博客站点移除并归档"
+            :data-tooltip="t('postEdit.tooltips.archive')"
             @click="runWorkflowAction('archive')"
           >
-            {{ activeAction === 'archive' ? '处理中…' : '归档' }}
+            {{ activeAction === 'archive' ? t('common.busy') : t('postEdit.actions.archive') }}
           </button>
         </div>
       </div>
@@ -70,28 +70,28 @@
       <div class="grid two editor-layout">
         <div class="panel panel-pad stack editor-panel">
           <label class="field">
-            <span>标题</span>
+            <span>{{ t('postEdit.fields.title') }}</span>
             <input
               v-model="form.title"
-              placeholder="给这篇文章一个清晰标题"
+              :placeholder="t('postEdit.placeholders.title')"
             >
           </label>
           <label class="field">
             <span>Slug</span>
             <input
               v-model="form.slug"
-              placeholder="留空时会自动生成"
+              :placeholder="t('postEdit.placeholders.slug')"
             >
           </label>
           <label class="field">
-            <span>摘要</span>
+            <span>{{ t('postEdit.fields.summary') }}</span>
             <textarea
               v-model="form.summary"
-              placeholder="为空时系统会根据正文自动提取。"
+              :placeholder="t('postEdit.placeholders.summary')"
             />
           </label>
           <label class="field">
-            <span>状态</span>
+            <span>{{ t('common.status') }}</span>
             <select v-model="form.status">
               <option
                 v-for="item in POST_STATUS_OPTIONS"
@@ -103,11 +103,11 @@
             </select>
           </label>
           <label class="field">
-            <span>正文 Markdown</span>
+            <span>{{ t('postEdit.fields.body') }}</span>
             <textarea
               v-model="form.content_markdown"
               class="editor-textarea"
-              placeholder="在这里编辑正文 Markdown。"
+              :placeholder="t('postEdit.placeholders.body')"
             />
           </label>
         </div>
@@ -115,27 +115,27 @@
         <div class="stack">
           <div class="panel panel-pad stack editor-info-card">
             <div class="section-title">
-              文章信息
+              {{ t('postEdit.infoTitle') }}
             </div>
             <dl class="meta-grid">
               <div>
-                <dt>当前状态</dt>
+                <dt>{{ t('postEdit.meta.status') }}</dt>
                 <dd>{{ getStatusLabel('post', form.status) }}</dd>
               </div>
               <div>
-                <dt>文章来源</dt>
-                <dd>{{ post.task_id ? '自动生成稿' : '手动创建' }}</dd>
+                <dt>{{ t('postEdit.meta.source') }}</dt>
+                <dd>{{ post.task_id ? t('postEdit.source.auto') : t('postEdit.source.manual') }}</dd>
               </div>
               <div>
-                <dt>最近修改</dt>
+                <dt>{{ t('postEdit.meta.updated') }}</dt>
                 <dd>{{ formatDateTimeWithRelative(post.updated_at) }}</dd>
               </div>
               <div>
-                <dt>发布时间</dt>
+                <dt>{{ t('postEdit.meta.published') }}</dt>
                 <dd>{{ formatDateTimeWithRelative(post.published_at) }}</dd>
               </div>
               <div>
-                <dt>当前版本</dt>
+                <dt>{{ t('postEdit.meta.revision') }}</dt>
                 <dd>#{{ post.revision || 1 }}</dd>
               </div>
             </dl>
@@ -143,7 +143,7 @@
 
           <div class="panel panel-pad stack editor-preview-card">
             <div class="section-title">
-              Markdown 预览
+              {{ t('postEdit.previewTitle') }}
             </div>
             <div
               v-if="form.summary"
@@ -164,10 +164,10 @@
             <div class="split">
               <div>
                 <div class="section-title">
-                  修订历史
+                  {{ t('postEdit.revisionsTitle') }}
                 </div>
                 <div class="muted">
-                  可查看旧版本内容，并按需回滚。
+                  {{ t('postEdit.revisionsDesc') }}
                 </div>
               </div>
               <button
@@ -176,15 +176,15 @@
                 :disabled="isRevisionsLoading"
                 @click="loadRevisions"
               >
-                {{ isRevisionsLoading ? '刷新中…' : '刷新' }}
+                {{ isRevisionsLoading ? t('postEdit.refreshing') : t('common.refresh') }}
               </button>
             </div>
 
             <AppEmpty
               v-if="!revisions.length && !isRevisionsLoading"
               inline
-              title="还没有修订记录"
-              description="首次修改后，这里会记录历史版本。"
+              :title="t('postEdit.emptyRevisionsTitle')"
+              :description="t('postEdit.emptyRevisionsDesc')"
             />
 
             <div
@@ -202,12 +202,12 @@
                     class="stack"
                     style="gap: 6px"
                   >
-                    <strong>版本 #{{ revision.revision }}</strong>
+                    <strong>{{ t('postEdit.revisionN', { n: revision.revision }) }}</strong>
                     <div class="muted">
                       {{ formatDateTimeWithRelative(revision.created_at) }}
                     </div>
                     <div class="muted">
-                      {{ revision.change_reason || '未记录原因' }}
+                      {{ revision.change_reason || t('postEdit.noChangeReason') }}
                     </div>
                   </div>
                   <div class="button-row">
@@ -216,7 +216,7 @@
                       type="button"
                       @click="selectedRevisionId = revision.id"
                     >
-                      查看内容
+                      {{ t('postEdit.viewRevision') }}
                     </button>
                     <button
                       class="btn ghost btn-small"
@@ -224,7 +224,7 @@
                       :disabled="activeAction === `revert:${revision.revision}`"
                       @click="revertRevision(revision)"
                     >
-                      {{ activeAction === `revert:${revision.revision}` ? '回滚中…' : '回滚到此版' }}
+                      {{ activeAction === `revert:${revision.revision}` ? t('postEdit.reverting') : t('postEdit.revertToRevision') }}
                     </button>
                   </div>
                 </div>
@@ -236,7 +236,7 @@
               class="stack"
             >
               <div class="section-title">
-                版本 #{{ selectedRevision.revision }} 内容
+                {{ t('postEdit.revisionContent', { n: selectedRevision.revision }) }}
               </div>
               <pre>{{ selectedRevision.content_markdown }}</pre>
             </div>
@@ -254,6 +254,7 @@ import DOMPurify from 'dompurify'
 import MarkdownIt from 'markdown-it'
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 import { api, unwrap } from '../api'
 import AppEmpty from '../components/AppEmpty.vue'
@@ -266,6 +267,7 @@ import { formatDateTimeWithRelative } from '../utils/time'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const markdown = new MarkdownIt({ html: false, linkify: true, breaks: true })
 
 const isNew = computed(() => !route.params.id)
@@ -292,7 +294,7 @@ const message = ref('')
 const messageType = ref('info')
 
 const actionBusy = computed(() => isSaving.value || !!activeAction.value)
-const previewHtml = computed(() => DOMPurify.sanitize(markdown.render(form.content_markdown || '还没有正文内容。')))
+const previewHtml = computed(() => DOMPurify.sanitize(markdown.render(form.content_markdown || t('postEdit.emptyBody'))))
 const selectedRevision = computed(() => revisions.value.find((item) => item.id === selectedRevisionId.value) || null)
 
 function applyPost(data) {
@@ -317,7 +319,7 @@ async function loadRevisions() {
     selectedRevisionId.value = revisions.value[0]?.id || null
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, '修订历史加载失败。')
+    message.value = describeError(error, t('postEdit.revisionsLoadFailed'))
   } finally {
     isRevisionsLoading.value = false
   }
@@ -340,7 +342,7 @@ async function load() {
     applyPost(data)
     await loadRevisions()
   } catch (error) {
-    loadError.value = describeError(error, '加载文章失败，请稍后重试。')
+    loadError.value = describeError(error, t('postEdit.loadFailed'))
   } finally {
     isLoading.value = false
   }
@@ -356,7 +358,7 @@ async function save() {
       const data = await unwrap(api.post('/posts', form))
       applyPost(data)
       messageType.value = 'success'
-      message.value = '文章已创建。'
+      message.value = t('postEdit.created')
       await router.replace(`/admin/posts/${data.id}`)
       await load()
       return
@@ -365,26 +367,26 @@ async function save() {
     const data = await unwrap(api.put(`/posts/${route.params.id}`, form))
     applyPost(data)
     messageType.value = 'success'
-    message.value = '文章已保存。'
+    message.value = t('postEdit.saved')
     formDirty.value = false
     await loadRevisions()
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, '保存文章失败。')
+    message.value = describeError(error, t('postEdit.saveFailed'))
   } finally {
     isSaving.value = false
   }
 }
 
 function actionLabel(action) {
-  if (action === 'publish') return '发布'
-  if (action === 'approve') return '审核通过'
-  return '归档'
+  if (action === 'publish') return t('postEdit.actions.publish')
+  if (action === 'approve') return t('postEdit.actions.approve')
+  return t('postEdit.actions.archive')
 }
 
 async function runWorkflowAction(action) {
   if (activeAction.value) return
-  if (!window.confirm(`确认${actionLabel(action)}这篇文章？`)) return
+  if (!window.confirm(t('postEdit.confirmAction', { action: actionLabel(action) }))) return
 
   activeAction.value = action
   message.value = ''
@@ -392,11 +394,11 @@ async function runWorkflowAction(action) {
     const data = await unwrap(api.post(`/posts/${route.params.id}/${action}`))
     applyPost(data)
     messageType.value = 'success'
-    message.value = `文章已${actionLabel(action)}。`
+    message.value = t('postEdit.actionDone', { action: actionLabel(action) })
     await loadRevisions()
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, `${actionLabel(action)}失败。`)
+    message.value = describeError(error, t('postEdit.actionFailed', { action: actionLabel(action) }))
   } finally {
     activeAction.value = ''
   }
@@ -404,7 +406,7 @@ async function runWorkflowAction(action) {
 
 async function revertRevision(revision) {
   if (activeAction.value) return
-  if (!window.confirm(`确认回滚到版本 #${revision.revision}？当前正文会被覆盖。`)) return
+  if (!window.confirm(t('postEdit.confirmRevert', { n: revision.revision }))) return
 
   activeAction.value = `revert:${revision.revision}`
   message.value = ''
@@ -412,11 +414,11 @@ async function revertRevision(revision) {
     const data = await unwrap(api.post(`/posts/${route.params.id}/revert/${revision.revision}`))
     applyPost(data)
     messageType.value = 'success'
-    message.value = `已回滚到版本 #${revision.revision}。`
+    message.value = t('postEdit.reverted', { n: revision.revision })
     await loadRevisions()
   } catch (error) {
     messageType.value = 'error'
-    message.value = describeError(error, '回滚失败。')
+    message.value = describeError(error, t('postEdit.revertFailed'))
   } finally {
     activeAction.value = ''
   }
@@ -436,7 +438,7 @@ onMounted(async () => {
 
 onBeforeRouteLeave(() => {
   if (formDirty.value) {
-    return window.confirm('有未保存的修改，确定要离开吗？')
+    return window.confirm(t('common.unsavedLeave'))
   }
 })
 </script>

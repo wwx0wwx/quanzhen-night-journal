@@ -28,6 +28,13 @@ def create_access_token(user_id: int, settings: Settings | None = None) -> str:
     return jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
 
 
+def create_pre_auth_token(user_id: int, settings: Settings | None = None) -> str:
+    settings = settings or get_settings()
+    expire_at = datetime.now(UTC) + timedelta(minutes=5)
+    payload = {"sub": str(user_id), "exp": expire_at, "type": "pre_auth"}
+    return jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
+
+
 def should_use_secure_cookie(request: Request, settings: Settings | None = None) -> bool:
     settings = settings or get_settings()
     forwarded_proto = request.headers.get("x-forwarded-proto", "").split(",")[0].strip().lower()
@@ -51,6 +58,13 @@ def decode_access_token(token: str, settings: Settings | None = None) -> dict[st
     return jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
 
 
+def decode_pre_auth_token(token: str, settings: Settings | None = None) -> int:
+    payload = decode_access_token(token, settings)
+    if payload.get("type") != "pre_auth":
+        raise jwt.InvalidTokenError("invalid_token_type")
+    return int(payload["sub"])
+
+
 async def get_current_user(
     request: Request,
     db: AsyncSession = Depends(get_session),
@@ -62,6 +76,8 @@ async def get_current_user(
 
     try:
         payload = decode_access_token(token, settings)
+        if payload.get("type") != "access":
+            raise jwt.InvalidTokenError("invalid_token_type")
         user_id = int(payload["sub"])
     except (jwt.InvalidTokenError, KeyError, ValueError) as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="token_invalid") from exc
@@ -82,6 +98,8 @@ async def get_optional_user(
         return None
     try:
         payload = decode_access_token(token, settings)
+        if payload.get("type") != "access":
+            return None
         return await db.get(User, int(payload["sub"]))
     except (jwt.InvalidTokenError, KeyError, ValueError):
         return None

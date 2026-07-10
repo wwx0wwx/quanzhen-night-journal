@@ -13,6 +13,10 @@ class User(Base):
     username: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(Text, nullable=False)
     is_initialized: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    totp_enabled: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    totp_secret_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
+    totp_confirmed_at: Mapped[str | None] = mapped_column(Text, nullable=True)
+    recovery_codes_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[str] = mapped_column(Text, nullable=False)
     updated_at: Mapped[str] = mapped_column(Text, nullable=False)
 

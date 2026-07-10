@@ -4,8 +4,10 @@ import asyncio
 
 from sqlalchemy import select
 
+from backend.config import get_settings
 from backend.database import get_sessionmaker
 from backend.models import Event, GenerationTask, Persona, SystemConfig, User
+from backend.security.totp import totp_code
 from backend.utils.audit import log_audit
 
 
@@ -113,6 +115,65 @@ def test_login_cookie_uses_request_scheme_for_secure_flag(client):
     )
     assert https_login.status_code == 200
     assert "Secure" in https_login.headers["set-cookie"]
+
+
+def test_auth_errors_include_message_key(client):
+    response = client.post("/api/auth/login", json={"username": "admin", "password": "wrong"})
+    assert response.status_code == 401
+    body = response.json()
+    assert body["message"] == "invalid_credentials"
+    assert body["message_key"] == "errors.raw.invalid_credentials"
+
+
+def test_two_factor_setup_confirm_login_and_recovery_code(authed_client):
+    setup = authed_client.post("/api/auth/2fa/setup")
+    assert setup.status_code == 200
+    setup_data = setup.json()["data"]
+    assert setup_data["secret"]
+    assert len(setup_data["recovery_codes"]) == 10
+
+    bad_confirm = authed_client.post("/api/auth/2fa/confirm", json={"code": "000000"})
+    assert bad_confirm.status_code == 401
+
+    code = totp_code(setup_data["secret"])
+    confirm = authed_client.post("/api/auth/2fa/confirm", json={"code": code})
+    assert confirm.status_code == 200
+    assert confirm.json()["data"]["enabled"] is True
+
+    authed_client.post("/api/auth/logout")
+    password_login = authed_client.post("/api/auth/login", json={"username": "admin", "password": "quanzhen123"})
+    assert password_login.status_code == 200
+    pre_auth = password_login.json()["data"]
+    assert pre_auth["requires_2fa"] is True
+    assert "pre_auth_token" in pre_auth
+
+    authed_client.cookies.set(get_settings().cookie_name, pre_auth["pre_auth_token"])
+    status = authed_client.get("/api/auth/status")
+    assert status.json()["data"]["is_logged_in"] is False
+
+    otp_login = authed_client.post(
+        "/api/auth/login/2fa",
+        json={"pre_auth_token": pre_auth["pre_auth_token"], "code": totp_code(setup_data["secret"])},
+    )
+    assert otp_login.status_code == 200
+    assert otp_login.json()["data"]["is_logged_in"] is True
+
+    authed_client.post("/api/auth/logout")
+    password_login = authed_client.post("/api/auth/login", json={"username": "admin", "password": "quanzhen123"})
+    recovery = setup_data["recovery_codes"][0]
+    recovery_login = authed_client.post(
+        "/api/auth/login/2fa",
+        json={"pre_auth_token": password_login.json()["data"]["pre_auth_token"], "recovery_code": recovery},
+    )
+    assert recovery_login.status_code == 200
+
+    authed_client.post("/api/auth/logout")
+    password_login = authed_client.post("/api/auth/login", json={"username": "admin", "password": "quanzhen123"})
+    reused = authed_client.post(
+        "/api/auth/login/2fa",
+        json={"pre_auth_token": password_login.json()["data"]["pre_auth_token"], "recovery_code": recovery},
+    )
+    assert reused.status_code == 401
 
 
 def test_startup_self_heal_actions_are_audited(authed_client):

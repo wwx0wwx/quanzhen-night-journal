@@ -39,13 +39,22 @@ export function describeErrorCode(code?: string | null): string {
 type ErrorLike = {
   code?: number | string
   message?: string
-  response?: { data?: { code?: number; message?: string } }
-  responseData?: { code?: number; message?: string }
+  response?: { data?: { code?: number; message?: string; message_key?: string; data?: { message_key?: string } } }
+  responseData?: { code?: number; message?: string; message_key?: string; data?: { message_key?: string } }
 }
 
 export function describeError(error: unknown, fallback?: string): string {
   const fb = fallback || tGlobal('errors.fallback')
   const err = (error || {}) as ErrorLike
+  const messageKey =
+    err?.response?.data?.message_key ||
+    err?.responseData?.message_key ||
+    err?.response?.data?.data?.message_key ||
+    err?.responseData?.data?.message_key
+  if (messageKey) {
+    const translated = tGlobal(messageKey)
+    if (translated !== messageKey) return translated
+  }
   const code = err?.response?.data?.code ?? err?.responseData?.code ?? err?.code
   if (typeof code === 'number' && CODE_KEYS[code]) {
     return tGlobal(CODE_KEYS[code])

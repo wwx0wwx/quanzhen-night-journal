@@ -25,7 +25,7 @@ from backend.utils.audit import log_audit
 from backend.utils.audit_catalog import ensure_audit_event_definitions
 from backend.utils.legacy_import import import_legacy_assets
 from backend.utils.metrics import METRICS
-from backend.utils.response import error
+from backend.utils.response import error, fail
 from backend.utils.seed_posts import create_seed_posts
 from backend.utils.time import utcnow_iso
 
@@ -301,10 +301,11 @@ app.add_middleware(
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(_request, exc: HTTPException):
+    detail = str(exc.detail)
+    if detail in {"not_authenticated", "token_invalid", "user_not_found", "system_not_initialized"}:
+        return fail(detail, status_code=exc.status_code)
     code = 2001 if exc.status_code == 401 else 1001
-    if exc.detail == "system_not_initialized":
-        code = 3001
-    return error(code, str(exc.detail), status_code=exc.status_code)
+    return error(code, detail, status_code=exc.status_code)
 
 
 @app.get("/")

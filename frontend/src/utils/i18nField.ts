@@ -1,11 +1,33 @@
-import { tGlobal } from '../i18n'
+import i18n, { tGlobal } from '../i18n'
 
 function asArray(help: string | string[] | undefined): string[] {
   if (!help) return []
   return Array.isArray(help) ? help : [help]
 }
 
+function flatSettingsValue(key: string): string | undefined {
+  const prefix = 'settingsFields.'
+  if (!key.startsWith(prefix)) return undefined
+  const rest = key.slice(prefix.length)
+  const parts = rest.split('.')
+  for (let split = parts.length - 1; split >= 1; split -= 1) {
+    const fieldKey = parts.slice(0, split).join('.')
+    const propPath = parts.slice(split)
+    const messages = i18n.global.getLocaleMessage(i18n.global.locale.value) as Record<string, unknown>
+    let value = (messages.settingsFields as Record<string, unknown> | undefined)?.[fieldKey]
+    for (const prop of propPath) {
+      if (!value || typeof value !== 'object') return undefined
+      value = (value as Record<string, unknown>)[prop]
+    }
+    if (typeof value === 'string') return value
+  }
+  return undefined
+}
+
 function tr(key: string, fallback?: string) {
+  const flat = flatSettingsValue(key)
+  if (flat) return flat
+  if (!i18n.global.te(key)) return fallback
   const value = tGlobal(key)
   return value !== key ? value : fallback
 }

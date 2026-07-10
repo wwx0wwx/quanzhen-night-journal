@@ -4,6 +4,8 @@ import { api, unwrap } from '../api'
 
 export type AuthStatus = {
   is_logged_in: boolean
+  requires_2fa?: boolean
+  pre_auth_token?: string
   system_initialized?: boolean
   is_initialized?: boolean
   username?: string | null
@@ -21,6 +23,14 @@ export const useAuthStore = defineStore('auth', {
       const data = await unwrap<AuthStatus>(api.get('/auth/status'))
       this.loaded = true
       this.isLoggedIn = data.is_logged_in
+      this.isInitialized = Boolean(data.system_initialized ?? data.is_initialized)
+      this.username = data.username ?? null
+      return data
+    },
+    async login2fa(payload: { pre_auth_token: string; code?: string; recovery_code?: string }) {
+      const data = await unwrap<AuthStatus>(api.post('/auth/login/2fa', payload))
+      this.loaded = true
+      this.isLoggedIn = true
       this.isInitialized = Boolean(data.system_initialized ?? data.is_initialized)
       this.username = data.username ?? null
       return data

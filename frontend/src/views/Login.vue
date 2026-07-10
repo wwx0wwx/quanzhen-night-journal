@@ -15,7 +15,10 @@
       class="stack"
       @submit.prevent="submit"
     >
-      <label class="field">
+      <label
+        v-if="step === 'password'"
+        class="field"
+      >
         <span>{{ t('login.username') }}</span>
         <input
           v-model="form.username"
@@ -24,7 +27,10 @@
         >
       </label>
 
-      <label class="field">
+      <label
+        v-if="step === 'password'"
+        class="field"
+      >
         <span>{{ t('login.password') }}</span>
         <input
           v-model="form.password"
@@ -34,13 +40,37 @@
         >
       </label>
 
+      <label
+        v-if="step === 'otp'"
+        class="field"
+      >
+        <span>{{ useRecoveryCode ? t('twofa.recoveryCode') : t('twofa.code') }}</span>
+        <input
+          v-model="otpValue"
+          :autocomplete="useRecoveryCode ? 'one-time-code' : 'one-time-code'"
+          :inputmode="useRecoveryCode ? 'text' : 'numeric'"
+          :placeholder="useRecoveryCode ? t('twofa.recoveryCodePlaceholder') : t('twofa.codePlaceholder')"
+        >
+      </label>
+
+      <button
+        v-if="step === 'otp'"
+        class="btn ghost"
+        type="button"
+        :disabled="isSubmitting"
+        style="width: 100%"
+        @click="toggleRecoveryCode"
+      >
+        {{ useRecoveryCode ? t('twofa.useAuthenticator') : t('twofa.useRecoveryCode') }}
+      </button>
+
       <button
         class="btn primary"
         type="submit"
         :disabled="isSubmitting"
         style="width: 100%"
       >
-        {{ isSubmitting ? t('login.submitting') : t('login.submit') }}
+        {{ submitLabel }}
       </button>
 
       <div
@@ -54,7 +84,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
@@ -70,9 +100,18 @@ const isSubmitting = ref(false)
 const isError = ref(false)
 const message = ref(t('login.hint'))
 const form = reactive({ username: 'admin', password: '' })
+const step = ref('password')
+const preAuthToken = ref('')
+const otpValue = ref('')
+const useRecoveryCode = ref(false)
+
+const submitLabel = computed(() => {
+  if (isSubmitting.value) return step.value === 'otp' ? t('twofa.verifying') : t('login.submitting')
+  return step.value === 'otp' ? t('twofa.verify') : t('login.submit')
+})
 
 watch(locale, () => {
-  if (!isError.value) message.value = t('login.hint')
+  if (!isError.value) message.value = step.value === 'otp' ? t('twofa.loginHint') : t('login.hint')
 })
 
 async function submit() {
@@ -81,7 +120,22 @@ async function submit() {
   isSubmitting.value = true
   isError.value = false
   try {
+    if (step.value === 'otp') {
+      const payload = useRecoveryCode.value
+        ? { pre_auth_token: preAuthToken.value, recovery_code: otpValue.value }
+        : { pre_auth_token: preAuthToken.value, code: otpValue.value }
+      const data = await auth.login2fa(payload)
+      router.push(getPostLoginRoute(Boolean(data.system_initialized ?? data.is_initialized)))
+      return
+    }
     const data = await auth.login(form)
+    if (data.requires_2fa && data.pre_auth_token) {
+      step.value = 'otp'
+      preAuthToken.value = data.pre_auth_token
+      otpValue.value = ''
+      message.value = t('twofa.loginHint')
+      return
+    }
     router.push(getPostLoginRoute(Boolean(data.system_initialized ?? data.is_initialized)))
   } catch (error) {
     isError.value = true
@@ -89,6 +143,11 @@ async function submit() {
   } finally {
     isSubmitting.value = false
   }
+}
+
+function toggleRecoveryCode() {
+  useRecoveryCode.value = !useRecoveryCode.value
+  otpValue.value = ''
 }
 </script>
 

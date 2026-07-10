@@ -21,6 +21,7 @@ from backend.scheduler.jobs import (
     ensure_seed_persona,
     memory_decay_job,
     memory_reflection_job,
+    run_auto_database_backup,
     scheduled_generation_job,
     sensory_sample_job,
 )
@@ -33,6 +34,9 @@ DEFAULT_SCHEDULES = {
     "schedule.review_cron": "0 3 * * 0",
     "schedule.decay_cron": "0 4 * * *",
     "schedule.sample_interval_minutes": "5",
+    "backup.auto_enabled": "0",
+    "backup.auto_cron": "0 3 * * *",
+    "backup.keep_count": "7",
 }
 _scheduler_ref: AsyncIOScheduler | None = None
 _logger = logging.getLogger(__name__)
@@ -230,6 +234,15 @@ async def reload_scheduler(scheduler: AsyncIOScheduler) -> AsyncIOScheduler:
         id="audit_cleanup",
         replace_existing=True,
     )
+    if values.get("backup.auto_enabled") == "1":
+        scheduler.add_job(
+            run_auto_database_backup,
+            trigger=CronTrigger.from_crontab(values["backup.auto_cron"]),
+            id="auto_database_backup",
+            replace_existing=True,
+        )
+    elif scheduler.get_job("auto_database_backup"):
+        scheduler.remove_job("auto_database_backup")
     return scheduler
 
 

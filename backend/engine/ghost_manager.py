@@ -220,16 +220,22 @@ class GhostManager:
         self.ghost_dir.mkdir(parents=True, exist_ok=True)
         return await self._prune_files(sorted(self.ghost_dir.glob("*.ghost"), reverse=True), keep)
 
-    async def backup_database(self, source_database: Path) -> Path:
+    async def backup_database(self, source_database: Path, *, automatic: bool = False) -> Path:
         self.backup_dir.mkdir(parents=True, exist_ok=True)
-        target = self._unique_path(self.backup_dir / f"quanzhen-db-{utcnow_iso().replace(':', '-')}.sqlite3")
+        prefix = "auto-quanzhen-db" if automatic else "quanzhen-db"
+        target = self._unique_path(self.backup_dir / f"{prefix}-{utcnow_iso().replace(':', '-')}.sqlite3")
         await asyncio.to_thread(self._copy_database_file, source_database, target)
         return target
 
     async def list_database_backups(self) -> list[dict]:
         self.backup_dir.mkdir(parents=True, exist_ok=True)
         return [
-            {"filename": file.name, "path": str(file), "size": file.stat().st_size}
+            {
+                "filename": file.name,
+                "path": str(file),
+                "size": file.stat().st_size,
+                "automatic": file.name.startswith("auto-"),
+            }
             for file in sorted(self.backup_dir.glob("*.sqlite3"), reverse=True)
         ]
 
@@ -244,6 +250,10 @@ class GhostManager:
     async def prune_database_backups(self, keep: int) -> list[Path]:
         self.backup_dir.mkdir(parents=True, exist_ok=True)
         return await self._prune_files(sorted(self.backup_dir.glob("*.sqlite3"), reverse=True), keep)
+
+    async def prune_auto_database_backups(self, keep: int) -> list[Path]:
+        self.backup_dir.mkdir(parents=True, exist_ok=True)
+        return await self._prune_files(sorted(self.backup_dir.glob("auto-*.sqlite3"), reverse=True), keep)
 
     @staticmethod
     def _copy_database_file(source_database: Path, target: Path) -> None:
