@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.adapters.embedding_adapter import EmbeddingAdapter, EmbeddingUnavailableError
 from backend.engine.config_store import ConfigStore
+from backend.engine.narrative_planner import NarrativePlanner
 from backend.models import Post, PostVector
 from backend.utils.post_content import extract_title, normalize_title
 from backend.utils.serde import json_dumps, json_loads
@@ -18,6 +19,10 @@ FIRST_PERSON_MARKERS = ("我", "属下", "在下", "末将", "卑职", "小人",
 SECOND_PERSON_MARKERS = ("你", "您")
 ENGLISH_FIRST_PERSON_RE = re.compile(r"\b(i|me|my|mine|we|us|our|ours)\b", re.IGNORECASE)
 ENGLISH_SECOND_PERSON_RE = re.compile(r"\b(you|your|yours)\b", re.IGNORECASE)
+
+# Opening clone threshold (char fingerprint similarity).
+DEFAULT_OPENING_SIM_THRESHOLD = 0.85
+OPENING_LOOKBACK_POSTS = 30
 
 
 class QAEngine:
@@ -33,20 +38,29 @@ class QAEngine:
         language_ok = await self._check_language(content)
         perspective_ok, perspective_reason = await self._check_perspective(content)
         format_ok, format_reason = await self._check_format(content)
+        title_ok, title_reason, title_clash_id = await self._check_title_unique(content, persona_id)
+        opening_ok, opening_reason, opening_clash_id, opening_score = await self._check_opening_fingerprint(
+            content, persona_id
+        )
         duplicate_result = await self._check_duplicate(content, persona_id)
         duplicate_ok = duplicate_result["duplicate_ok"]
         integrity_ok, integrity_reason = self._check_content_integrity(content)
+        # Title/opening clashes force rewrite path via format-like hard fails.
         risk_level = self._calculate_risk(
             length_ok,
             forbidden_ok,
             template_ok,
             language_ok,
             perspective_ok,
-            format_ok,
+            format_ok and title_ok and opening_ok,
             duplicate_ok,
             integrity_ok,
             duplicate_result["duplicate_review_required"],
         )
+        if not title_ok or not opening_ok:
+            # Elevate so rewrite loop engages (same as format/perspective).
+            if risk_level == "low":
+                risk_level = "medium"
         return {
             "length_ok": length_ok,
             "forbidden_ok": forbidden_ok,
@@ -56,6 +70,13 @@ class QAEngine:
             "perspective_reason": perspective_reason,
             "format_ok": format_ok,
             "format_reason": format_reason,
+            "title_ok": title_ok,
+            "title_reason": title_reason,
+            "title_clash_post_id": title_clash_id,
+            "opening_ok": opening_ok,
+            "opening_reason": opening_reason,
+            "opening_clash_post_id": opening_clash_id,
+            "opening_score": opening_score,
             "duplicate_ok": duplicate_ok,
             "duplicate_score": duplicate_result["duplicate_score"],
             "duplicate_post_id": duplicate_result["duplicate_post_id"],
@@ -73,6 +94,8 @@ class QAEngine:
                     language_ok,
                     perspective_ok,
                     format_ok,
+                    title_ok,
+                    opening_ok,
                     integrity_ok,
                     not duplicate_result["duplicate_review_required"],
                 ]
@@ -102,10 +125,61 @@ class QAEngine:
         await self.db.flush()
 
     async def _check_length(self, content: str) -> bool:
-        min_length = int(await self.config_store.get("qa.min_length", "200") or 200)
+        # Default raised to 900 (medium night-journal density); ops can still lower via config.
+        min_length = int(await self.config_store.get("qa.min_length", "900") or 900)
         max_length = int(await self.config_store.get("qa.max_length", "5000") or 5000)
         length = len(content.strip())
         return min_length <= length <= max_length
+
+    async def _check_title_unique(self, content: str, persona_id: int) -> tuple[bool, str, int | None]:
+        lines = content.splitlines()
+        first_index = next((index for index, line in enumerate(lines) if line.strip()), None)
+        if first_index is None:
+            return True, "", None
+        first_line = lines[first_index].strip()
+        if not first_line.startswith("# "):
+            return True, "", None
+        title = normalize_title(first_line, max_length=64)
+        if not title:
+            return True, "", None
+        posts = await self.db.scalars(
+            select(Post)
+            .where(Post.persona_id == persona_id, Post.status == "published")
+            .order_by(Post.id.desc())
+            .limit(200)
+        )
+        for post in posts:
+            if normalize_title(post.title or "", max_length=64) == title:
+                return False, "title_duplicate", post.id
+        return True, "", None
+
+    async def _check_opening_fingerprint(
+        self, content: str, persona_id: int
+    ) -> tuple[bool, str, int | None, float | None]:
+        threshold = float(
+            await self.config_store.get("qa.opening_similarity_threshold", str(DEFAULT_OPENING_SIM_THRESHOLD))
+            or DEFAULT_OPENING_SIM_THRESHOLD
+        )
+        fingerprint = NarrativePlanner.opening_fingerprint(content)
+        if len(fingerprint) < 12:
+            return True, "", None, None
+        posts = await self.db.scalars(
+            select(Post)
+            .where(Post.persona_id == persona_id, Post.status == "published")
+            .order_by(Post.id.desc())
+            .limit(OPENING_LOOKBACK_POSTS)
+        )
+        best_score = 0.0
+        best_id: int | None = None
+        for post in posts:
+            other = NarrativePlanner.opening_fingerprint(post.content_markdown or "")
+            score = NarrativePlanner.opening_similarity(fingerprint, other)
+            if score > best_score:
+                best_score = score
+                best_id = post.id
+        if best_score >= threshold:
+            return False, "opening_near_duplicate", best_id, round(best_score, 4)
+        return True, "", None, round(best_score, 4) if best_id is not None else None
 
     async def _check_forbidden(self, content: str) -> bool:
         words = json_loads(await self.config_store.get("qa.forbidden_words", "[]", decrypt=False), [])

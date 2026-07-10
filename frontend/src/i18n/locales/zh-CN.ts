@@ -792,11 +792,30 @@ export default {
     },
     'qa.min_length': {
       label: "最小长度",
-      placeholder: "200",
-      help: "正文最小字符数。",
+      placeholder: "900",
+      help: "正文最小字符数。medium 夜记建议 800–1000。",
       opt: {
         zh: "中文",
       },
+    },
+    'qa.opening_similarity_threshold': {
+      label: "开场相似度阈值",
+      placeholder: "0.85",
+      help: "与近篇开场指纹相似度达到此值则判定近复制并强制重写。",
+    },
+    'narrative.enabled': {
+      label: "长线世界线",
+      placeholder: "1",
+      help: "开启后每篇注入任务卡（关系主音/场景轮转/世界阶段），发文后缓慢推进影中年华。",
+      opt: {
+        "1": "开启",
+        "0": "关闭",
+      },
+    },
+    'narrative.posts_per_world_year': {
+      label: "每年约几篇夜记",
+      placeholder: "15",
+      help: "约 15 篇 ≈ 1 个世界年。按每日一篇，3–5 个月真实发文 ≈ 6–10 年影中年华。",
     },
     'qa.max_length': {
       label: "最大长度",

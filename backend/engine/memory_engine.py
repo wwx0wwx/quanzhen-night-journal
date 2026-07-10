@@ -359,19 +359,82 @@ class MemoryEngine:
         score = 100 - min(50, variance * 100)
         return round(max(0.0, score), 2)
 
-    async def create_from_article(self, post: Post, persona_id: int) -> Memory:
-        content = self._build_article_memory_content(post)
+    async def create_from_article(
+        self,
+        post: Post,
+        persona_id: int,
+        narrative_meta: dict | None = None,
+    ) -> Memory:
+        content = self._build_article_memory_content(post, narrative_meta=narrative_meta)
         summary = (post.summary or post.title)[:180]
+        tags = ["article", f"post:{post.id}"]
+        if narrative_meta:
+            tone = narrative_meta.get("relation_tone")
+            bucket = narrative_meta.get("scene_bucket")
+            if tone:
+                tags.append(f"tone:{tone}")
+            if bucket:
+                tags.append(f"bucket:{bucket}")
         return await self.create_memory(
             MemoryCreate(
                 persona_id=persona_id,
                 level="L2",
                 content=content,
                 summary=summary,
-                tags=["article", f"post:{post.id}"],
+                tags=tags,
                 source="article",
             )
         )
+
+    async def upsert_worldline_memory(self, persona_id: int, state) -> Memory:  # noqa: ANN001
+        """Keep a single L1 worldline/relation-state memory up to date.
+
+        DB source CHECK only allows hand_written/auto_summary/article/reflection/import,
+        so worldline rows use source=auto_summary and are tagged ``worldline``.
+        """
+        from backend.engine.narrative_planner import NarrativePlanner
+
+        planner = NarrativePlanner()
+        content = planner.format_worldline_memory_content(state)
+        summary = planner.format_worldline_memory_summary(state)
+        tags = ["worldline", "关系状态", "长线"]
+        candidates = await self.db.scalars(
+            select(Memory)
+            .where(Memory.persona_id == persona_id, Memory.level == "L1")
+            .order_by(desc(Memory.id))
+            .limit(40)
+        )
+        memory = None
+        for item in candidates:
+            item_tags = json_loads(item.tags, [])
+            if "worldline" in item_tags:
+                memory = item
+                break
+        if memory is None:
+            return await self.create_memory(
+                MemoryCreate(
+                    persona_id=persona_id,
+                    level="L1",
+                    content=content,
+                    summary=summary,
+                    tags=tags,
+                    source="auto_summary",
+                    weight=2.2,
+                    is_core=False,
+                    decay_strategy="never",
+                    review_status="reviewed",
+                )
+            )
+        memory.content = content
+        memory.summary = summary
+        memory.tags = json_dumps(tags)
+        memory.source = "auto_summary"
+        memory.weight = 2.2
+        memory.decay_strategy = "never"
+        memory.last_accessed_at = utcnow_iso()
+        await self.db.flush()
+        await self.embed_and_store(memory.id, memory.content)
+        return memory
 
     async def recent_article_memory_ids(self, persona_id: int, *, limit: int, hours: int) -> list[int]:
         rows = await self.db.scalars(
@@ -410,7 +473,7 @@ class MemoryEngine:
     def _parse_time(self, value: str) -> datetime:
         return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(UTC)
 
-    def _build_article_memory_content(self, post: Post) -> str:
+    def _build_article_memory_content(self, post: Post, narrative_meta: dict | None = None) -> str:
         lines = [
             line.strip() for line in post.content_markdown.splitlines() if line.strip() and not line.startswith("#")
         ]
@@ -420,13 +483,48 @@ class MemoryEngine:
             else (post.summary or post.title)[: self.ARTICLE_MEMORY_SNIPPET_LIMIT]
         )
         closing = lines[-1][: self.ARTICLE_MEMORY_SNIPPET_LIMIT] if lines else opening
-        return "\n".join(
-            [
-                f"标题：{post.title}",
-                f"发布时间：{post.published_at or post.created_at}",
-                f"摘要：{(post.summary or post.title)[:180]}",
-                f"开场动作：{opening}",
-                f"收束状态：{closing}",
-                "用途：用于保持长期叙事连续性，但新稿不得直接复写上述场景、动作或措辞。",
-            ]
-        ).strip()
+        # Extract a few concrete image tokens for next-post avoid list (simple heuristic).
+        body = "\n".join(lines)
+        avoid_images = self._extract_avoid_images(body)
+        parts = [
+            f"标题：{post.title}",
+            f"发布时间：{post.published_at or post.created_at}",
+            f"摘要：{(post.summary or post.title)[:180]}",
+            f"开场动作：{opening}",
+            f"收束状态：{closing}",
+        ]
+        if narrative_meta:
+            tone = narrative_meta.get("relation_tone")
+            bucket = narrative_meta.get("scene_bucket")
+            phase = narrative_meta.get("phase_name")
+            year_label = narrative_meta.get("world_year_label")
+            if tone:
+                parts.append(f"关系主音：{tone}")
+            if bucket:
+                parts.append(f"场景大类：{bucket}")
+            if phase or year_label:
+                parts.append(f"世界线：{year_label or ''} {phase or ''}".strip())
+        if avoid_images:
+            parts.append("禁用下篇复用的意象：" + "、".join(avoid_images[:5]))
+        parts.append("用途：用于保持长期叙事连续性，但新稿不得直接复写上述场景、动作或措辞。")
+        return "\n".join(parts).strip()
+
+    def _extract_avoid_images(self, body: str) -> list[str]:
+        candidates = (
+            "廊下",
+            "剑柄",
+            "剑穗",
+            "窗纸",
+            "檐角",
+            "微雪",
+            "残月",
+            "药碗",
+            "灯影",
+            "袖中",
+            "渡口",
+            "驿站",
+            "马厩",
+            "西厢",
+        )
+        found = [token for token in candidates if token in body]
+        return found[:5]

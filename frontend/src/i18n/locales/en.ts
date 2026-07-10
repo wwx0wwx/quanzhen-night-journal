@@ -801,8 +801,8 @@ export default {
     },
     'qa.min_length': {
       label: "Min length",
-      placeholder: "200",
-      help: "Minimum body character count.",
+      placeholder: "900",
+      help: "Minimum body character count. Medium night journals work best around 800–1000.",
     },
     'qa.max_length': {
       label: "Max length",
@@ -813,6 +813,25 @@ export default {
       label: "Duplicate threshold",
       placeholder: "0.85",
       help: "Higher is looser; usually between 0 and 1.",
+    },
+    'qa.opening_similarity_threshold': {
+      label: "Opening similarity threshold",
+      placeholder: "0.85",
+      help: "If the opening fingerprint is this similar to a recent post, force a rewrite.",
+    },
+    'narrative.enabled': {
+      label: "Long-arc worldline",
+      placeholder: "1",
+      help: "Injects a per-post task card (relation tone / scene rotation / world phase) and advances shadow years after publish.",
+      opt: {
+        "1": "On",
+        "0": "Off",
+      },
+    },
+    'narrative.posts_per_world_year': {
+      label: "Posts per world year",
+      placeholder: "15",
+      help: "About 15 posts ≈ 1 world year. At one post/day, 3–5 months of real posts ≈ 6–10 shadow years.",
     },
     'qa.required_language': {
       label: "Target language",

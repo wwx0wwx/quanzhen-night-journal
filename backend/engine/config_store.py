@@ -37,6 +37,7 @@ CATEGORY_BY_PREFIX = {
     "sensory": "sensory",
     "hugo": "hugo",
     "system": "system",
+    "narrative": "narrative",
 }
 
 

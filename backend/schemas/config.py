@@ -13,6 +13,7 @@ ALLOWED_CONFIG_PREFIXES = frozenset(
         "embedding.",
         "hugo.",
         "llm.",
+        "narrative.",
         "notify.",
         "panel.",
         "qa.",
@@ -87,19 +88,29 @@ def _validate_config_value(key: str, value: str) -> None:
         "anti_perfection.consecutive_max",
         "anti_perfection.cooldown_hours",
         "sensory.blind_zone_minutes",
+        "narrative.posts_per_world_year",
     }:
         _validate_int_range(key, stripped, min_value=0)
+    elif key.startswith("narrative.state."):
+        # Opaque JSON blob for per-persona worldline state.
+        return
     elif key in {
         "budget.daily_limit_usd",
         "budget.monthly_limit_usd",
         "qa.duplicate_block_threshold",
         "qa.duplicate_threshold",
+        "qa.opening_similarity_threshold",
         "sensory.cpu_high_threshold",
         "sensory.mem_high_threshold",
         "sensory.io_high_threshold",
     }:
         _validate_float_range(key, stripped, min_value=0.0)
-    elif key in {"budget.is_hibernating", "notify.enabled", "anti_perfection.enabled"}:
+    elif key in {
+        "budget.is_hibernating",
+        "notify.enabled",
+        "anti_perfection.enabled",
+        "narrative.enabled",
+    }:
         if stripped not in {"0", "1", "true", "false", "yes", "no", "on", "off"}:
             raise ValueError(f"{key} must be a boolean-like value")
     elif key == "schedule.publish_time":
@@ -129,6 +140,7 @@ def _validate_config_value(key: str, value: str) -> None:
     bounded_percent_keys = {
         "qa.duplicate_block_threshold",
         "qa.duplicate_threshold",
+        "qa.opening_similarity_threshold",
         "sensory.cpu_high_threshold",
         "sensory.mem_high_threshold",
         "sensory.io_high_threshold",

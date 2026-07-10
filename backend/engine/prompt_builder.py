@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
+from backend.engine.narrative_planner import NarrativeTaskCard
 from backend.models import Event, Persona, SensorySnapshot
 from backend.schemas.memory import MemoryHit
 from backend.utils.serde import json_loads
@@ -23,6 +24,7 @@ class RecentPostContext:
     title: str
     summary: str
     published_at: str | None
+    opening: str = ""
 
 
 @dataclass(slots=True)
@@ -36,6 +38,7 @@ class GenerationContext:
     anti_perfection: bool
     cold_start: bool
     site_title: str = ""
+    narrative_card: NarrativeTaskCard | None = None
 
 
 class PromptBuilder:
@@ -67,9 +70,19 @@ class PromptBuilder:
                 {"id": hit.id, "level": hit.level, "similarity": hit.similarity} for hit in context.memory_hits
             ]
 
-        scene_block = self._build_scene_block(context.persona, context.recent_posts)
-        fragments.append(scene_block)
-        summary["scene_direction"] = scene_block[:120]
+        # Prefer narrative task card (rotation + worldline) over pure random scene.
+        if context.narrative_card and context.narrative_card.enabled:
+            from backend.engine.narrative_planner import NarrativePlanner
+
+            planner = NarrativePlanner()
+            task_block = planner.format_task_card_block(context.narrative_card)
+            fragments.append(task_block)
+            summary["narrative"] = context.narrative_card.to_dict()
+            summary["scene_direction"] = task_block[:160]
+        else:
+            scene_block = self._build_scene_block(context.persona, context.recent_posts)
+            fragments.append(scene_block)
+            summary["scene_direction"] = scene_block[:120]
 
         if context.recent_posts:
             recent_posts_block = self._build_recent_posts_block(context.recent_posts)
@@ -92,6 +105,7 @@ class PromptBuilder:
             "每一篇文章都必须是全新的夜晚、全新的场景、全新的事件，绝不能只换说法重写上一篇。"
             "正文必须采用第一人称叙事：叙述者就是人格本人，可自称“我”或符合人格的自称。"
             "禁止用“你”“您”“你们”作为正文叙事视角或面向读者持续称呼；提及王爷时使用“王爷”或“主人”。"
+            "长线世界在变，日记只写今夜能感到的一颤，不要写成武林大会纪要。"
         )
         if anti_perfection:
             block += " 当前允许轻微碎片化与不稳定跳接，但仍必须像同一个人格写下。"
@@ -140,14 +154,19 @@ class PromptBuilder:
         lines = ["最近已发布文章回避清单（严格禁止复写下列场景与动作）："]
         for item in recent_posts:
             summary = (item.summary or item.title).strip()
-            lines.append(f"- [{item.published_at or 'recent'}] 《{item.title}》：{summary[:100]}")
+            opening = (item.opening or "").strip()
+            line = f"- [{item.published_at or 'recent'}] 《{item.title}》：{summary[:100]}"
+            if opening:
+                line += f"｜开场：{opening[:40]}"
+            lines.append(line)
         lines.append(
             "严格要求：\n"
             "1. 新稿必须推进到全新的夜晚、全新的事件或全新的关系转折，绝不能只换说法重写上一稿。\n"
             "2. 如果上面的文章已经写过某个具体场景或动作（如递药、拂雪、按剑柄、站在廊下等），"
             "新稿中必须回避这些动作，换用从未出现过的新动作和新物件。\n"
-            "3. 新稿的开场时间、地点、姿态必须与上述所有文章不同。\n"
-            "4. 严格按照上面给出的「本篇场景方向」展开，不要偏离。"
+            "3. 新稿的开场时间、地点、姿态必须与上述所有文章不同；开场前40字不得近似。\n"
+            "4. 标题不得与历史标题完全相同。\n"
+            "5. 严格按照「本篇任务卡」或「本篇场景方向」展开，不要偏离。"
         )
         return "\n".join(lines)
 
@@ -163,8 +182,9 @@ class PromptBuilder:
             f"- 标题必须是具体文章题目，不能只写{invalid_str}或人格名。\n"
             "- 标题后空一行，再开始正文。\n"
             "- 保持叙事感和连续存在感。\n"
-            f"- 结构贴近 {persona.structure_preference} 长度偏好。\n"
+            f"- 结构贴近 {persona.structure_preference} 长度偏好；medium 时正文宜充实，避免只有一个姿态速写。\n"
             "- 必须有具体动作、物件或体感。\n"
-            "- 必须贴合本篇场景方向所指定的时间、地点和叙事方向。\n"
+            "- 必须贴合本篇任务卡/场景方向所指定的时间、地点和叙事方向。\n"
             "- 必须严格使用第一人称正文，不得把读者、王爷或叙述对象写成“你/您/你们”。"
         )
+

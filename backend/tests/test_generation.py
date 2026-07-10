@@ -539,7 +539,7 @@ def test_embedding_fallback_requires_manual_review(monkeypatch, authed_client):
         "/api/posts",
         json={
             "title": "旧夜",
-            "content_markdown": "# 旧夜\n\n我靠在廊柱边，看雪落在剑鞘上。",
+            "content_markdown": "# 旧夜\n\n我靠在廊柱边，看雪落在剑鞘上。夜里风从门缝里进来，属下没有动。",
             "status": "published",
             "persona_id": 1,
         },
@@ -548,7 +548,12 @@ def test_embedding_fallback_requires_manual_review(monkeypatch, authed_client):
     post_id = create_post.json()["data"]["id"]
 
     async def stable_chat(self, **_kwargs):  # noqa: ANN001
-        content = "# 新夜\n\n我靠在廊柱边，看雪落在剑鞘上。" + " 夜色很深。" * 40
+        # Different opening (avoid opening-fingerprint rewrite), still body-similar for fallback overlap.
+        content = (
+            "# 新夜\n\n"
+            "渡口潮气贴着衣摆上来，我把伞柄握紧。"
+            "我靠在廊柱边，看雪落在剑鞘上。" + " 夜色很深。" * 40
+        )
         return content, {"prompt_tokens": 12, "completion_tokens": 120}, 5
 
     async def missing_embeddings(self, **_kwargs):  # noqa: ANN001
@@ -663,7 +668,7 @@ def test_embedding_duplicate_warning_does_not_block_auto_publish(monkeypatch, au
                 title="旧夜",
                 slug="old-night",
                 front_matter="{}",
-                content_markdown="# 旧夜\n\n我靠在廊柱边，看雪落在剑鞘上。",
+                content_markdown="# 旧夜\n\n我靠在廊柱边，看雪落在剑鞘上。夜里风从门缝里进来，属下没有动。",
                 summary="我靠在廊柱边，看雪落在剑鞘上。",
                 status="published",
                 persona_id=1,
@@ -683,12 +688,18 @@ def test_embedding_duplicate_warning_does_not_block_auto_publish(monkeypatch, au
 
             monkeypatch.setattr(EmbeddingAdapter, "embed", fake_embed)
             engine = QAEngine(db, config_store, EmbeddingAdapter())
-            content = "# 新夜\n\n我靠在廊柱边，看雪落在剑鞘上。" + " 夜色很深，我仍守着旧门。" * 4
+            # Opening deliberately different so title/opening QA do not hard-fail this path.
+            content = (
+                "# 新夜\n\n"
+                "渡口潮气贴着衣摆上来，我把伞柄握紧。"
+                "我靠在廊柱边，看雪落在剑鞘上。" + " 夜色很深，我仍守着旧门。" * 4
+            )
             result = await engine.check(content, persona_id=1)
 
             assert result["duplicate_score"] == 0.8
             assert result["duplicate_ok"] is False
             assert result["duplicate_review_required"] is False
+            assert result["opening_ok"] is True
             assert result["risk_level"] == "medium"
             assert result["passed"] is True
 

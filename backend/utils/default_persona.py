@@ -175,12 +175,20 @@ get_seed_memories = get_preset_memories
 
 
 def is_legacy_default_persona(persona: Persona) -> bool:
-    return (
+    if (
         persona.description in LEGACY_DESCRIPTION_VALUES
         and persona.identity_setting in LEGACY_IDENTITY_VALUES
         and persona.worldview_setting in LEGACY_WORLDVIEW_VALUES
         and persona.language_style in LEGACY_LANGUAGE_VALUES
-    )
+    ):
+        return True
+    # Soft upgrade: default 全真 missing the 2026-07 narrative hard rules.
+    if persona.is_default and persona.name == "全真":
+        style = persona.language_style or ""
+        world = persona.worldview_setting or ""
+        if "夜记写法硬约束" not in style or "长线世界" not in world:
+            return True
+    return False
 
 
 is_legacy_default_quanzhen = is_legacy_default_persona

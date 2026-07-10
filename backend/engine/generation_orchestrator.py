@@ -13,6 +13,7 @@ from backend.engine.context_builder import ContextBuilder
 from backend.engine.cost_monitor import CostMonitor
 from backend.engine.digital_stamp import DigitalStampGenerator
 from backend.engine.memory_engine import MemoryEngine
+from backend.engine.narrative_planner import NarrativePlanner, NarrativeTaskCard
 from backend.engine.notification_manager import NotificationManager
 from backend.engine.persona_engine import PersonaEngine
 from backend.engine.prompt_builder import PromptBuilder
@@ -215,6 +216,10 @@ class GenerationOrchestrator:
                         perspective_reason=qa_result.get("perspective_reason", ""),
                         format_ok=bool(qa_result.get("format_ok", True)),
                         format_reason=qa_result.get("format_reason", ""),
+                        title_ok=bool(qa_result.get("title_ok", True)),
+                        title_reason=qa_result.get("title_reason", ""),
+                        opening_ok=bool(qa_result.get("opening_ok", True)),
+                        opening_reason=qa_result.get("opening_reason", ""),
                         integrity_ok=bool(qa_result.get("integrity_ok", True)),
                         integrity_reason=qa_result.get("integrity_reason", ""),
                     )
@@ -224,6 +229,8 @@ class GenerationOrchestrator:
                         not qa_result.get("integrity_ok", True)
                         or not qa_result.get("perspective_ok", True)
                         or not qa_result.get("format_ok", True)
+                        or not qa_result.get("title_ok", True)
+                        or not qa_result.get("opening_ok", True)
                     ):
                         reason, error_code = self._qa_rewrite_failure(qa_result)
                         if task.retry_count >= task.max_retries:
@@ -298,7 +305,12 @@ class GenerationOrchestrator:
                 self._append_trace(task, "publish_completed", post_id=post.id, publish_target=post.publish_target)
                 await self.db.commit()
                 await self._transition(task, "published")
-                await self.memory_engine.create_from_article(post, persona.id)
+                await self.memory_engine.create_from_article(
+                    post,
+                    persona.id,
+                    narrative_meta=self._narrative_meta_from_context(context),
+                )
+                await self._advance_narrative(persona.id, context.narrative_card, post, task=task)
                 self._append_trace(task, "memory_created", post_id=post.id, persona_id=persona.id)
                 await self.db.commit()
                 return task
@@ -390,7 +402,21 @@ class GenerationOrchestrator:
         self._append_trace(task, "publish_completed", post_id=post.id, publish_target=post.publish_target)
         await self.db.commit()
         await self._transition(task, "published")
-        await self.memory_engine.create_from_article(post, task.persona_id)
+        narrative_meta = None
+        narrative_card = None
+        try:
+            snap = json_loads(task.context_snapshot, {})
+            narrative_meta = snap.get("narrative") if isinstance(snap, dict) else None
+            if isinstance(narrative_meta, dict):
+                narrative_card = self._card_from_dict(narrative_meta)
+        except (TypeError, ValueError, KeyError):
+            narrative_meta = None
+        await self.memory_engine.create_from_article(
+            post,
+            task.persona_id,
+            narrative_meta=narrative_meta if isinstance(narrative_meta, dict) else None,
+        )
+        await self._advance_narrative(task.persona_id, narrative_card, post, task=task)
         self._append_trace(task, "memory_created", post_id=post.id, persona_id=task.persona_id)
         await self.db.commit()
         return task
@@ -666,15 +692,23 @@ class GenerationOrchestrator:
         format_reason = qa_result.get("format_reason", "")
         if format_reason:
             failed.append(f"format:{format_reason}")
+        title_reason = qa_result.get("title_reason", "")
+        if title_reason:
+            failed.append(f"title:{title_reason}")
+        opening_reason = qa_result.get("opening_reason", "")
+        if opening_reason:
+            failed.append(f"opening:{opening_reason}")
         issues = ", ".join(failed) if failed else "generic_quality"
         return (
+            f"{prompt}\n\n"
             f"Previous draft:\n{content}\n\n"
             f"Issues to fix: {issues}.\n"
-            "Rewrite the draft from scratch: keep the same persona, but shift to "
-            "a new scene, new concrete action, and new narrative progression. "
+            "Rewrite the draft from scratch: keep the same persona and task card, but use "
+            "a new scene detail, new concrete action, and new narrative progression. "
             "Use strict first-person narration in the article body: write as 我/属下, "
             "and do not address the reader, 王爷, or any narration target as 你/您/你们. "
-            "The first non-empty line must be a Markdown H1 like '# 具体题目', followed by one blank line."
+            "The first non-empty line must be a Markdown H1 like '# 具体题目', followed by one blank line. "
+            "Title must not duplicate any historical title. Opening ~40 characters must not near-copy prior posts."
         )
 
     def _build_truncation_retry_prompt(self, prompt: str, content: str) -> str:
@@ -696,7 +730,78 @@ class GenerationOrchestrator:
             return qa_result.get("perspective_reason") or "first person perspective required", "perspective_drift"
         if not qa_result.get("format_ok", True):
             return qa_result.get("format_reason") or "markdown h1 title required", "format_invalid"
+        if not qa_result.get("title_ok", True):
+            return qa_result.get("title_reason") or "title must be unique", "title_duplicate"
+        if not qa_result.get("opening_ok", True):
+            return qa_result.get("opening_reason") or "opening near-duplicate", "opening_near_duplicate"
         return "generated content needs rewrite", "qa_rewrite_required"
+
+    def _narrative_meta_from_context(self, context) -> dict | None:  # noqa: ANN001
+        card = getattr(context, "narrative_card", None)
+        if card is None:
+            return None
+        return card.to_dict()
+
+    def _card_from_dict(self, data: dict) -> NarrativeTaskCard | None:
+        try:
+            return NarrativeTaskCard(
+                relation_tone=str(data.get("relation_tone") or "守护"),
+                scene_bucket=str(data.get("scene_bucket") or "府内夜"),
+                scene={str(k): str(v) for k, v in (data.get("scene") or {}).items()},
+                world_year=float(data.get("world_year") or 0),
+                world_year_label=str(data.get("world_year_label") or ""),
+                phase_id=str(data.get("phase_id") or "shadow_stable"),
+                phase_name=str(data.get("phase_name") or ""),
+                phase_pressure=str(data.get("phase_pressure") or ""),
+                diary_hint=str(data.get("diary_hint") or ""),
+                avoid_titles=list(data.get("avoid_titles") or []),
+                avoid_openings=list(data.get("avoid_openings") or []),
+                requirements=list(data.get("requirements") or []),
+                relation_state_notes=list(data.get("relation_state_notes") or []),
+                enabled=bool(data.get("enabled", True)),
+            )
+        except (TypeError, ValueError, KeyError):
+            return None
+
+    async def _advance_narrative(
+        self,
+        persona_id: int,
+        card: NarrativeTaskCard | None,
+        post: Post,
+        task: GenerationTask | None = None,
+    ) -> None:
+        planner = NarrativePlanner()
+        enabled_raw = (await self.config_store.get("narrative.enabled", "1") or "1").strip().lower()
+        if enabled_raw in {"0", "false", "no", "off"}:
+            return
+        posts_per_year = int(
+            await self.config_store.get(
+                "narrative.posts_per_world_year",
+                str(NarrativePlanner.DEFAULT_POSTS_PER_WORLD_YEAR),
+            )
+            or NarrativePlanner.DEFAULT_POSTS_PER_WORLD_YEAR
+        )
+        state_key = planner.state_key(persona_id)
+        state = planner.load_state(await self.config_store.get(state_key, ""))
+        new_state = planner.advance_after_publish(
+            state,
+            card,
+            title=post.title or "",
+            content=post.content_markdown or "",
+            posts_per_world_year=posts_per_year,
+        )
+        await self.config_store.set(state_key, new_state.to_json(), category="narrative")
+        await self.memory_engine.upsert_worldline_memory(persona_id, new_state)
+        if task is not None:
+            self._append_trace(
+                task,
+                "narrative_advanced",
+                world_year=new_state.world_year,
+                phase_id=new_state.phase_id,
+                posts_published=new_state.posts_published,
+                relation_tone=(card.relation_tone if card else None),
+                scene_bucket=(card.scene_bucket if card else None),
+            )
 
     def _append_trace(self, task: GenerationTask, stage: str, **detail: object) -> None:
         trace = json_loads(task.trace_json, [])

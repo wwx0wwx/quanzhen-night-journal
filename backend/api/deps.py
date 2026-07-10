@@ -86,7 +86,9 @@ async def get_orchestrator(
     cost_monitor: CostMonitor = Depends(get_cost_monitor),
 ) -> GenerationOrchestrator:
     anti = AntiPerfectionEngine(db, config_store)
-    context_builder = ContextBuilder(db, memory_engine, persona_engine, anti)
+    context_builder = ContextBuilder(
+        db, memory_engine, persona_engine, anti, config_store=config_store
+    )
     return GenerationOrchestrator(
         db=db,
         config_store=config_store,

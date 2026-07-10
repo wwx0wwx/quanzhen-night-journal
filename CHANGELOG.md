@@ -2,6 +2,22 @@
 
 本文件记录全真夜记各版本的主要变更。
 
+## [1.4.0] - 2026-07-10
+
+### Added
+- 长线叙事规划器 `narrative_planner`：影中五阶段（0–10 年）、关系主音轮转、五类场景轮转、本篇任务卡。
+- 配置项 `narrative.enabled`、`narrative.posts_per_world_year`（默认 15 篇≈1 世界年，约 3–5 个月真实发文对应 6–10 年影中年华）。
+- QA：标题同名拒绝、开场 40 字指纹近复制检测（`qa.opening_similarity_threshold`）。
+- 篇级记忆增强（关系主音/场景大类/禁用意象）与 L1 世界线状态记忆自动 upsert。
+
+### Changed
+- 默认 `qa.min_length` 提到 900，抑制姿态速写短文。
+- 全真人格文案补「夜记写法硬约束」与「长线世界」；启动时对缺省文案的默认人格软升级。
+- 生成上下文近篇扩展到 8 条并带开场指纹回避清单。
+
+### Tests
+- 新增 `test_narrative_planner`、`test_qa_opening_title`；调整生成去重用例开场，避免与新规则冲突。
+
 ## [1.3.0] - 2026-07-10
 
 ### Added

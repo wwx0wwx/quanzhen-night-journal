@@ -43,7 +43,9 @@ async def _runtime():
         qa_engine = QAEngine(db, config_store, EmbeddingAdapter())
         cost_monitor = CostMonitor(db, config_store)
         anti = AntiPerfectionEngine(db, config_store)
-        context_builder = ContextBuilder(db, memory_engine, persona_engine, anti)
+        context_builder = ContextBuilder(
+            db, memory_engine, persona_engine, anti, config_store=config_store
+        )
         orchestrator = GenerationOrchestrator(
             db=db,
             config_store=config_store,

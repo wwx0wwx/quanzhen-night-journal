@@ -4,7 +4,9 @@ from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.engine.anti_perfection import AntiPerfectionEngine
+from backend.engine.config_store import ConfigStore
 from backend.engine.memory_engine import MemoryEngine
+from backend.engine.narrative_planner import NarrativePlanner, NarrativeTaskCard
 from backend.engine.persona_engine import PersonaEngine
 from backend.engine.prompt_builder import GenerationContext, RecentPostContext
 from backend.models import Event, GenerationTask, Persona, Post, SensorySnapshot
@@ -12,7 +14,7 @@ from backend.utils.serde import json_loads
 
 
 class ContextBuilder:
-    RECENT_POST_LIMIT = 4
+    RECENT_POST_LIMIT = 8
     RECENT_ARTICLE_MEMORY_EXCLUDE_COUNT = 2
     RECENT_ARTICLE_MEMORY_EXCLUDE_HOURS = 72
 
@@ -22,11 +24,15 @@ class ContextBuilder:
         memory_engine: MemoryEngine,
         persona_engine: PersonaEngine,
         anti_perfection_engine: AntiPerfectionEngine,
+        config_store: ConfigStore | None = None,
+        narrative_planner: NarrativePlanner | None = None,
     ):
         self.db = db
         self.memory_engine = memory_engine
         self.persona_engine = persona_engine
         self.anti_perfection_engine = anti_perfection_engine
+        self.config_store = config_store
+        self.narrative_planner = narrative_planner or NarrativePlanner()
 
     async def build(self, task: GenerationTask, persona: Persona) -> tuple[GenerationContext, dict]:
         event = await self.db.get(Event, task.event_id) if task.event_id else None
@@ -36,7 +42,7 @@ class ContextBuilder:
         memory_hits = await self.memory_engine.search(
             query=query,
             persona_id=persona.id,
-            top_k=5,
+            top_k=6,
             exclude_memory_ids=excluded_memory_ids,
         )
 
@@ -46,6 +52,7 @@ class ContextBuilder:
             sensory_text = self.persona_engine.translate_sensory(persona, json_loads(snapshot.tags, []))
 
         anti = await self.anti_perfection_engine.should_trigger(snapshot, persona)
+        narrative_card = await self._build_narrative_card(persona, recent_posts)
         context = GenerationContext(
             persona=persona,
             memory_hits=memory_hits,
@@ -55,6 +62,7 @@ class ContextBuilder:
             recent_posts=recent_posts,
             anti_perfection=anti,
             cold_start=(len(memory_hits) == 0),
+            narrative_card=narrative_card,
         )
         snapshot_dict = {
             "persona_id": persona.id,
@@ -70,13 +78,71 @@ class ContextBuilder:
                     "title": item.title,
                     "summary": item.summary,
                     "published_at": item.published_at,
+                    "opening": item.opening,
                 }
                 for item in recent_posts
             ],
             "anti_perfection": anti,
             "cold_start": context.cold_start,
+            "narrative": narrative_card.to_dict() if narrative_card else None,
         }
         return context, snapshot_dict
+
+    async def _build_narrative_card(
+        self, persona: Persona, recent_posts: list[RecentPostContext]
+    ) -> NarrativeTaskCard | None:
+        enabled = True
+        posts_per_year = NarrativePlanner.DEFAULT_POSTS_PER_WORLD_YEAR
+        state_raw = None
+        if self.config_store is not None:
+            enabled_raw = (await self.config_store.get("narrative.enabled", "1") or "1").strip().lower()
+            enabled = enabled_raw not in {"0", "false", "no", "off"}
+            posts_per_year = int(
+                await self.config_store.get(
+                    "narrative.posts_per_world_year",
+                    str(NarrativePlanner.DEFAULT_POSTS_PER_WORLD_YEAR),
+                )
+                or NarrativePlanner.DEFAULT_POSTS_PER_WORLD_YEAR
+            )
+            state_raw = await self.config_store.get(self.narrative_planner.state_key(persona.id), "")
+
+        state = self.narrative_planner.load_state(state_raw)
+        # Seed avoid lists from recent posts if state is empty (first run after upgrade).
+        if not state.last_titles and recent_posts:
+            state.last_titles = [p.title for p in recent_posts if p.title][:20]
+        if not state.last_openings and recent_posts:
+            state.last_openings = [p.opening for p in recent_posts if p.opening][:14]
+        if state.posts_published == 0 and recent_posts:
+            # Approximate progress from existing corpus so mid-stream personas don't restart year 1.
+            state.posts_published = len(recent_posts)
+            # Full corpus count is better — try from DB if available via posts_published already 0.
+            try:
+                from sqlalchemy import func
+
+                total = await self.db.scalar(
+                    select(func.count()).select_from(Post).where(
+                        Post.persona_id == persona.id, Post.status == "published"
+                    )
+                )
+                if total:
+                    state.posts_published = int(total)
+                    state.world_year = float(total) / max(6, posts_per_year)
+                    phase = self.narrative_planner.phase_for_year(state.world_year)
+                    state.phase_id = str(phase["id"])
+            except Exception:  # noqa: BLE001 — best-effort bootstrap
+                pass
+
+        scene_pool = json_loads(persona.scene_pool, [])
+        return self.narrative_planner.build_task_card(
+            persona_id=persona.id,
+            scene_pool=scene_pool if isinstance(scene_pool, list) else [],
+            state=state,
+            recent_titles=[p.title for p in recent_posts if p.title],
+            recent_openings=[p.opening for p in recent_posts if p.opening],
+            posts_per_world_year=posts_per_year,
+            enabled=enabled,
+            seed=f"{persona.id}:{state.posts_published}:{state.world_year}",
+        )
 
     async def _get_latest_valid_snapshot(self) -> SensorySnapshot | None:
         rows = await self.db.scalars(
@@ -88,7 +154,7 @@ class ContextBuilder:
         return rows.first()
 
     def _build_search_query(self, task: GenerationTask, persona: Persona, event: Event | None) -> str:
-        pieces = [persona.identity_setting, persona.worldview_setting]
+        pieces = [persona.identity_setting, persona.worldview_setting, "世界线 关系状态 姐姐 密令 旧伤"]
         if event:
             pieces.extend([event.normalized_semantic, event.source, event.event_type])
         if task.context_snapshot:
@@ -102,15 +168,19 @@ class ContextBuilder:
             .order_by(desc(Post.published_at), desc(Post.id))
             .limit(self.RECENT_POST_LIMIT)
         )
-        return [
-            RecentPostContext(
-                id=post.id,
-                title=post.title,
-                summary=post.summary,
-                published_at=post.published_at,
+        result: list[RecentPostContext] = []
+        for post in rows:
+            opening = NarrativePlanner.opening_fingerprint(post.content_markdown or "")
+            result.append(
+                RecentPostContext(
+                    id=post.id,
+                    title=post.title,
+                    summary=post.summary,
+                    published_at=post.published_at,
+                    opening=opening,
+                )
             )
-            for post in rows
-        ]
+        return result
 
     async def _get_recent_article_memory_ids(self, persona_id: int) -> list[int]:
         return await self.memory_engine.recent_article_memory_ids(
@@ -118,3 +188,4 @@ class ContextBuilder:
             limit=self.RECENT_ARTICLE_MEMORY_EXCLUDE_COUNT,
             hours=self.RECENT_ARTICLE_MEMORY_EXCLUDE_HOURS,
         )
+
