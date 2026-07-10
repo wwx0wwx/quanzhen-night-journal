@@ -120,6 +120,18 @@ def test_easter_egg_fires_after_gap_and_includes_idle_beats():
     assert card.easter_egg_id in new_state.last_easter_egg_ids
 
 
+def test_new_clever_easter_eggs_in_catalog():
+    from backend.engine.narrative_planner import EASTER_EGG_CATALOG
+
+    ids = {egg["id"] for egg in EASTER_EGG_CATALOG}
+    assert "steal_hair_lesson" in ids
+    assert "new_tassel_unused" in ids
+    hair = next(e for e in EASTER_EGG_CATALOG if e["id"] == "steal_hair_lesson")
+    tassel = next(e for e in EASTER_EGG_CATALOG if e["id"] == "new_tassel_unused")
+    assert "偷学" in hair["scene"]["方向"] or "偷看" in hair["scene"]["方向"]
+    assert "新穗" in tassel["scene"]["方向"] and "旧穗" in tassel["scene"]["方向"]
+
+
 def test_easter_egg_suppressed_within_min_gap():
     planner = NarrativePlanner()
     state = NarrativeState(posts_published=5, posts_since_easter_egg=2)
