@@ -1,0 +1,16 @@
+{{ define "main" }}
+<header class="page-head">
+  <h1>{{ .Title | default "搜索" }}</h1>
+  <p class="muted">输入关键词，在标题与摘要中查找。</p>
+</header>
+
+<div class="search-box">
+  <input type="search" id="search-input" placeholder="搜索文章…" autocomplete="off" aria-label="搜索">
+  <p class="muted" id="search-status">加载索引中…</p>
+</div>
+<section class="post-list" id="search-results" aria-live="polite"></section>
+{{ end }}
+
+{{ define "scripts" }}
+<script src="{{ "js/search.js" | relURL }}" defer></script>
+{{ end }}

@@ -29,3 +29,7 @@ data/ghosts/
 data/quanzhen.db
 inbox/*
 !inbox/.gitkeep
+
+# Blog theme preview build output
+blog-preview/public/
+

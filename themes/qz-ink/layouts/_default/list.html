@@ -1,0 +1,22 @@
+{{ define "main" }}
+<header class="page-head">
+  <h1>{{ .Title }}</h1>
+  {{- with .Content -}}
+    <div class="page-intro">{{ . }}</div>
+  {{- end -}}
+</header>
+
+<section class="post-list">
+  {{- range .Pages.ByDate.Reverse -}}
+    <article class="post-item">
+      <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006年1月2日" }}</time>
+      <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+      {{- with .Params.summary | default .Summary -}}
+        <p class="summary">{{ . | plainify | truncate 100 }}</p>
+      {{- end -}}
+    </article>
+  {{- else -}}
+    <p class="muted">这里还没有内容。</p>
+  {{- end -}}
+</section>
+{{ end }}

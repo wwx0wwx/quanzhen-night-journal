@@ -1,0 +1,9 @@
+name = "qz-ink"
+license = "MIT"
+licenselink = "https://opensource.org/licenses/MIT"
+description = "全真夜记极简中文阅读主题（夜墨）"
+homepage = "https://github.com/wwx0wwx/quanzhen-night-journal"
+min_version = "0.120.0"
+
+[author]
+  name = "quanzhen-night-journal"

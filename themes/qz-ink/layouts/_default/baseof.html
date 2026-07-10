@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  {{- partial "head.html" . -}}
+</head>
+<body>
+  <div class="site">
+    {{- partial "header.html" . -}}
+    <main class="main">
+      {{- block "main" . }}{{ end -}}
+    </main>
+    {{- partial "footer.html" . -}}
+  </div>
+  <script src="{{ "js/theme.js" | relURL }}" defer></script>
+  {{- block "scripts" . }}{{ end -}}
+</body>
+</html>

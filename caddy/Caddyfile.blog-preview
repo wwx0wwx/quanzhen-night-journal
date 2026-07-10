@@ -1,0 +1,11 @@
+{
+    admin off
+}
+
+:5212 {
+    root * /srv/blog
+    encode gzip
+    try_files {path} {path}/ /index.html
+    file_server
+    header Cache-Control "no-store"
+}

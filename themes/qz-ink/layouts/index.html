@@ -1,0 +1,26 @@
+{{ define "main" }}
+<section class="hero">
+  <h1>{{ .Site.Params.homeInfoParams.Title | default .Site.Title }}</h1>
+  <p class="hero-desc">
+    {{ .Site.Params.homeInfoParams.Content | default .Site.Params.description | plainify }}
+  </p>
+</section>
+
+<section class="post-list" aria-label="文章列表">
+  {{- $pages := where .Site.RegularPages "Type" "in" .Site.Params.mainSections -}}
+  {{- if not $pages -}}
+    {{- $pages = where .Site.RegularPages "Section" "posts" -}}
+  {{- end -}}
+  {{- range $pages -}}
+    <article class="post-item">
+      <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006年1月2日" }}</time>
+      <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+      {{- with .Params.summary | default .Summary -}}
+        <p class="summary">{{ . | plainify | truncate 120 }}</p>
+      {{- end -}}
+    </article>
+  {{- else -}}
+    <p class="muted">暂无文章。</p>
+  {{- end -}}
+</section>
+{{ end }}

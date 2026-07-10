@@ -1,0 +1,27 @@
+{{ define "main" }}
+<header class="page-head">
+  <h1>{{ .Title | default "归档" }}</h1>
+  <p class="muted">按时间浏览全部夜记。</p>
+</header>
+
+{{- $pages := where .Site.RegularPages "Type" "in" site.Params.mainSections -}}
+{{- if not $pages -}}{{ $pages = where .Site.RegularPages "Section" "posts" }}{{- end -}}
+
+<section class="archive-list">
+  {{- range $pages.GroupByDate "2006" -}}
+    <div class="archive-year">
+      <h2>{{ .Key }}</h2>
+      <ul>
+        {{- range .Pages -}}
+          <li>
+            <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "01-02" }}</time>
+            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+          </li>
+        {{- end -}}
+      </ul>
+    </div>
+  {{- else -}}
+    <p class="muted">暂无归档。</p>
+  {{- end -}}
+</section>
+{{ end }}

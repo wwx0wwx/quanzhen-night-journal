@@ -1,0 +1,36 @@
+{{ define "main" }}
+<article class="article">
+  <header class="article-head">
+    <h1>{{ .Title }}</h1>
+    <div class="article-meta">
+      {{- with .Date -}}
+        <time datetime="{{ .Format "2006-01-02T15:04:05Z07:00" }}">{{ .Format "2006年1月2日" }}</time>
+      {{- end -}}
+      {{- if .Params.author -}}
+        <span>·</span><span>{{ .Params.author }}</span>
+      {{- end -}}
+      {{- if and .Site.Params.ShowReadingTime .ReadingTime -}}
+        <span>·</span><span>约 {{ .ReadingTime }} 分钟</span>
+      {{- end -}}
+    </div>
+    {{- with .Params.summary -}}
+      <p class="article-lead">{{ . }}</p>
+    {{- end -}}
+  </header>
+
+  <div class="article-body content">
+    {{ .Content }}
+  </div>
+
+  {{- if and .Site.Params.ShowPostNavLinks (eq .Section "posts") -}}
+    <nav class="post-nav" aria-label="相邻文章">
+      {{- with .NextInSection -}}
+        <a class="prev" href="{{ .RelPermalink }}"><span>上一篇</span><strong>{{ .Title }}</strong></a>
+      {{- end -}}
+      {{- with .PrevInSection -}}
+        <a class="next" href="{{ .RelPermalink }}"><span>下一篇</span><strong>{{ .Title }}</strong></a>
+      {{- end -}}
+    </nav>
+  {{- end -}}
+</article>
+{{ end }}

@@ -1,0 +1,55 @@
+# 预览站配置：主题 qz-ink，输出到独立目录，不覆盖生产 hugo_public
+baseURL = "/"
+languageCode = "zh-cn"
+defaultContentLanguage = "zh"
+title = "全真夜记"
+theme = "qz-ink"
+hasCJKLanguage = true
+mainSections = ["posts"]
+# publishDir 由构建脚本 -d 指定，避免写进生产 volume
+
+[services]
+[services.rss]
+limit = 20
+
+[params]
+ShowReadingTime = true
+ShowShareButtons = false
+ShowPostNavLinks = true
+defaultTheme = "light"
+description = "记录深夜写作、自动生成与人工修订后的夜记。"
+hidePreviewBadge = false
+
+[params.label]
+text = "全真夜记"
+
+[params.homeInfoParams]
+Title = "全真夜记"
+Content = "记录深夜写作、自动生成与人工修订后的夜记。这里不是批量生成内容，而是由同一写作主体持续写下的夜札。"
+
+[outputs]
+home = ["HTML", "RSS", "JSON"]
+
+[[menu.main]]
+identifier = "home"
+name = "首页"
+url = "/"
+weight = 10
+
+[[menu.main]]
+identifier = "archives"
+name = "归档"
+url = "/archives/"
+weight = 20
+
+[[menu.main]]
+identifier = "search"
+name = "搜索"
+url = "/search/"
+weight = 30
+
+[[menu.main]]
+identifier = "about"
+name = "关于"
+url = "/about/"
+weight = 40

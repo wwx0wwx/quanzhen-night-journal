@@ -1,0 +1,11 @@
+<footer class="footer">
+  <div class="footer-inner">
+    <p>{{ .Site.Title }} · 夜记</p>
+    <p class="muted">
+      <a href="{{ "index.xml" | relURL }}">RSS</a>
+      {{- if not .Site.Params.hidePreviewBadge }}
+      <span class="preview-tag">预览主题 qz-ink · 端口 5212</span>
+      {{- end }}
+    </p>
+  </div>
+</footer>
