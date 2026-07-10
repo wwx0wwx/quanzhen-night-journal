@@ -1,0 +1,24 @@
+{
+    admin off
+}
+
+:5211 {
+    redir /admin /admin/ 308
+
+    handle_path /admin/* {
+        root * /srv/webui
+        header Cache-Control "no-store"
+        try_files {path} /index.html
+        file_server
+    }
+
+    @api path /api /api/*
+    handle @api {
+        reverse_proxy core:8000
+    }
+
+    @console_root path /
+    redir @console_root /admin/ 308
+
+    respond 404
+}
